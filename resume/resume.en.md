@@ -19,7 +19,7 @@
 basics:
   name: "Aleksandr Krasnobai"
   label: "Senior DevOps / SRE Engineer"   # TODO: confirm exact headline
-  email: "TODO@example.com"               # TODO: real email
+  email: "hi@krasnobai.dev"
   # phone: "+TODO"                         # TODO: real phone (delete line if unused)
   url: "https://krasnobai.dev"
   summary: "Senior DevOps / SRE engineer based in Belgrade, Serbia — permanent residence, CET, no visa sponsorship. I build and run high-throughput distributed systems, and the platform work that lets a team ship."
@@ -100,4 +100,4 @@ location: Ulyanovsk, Russia
 
 ## Contact
 
-Best reached by email: TODO@example.com — usually reply within a day. Open to senior DevOps / SRE and cloud-infrastructure roles in remote-friendly teams (based in Belgrade, Serbia — permanent residence, CET, no visa sponsorship).
+Best reached by email: hi@krasnobai.dev — usually reply within a day. Open to senior DevOps / SRE and cloud-infrastructure roles in remote-friendly teams (based in Belgrade, Serbia — permanent residence, CET, no visa sponsorship).
