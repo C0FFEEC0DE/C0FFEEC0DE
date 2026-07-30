@@ -1,4 +1,3 @@
-# Aleksandr Krasnobai
 **Senior DevOps / SRE Engineer** · Belgrade, Serbia — permanent residence
 
 I build and run high-throughput distributed systems, and the platform work that lets a team ship.
