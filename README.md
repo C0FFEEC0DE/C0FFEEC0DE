@@ -1,6 +1,6 @@
 **Senior DevOps / SRE Engineer** · Belgrade, Serbia — permanent residence
 
-I build and run high-throughput distributed systems, and the platform work that lets a team ship.
+DON'T PANIC — I keep distributed systems running.
 
 🌐  **Live résumé → <https://krasnobai.dev>**
      `curl -sL krasnobai.dev/resume.txt`
