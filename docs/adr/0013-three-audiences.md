@@ -1,6 +1,6 @@
 # ADR-0013 — Three explicit resume audiences: human, LLM-agent, ATS
 
-Date: 2026-07-30 · Status: Accepted
+Date: 2026-07-30 · Status: Accepted (landing-page render narrowed by ADR-0025)
 
 ## Context
 Research (2026) shows a resume serves three audiences with conflicting needs:

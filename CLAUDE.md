@@ -48,10 +48,16 @@ files exist in `dist/`.
 others causes divergence bugs):
 - `render_header_fragment` — name/label/summary; injected into the landing hero
   (`{{HEADER_EN}}` / `{{HEADER_RU}}` in `src/index.html`).
-- `render_body_fragment` — the résumé sections (Contact → Experience → Skills →
-  Projects → Education → Certificates → Languages). Used by **both** the landing
-  `#resume` block (`{{RESUME_EN_HTML}}`) **and** the branded-PDF body (via
-  `render_html_fragment`). Keep these two in lockstep (ADR-0013).
+- `render_contact_fragment` — the Contact block only; injected into the landing
+  `#resume` block (`{{RESUME_EN_HTML}}` / `{{RESUME_RU_HTML}}`). The landing
+  page shows identity (hero) + contact and funnels to the PDF for the detail
+  (ADR-0025). The contact markup is shared with the branded PDF via
+  `_contact_section` so the contact surface stays in lockstep.
+- `render_body_fragment` — the full résumé sections (Contact → Experience →
+  Skills → Projects → Education → Certificates → Languages). Used by the
+  branded-PDF body only (via `render_html_fragment`); **not** the landing page
+  (ADR-0025 supersedes the ADR-0013 lockstep on the page vs. PDF — they
+  intentionally diverge now, except for Contact).
 - `render_ats_html` — the ATS `resume.pdf`. Uses **neutral** colors and a
   standard font on purpose (ADR-0014) — do NOT "align" it to the Forest theme.
 
@@ -96,13 +102,14 @@ these are caught.
   into the summary — they belong in Experience/Certificates.
 - **ATS `resume.pdf` is intentionally NOT Forest** (ADR-0014); the branded PDF
   IS Forest. Don't "fix" the mismatch.
-- **Contact profiles must stay exactly `[GitHub, LinkedIn, Telegram]`** in that
-  order, with the Telegram URL a `https://t.me/...` link (ADR-0016, enforced by
-  `test_contact_profiles_required_set`).
+- **Contact profiles must stay exactly `[GitHub, LinkedIn]`** in that order
+  (ADR-0024, which supersedes ADR-0016 — Telegram was dropped). No `t.me/` link
+  may appear on any audience surface; enforced by
+  `test_contact_profiles_required_set`.
 - **Tests pin specific résumé data** (name, company, label, fluency, etc.). When
   you change résumé content, update the assertions in `build/test_build.py` and
-  `tests/ui/ui.spec.js` — or make them data-agnostic (e.g. `t.me/` substring)
-  so they survive content edits.
+  `tests/ui/ui.spec.js` — or make them data-agnostic so they survive content
+  edits.
 - **All generated/injected content is HTML-escaped** (ADR-0012). The
   `resume_md_attacked` fixture feeds hostile markdown (script tags, etc.) to
   confirm escaping holds — don't introduce raw injection.

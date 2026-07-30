@@ -21,7 +21,7 @@ superseded record is marked **Superseded by ADR-00xx** and a new one is added.
 | 0013 | Three explicit resume audiences: human, LLM-agent, ATS | Accepted |
 | 0014 | `resume.pdf` is the ATS-optimized render | Accepted |
 | 0015 | AI-agent discoverability: cv.json well-known + metadata tier | Accepted |
-| 0016 | Contact profiles: GitHub, LinkedIn, Telegram | Accepted |
+| 0016 | Contact profiles: GitHub, LinkedIn, Telegram | Superseded by ADR-0024 |
 | 0017 | Single Forest theme | Accepted |
 | 0018 | Human, handcrafted feel | Accepted |
 | 0019 | Automated contrast + no-JS regression guards | Accepted |
@@ -29,3 +29,5 @@ superseded record is marked **Superseded by ADR-00xx** and a new one is added.
 | 0021 | Dragon share link revealed inline | Accepted |
 | 0022 | LinkedIn share button (pre-filled link) | Accepted |
 | 0023 | Custom domain set to krasnobai.dev | Accepted |
+| 0024 | Contact profiles: GitHub, LinkedIn | Accepted |
+| 0025 | Landing page shows Contact only; full résumé lives in the PDF | Accepted |

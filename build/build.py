@@ -271,16 +271,9 @@ def render_header_fragment(r: dict, lang: str) -> str:
     return _resume_header_inner(r, lang)
 
 
-def render_body_fragment(r: dict, lang: str) -> str:
-    """Résumé sections WITHOUT the header — injected into the landing résumé
-    block. The header lives once in the hero, so it is not duplicated here."""
-    b = r["basics"]
-    parts: list[str] = []
-
-    def section(title, inner):
-        return f'<section class="block"><h2>{esc(title)}</h2>{inner}</section>'
-
-    # Contact line
+def _contact_section(b: dict, lang: str) -> str:
+    """The Contact block, shared by the landing page and the branded PDF so the
+    contact surface never diverges between them (ADR-0013 lockstep on contact)."""
     contacts = []
     if b.get("email"):
         contacts.append(f'<a href="mailto:{esc(b["email"])}">{esc(b["email"])}</a>')
@@ -290,8 +283,34 @@ def render_body_fragment(r: dict, lang: str) -> str:
         contacts.append(f'<a href="{esc(b["url"])}">{esc(b["url"])}</a>')
     for p in b.get("profiles", []) or []:
         contacts.append(f'<a href="{esc(p.get("url"))}">{esc(p.get("network"))}</a>')
-    if contacts:
-        parts.append(section(_t(lang, "Contact"), '<p class="contact">' + " · ".join(contacts) + "</p>"))
+    if not contacts:
+        return ""
+    return (f'<section class="block"><h2>{esc(_t(lang, "Contact"))}</h2>'
+            f'<p class="contact">{" · ".join(contacts)}</p></section>')
+
+
+def render_contact_fragment(r: dict, lang: str) -> str:
+    """Contact section only — injected into the landing résumé block
+    (ADR-0025). The full résumé body lives in the branded PDF and the
+    machine-readable outputs; the landing page shows identity (hero) + contact
+    only and funnels to the PDF for the detail."""
+    return _contact_section(r["basics"], lang)
+
+
+def render_body_fragment(r: dict, lang: str) -> str:
+    """Résumé sections WITHOUT the header — used by the branded PDF (via
+    render_html_fragment). The landing page uses render_contact_fragment instead
+    (ADR-0025), so the full body renders only in the PDF, not on the page."""
+    b = r["basics"]
+    parts: list[str] = []
+
+    def section(title, inner):
+        return f'<section class="block"><h2>{esc(title)}</h2>{inner}</section>'
+
+    # Contact line (shared with the landing page via _contact_section)
+    contact = _contact_section(b, lang)
+    if contact:
+        parts.append(contact)
 
     work = r.get("work", [])
     if work:
@@ -363,8 +382,9 @@ def render_body_fragment(r: dict, lang: str) -> str:
 
 def render_html_fragment(r: dict, lang: str) -> str:
     """Full fragment (header + body) for the branded PDF (ADR-0013). The
-    landing page uses render_header_fragment + render_body_fragment instead,
-    so the header is shown once, not twice."""
+    landing page uses render_header_fragment + render_contact_fragment instead,
+    so the header is shown once, not twice, and the full body lives only in the
+    PDF (ADR-0025)."""
     return '<header class="hero">' + _resume_header_inner(r, lang) + "</header>\n" + render_body_fragment(r, lang)
 
 
@@ -471,7 +491,7 @@ def render_markdown(r: dict) -> str:
         out += [f"*{b['label']}*", ""]
     if b.get("summary"):
         out += [b["summary"], ""]
-    # Contact (ADR-0016: GitHub, LinkedIn, Telegram + email/phone/url)
+    # Contact (ADR-0024: GitHub, LinkedIn + email/phone/url)
     contact = []
     if b.get("email"):
         contact.append(f"<{b['email']}>")
@@ -743,7 +763,7 @@ def build_llms_txt(r: dict, base: str) -> str:
         ("AGENTS.md", "Notes for AI agents reading this site"),
     ]
     link_lines = "\n".join(f"- [{p}]({_abs(base, p)}): {d}" for p, d in links)
-    # Contact surface (ADR-0016): GitHub, LinkedIn, Telegram, for LLM agents.
+    # Contact surface (ADR-0024): GitHub, LinkedIn, for LLM agents.
     contact_lines = "\n".join(f"- {p.get('network')}: {p.get('url')}"
                              for p in (b.get("profiles", []) or []))
     contact_block = f"\n## Contact\n{contact_lines}\n" if contact_lines else ""
@@ -895,8 +915,8 @@ def build(clean: bool = False, do_pdf: bool = True):
     tpl = load_index_template()
     jsonld = build_jsonld(resumes["en"])
     out = inject_template(tpl, {
-        "RESUME_EN_HTML": render_body_fragment(resumes["en"], "en"),
-        "RESUME_RU_HTML": render_body_fragment(resumes["ru"], "ru"),
+        "RESUME_EN_HTML": render_contact_fragment(resumes["en"], "en"),
+        "RESUME_RU_HTML": render_contact_fragment(resumes["ru"], "ru"),
         "HEADER_EN": render_header_fragment(resumes["en"], "en"),
         "HEADER_RU": render_header_fragment(resumes["ru"], "ru"),
         "JSONLD": jsonld,

@@ -30,7 +30,6 @@ basics:
 profiles:
   - {network: "GitHub",   username: "C0FFEEC0DE", url: "https://github.com/C0FFEEC0DE"}
   - {network: "LinkedIn", username: "aleksandrkrasnobai", url: "https://www.linkedin.com/in/aleksandrkrasnobai"}
-  - {network: "Telegram", username: "krasnobaicoach", url: "https://t.me/krasnobaicoach"}
 availability:
   status: "open"   # TODO: confirm you are actively open to roles
   roles: ["Senior DevOps Engineer", "SRE", "Cloud Infrastructure Engineer"]

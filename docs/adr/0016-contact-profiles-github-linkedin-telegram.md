@@ -1,6 +1,6 @@
 # ADR-0016 — Contact profiles: GitHub, LinkedIn, Telegram
 
-Date: 2026-07-30 · Status: Accepted
+Date: 2026-07-30 · Status: Superseded by ADR-0024
 
 ## Context
 The résumé's contact section (rendered from `basics.profiles` in JSON Resume)

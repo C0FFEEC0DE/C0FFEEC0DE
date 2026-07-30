@@ -236,23 +236,35 @@ def test_jsonld_script_breakout_escaped(dist, resume_md_attacked, monkeypatch):
 
 def test_no_placeholder_injection_into_body(dist, resume_md_attacked, monkeypatch):
     """A `{{JSONLD}}` token in resume content must stay literal, not be
-    substituted into the body (finding #2)."""
+    substituted when the content is injected as a template value (finding #2).
+    The body no longer renders into index.html (ADR-0025), so test the
+    protection directly: body HTML used as a replacement value is not re-scanned
+    by inject_template's single-pass re.sub."""
     monkeypatch.setattr(build, "RESUME_DIR", resume_md_attacked)
     build.build(clean=True)
     html = (dist / "index.html").read_text("utf-8")
     # the JSON-LD @context appears exactly once (in its own <script>), not leaked
     assert html.count('"@context"') == 1
-    # the literal token survived as text rather than being expanded
-    assert "{{JSONLD}}" in html
+    en = build.parse_resume(build.RESUME_DIR / "resume.en.md")
+    body = build.render_body_fragment(en, "en")
+    # body content carrying {{JSONLD}} is injected as a VALUE, not re-scanned,
+    # so the token survives literal and the JSON-LD block is not substituted in
+    out = build.inject_template("{{RESUME_EN_HTML}}",
+                                {"RESUME_EN_HTML": body, "JSONLD": "LEAKED-JSONLD"})
+    assert "{{JSONLD}}" in out
+    assert "LEAKED-JSONLD" not in out
 
 
 def test_resume_html_escapes_script(dist, resume_md_attacked, monkeypatch):
-    """`<script>` inside highlights must be HTML-escaped in the rendered body."""
+    """`<script>` inside highlights must be HTML-escaped in the rendered body.
+    Highlights render into the branded-PDF body now, not index.html (ADR-0025),
+    so check render_body_fragment directly."""
     monkeypatch.setattr(build, "RESUME_DIR", resume_md_attacked)
     build.build(clean=True)
-    html = (dist / "index.html").read_text("utf-8")
-    assert "<script>alert(2)</script>" not in html
-    assert "&lt;script&gt;" in html
+    en = build.parse_resume(build.RESUME_DIR / "resume.en.md")
+    body = build.render_body_fragment(en, "en")
+    assert "<script>alert(2)</script>" not in body
+    assert "&lt;script&gt;" in body
 
 
 def test_sitemap_only_with_base(dist, monkeypatch):
@@ -315,6 +327,28 @@ def test_render_body_fragment_has_no_header(dist):
     assert "<h1>" not in body
     assert "<header class=\"hero\">" in full
     assert "<h1>" in full
+
+
+def test_landing_page_shows_contact_only(dist):
+    """ADR-0025: the landing #resume block shows Contact only — the full résumé
+    body (Experience, Skills, Projects, Education, Certificates, Languages)
+    lives in the branded PDF, not on the page. Guards against re-injecting
+    render_body_fragment into the landing page."""
+    build.build(clean=True)
+    html = (dist / "index.html").read_text("utf-8")
+    resume = html[html.find('id="resume"'):html.find("<footer")]
+    # Contact is the one block kept (both languages)
+    assert "Contact" in resume and "Контакты" in resume
+    # none of the other résumé sections leak onto the landing page
+    for absent in ("Work Experience", "Skills", "Projects", "Education",
+                   "Certificates", "Languages", "Опыт работы", "Навыки",
+                   "Проекты", "Образование", "Сертификаты", "Языки"):
+        assert absent not in resume, f"landing page leaked section: {absent}"
+    # the branded PDF body still carries the full résumé
+    en = build.parse_resume(build.RESUME_DIR / "resume.en.md")
+    body = build.render_body_fragment(en, "en")
+    assert "Work Experience" in body
+    assert "Skills" in body
 
 
 # --- ATS format: single column, standard font, real text, no graphics ------- #
@@ -616,29 +650,26 @@ def test_button_text_color_matches_mode(dist):
         css), "dark .btn-primary must use #15171c text"
 
 
-# --- ADR-0016: contact profiles are GitHub, LinkedIn, Telegram -------------- #
+# --- ADR-0024: contact profiles are GitHub, LinkedIn (supersedes ADR-0016) --- #
 def test_contact_profiles_required_set(dist):
-    """Both language files must carry the ADR-0016 contact set, in order, and
+    """Both language files must carry the ADR-0024 contact set, in order, and
     no stray Website profile (the site URL lives in basics.url, not profiles)."""
     build.build(clean=True)
-    expected = ["GitHub", "LinkedIn", "Telegram"]
+    expected = ["GitHub", "LinkedIn"]
     for fn in ("resume.json", "resume.ru.json"):
         r = json.loads((dist / fn).read_text("utf-8"))
         networks = [p.get("network") for p in r["basics"].get("profiles", [])]
         assert networks == expected, f"{fn} profiles = {networks}"
         assert "Website" not in networks
-    # Telegram profile URL is a t.me link and reaches the rendered HTML + text
-    en = json.loads((dist / "resume.json").read_text("utf-8"))
-    tg = next(p for p in en["basics"]["profiles"] if p["network"] == "Telegram")
-    assert tg["url"].startswith("https://t.me/")
-    html = (dist / "index.html").read_text("utf-8")
-    assert "https://t.me/" in html
-    assert (dist / "resume.txt").read_text("utf-8").count("Telegram") >= 2  # EN + RU
-    # ADR-0016: the contact surface reaches EVERY audience, not just JSON
+    # ADR-0024: Telegram is no longer a contact channel — it must not leak into
+    # any audience surface. The contact set reaches EVERY audience, not just JSON.
     en_resume = build.parse_resume(build.RESUME_DIR / "resume.en.md")
-    assert "t.me/" in build.render_ats_html(en_resume, "en")      # ATS PDF
-    assert "t.me/" in build.render_body_fragment(en_resume, "en")  # branded PDF body
-    assert "Telegram" in (dist / "llms.txt").read_text("utf-8")              # LLM index
-    assert "t.me/" in (dist / "llms.txt").read_text("utf-8")
-    assert "Telegram" in (dist / "resume.md").read_text("utf-8")             # markdown mirror
-    assert "t.me/" in (dist / "resume.md").read_text("utf-8")
+    assert "t.me/" not in build.render_ats_html(en_resume, "en")      # ATS PDF
+    assert "t.me/" not in build.render_body_fragment(en_resume, "en")  # branded PDF body
+    html = (dist / "index.html").read_text("utf-8")
+    assert "t.me/" not in html
+    assert "Telegram" not in (dist / "resume.txt").read_text("utf-8")
+    assert "Telegram" not in (dist / "llms.txt").read_text("utf-8")             # LLM index
+    assert "t.me/" not in (dist / "llms.txt").read_text("utf-8")
+    assert "Telegram" not in (dist / "resume.md").read_text("utf-8")             # markdown mirror
+    assert "t.me/" not in (dist / "resume.md").read_text("utf-8")

@@ -30,10 +30,11 @@ test("EN/RU toggle swaps the hero header and résumé body, one language at a ti
   await page.click(".lang-toggle button[data-lang='ru']");
   await expect(page.locator(".hero-text [data-lang='ru'] .label")).toContainText("SRE");
   await expect(page.locator(".hero-text [data-lang='en'] .label")).toBeHidden();
-  // résumé body follows the same toggle
+  // résumé body follows the same toggle (ADR-0025: the landing #resume block
+  // shows Contact only — the full body lives in the branded PDF)
   await expect(page.locator("#resume [data-lang='ru']")).toBeVisible();
   await expect(page.locator("#resume [data-lang='en']")).toBeHidden();
-  await expect(page.locator("#resume [data-lang='ru']")).toContainText("Grid Dynamics");
+  await expect(page.locator("#resume [data-lang='ru']")).toContainText("LinkedIn");
   // switch back to EN
   await page.click(".lang-toggle button[data-lang='en']");
   await expect(page.locator(".hero-text [data-lang='en'] .label")).toHaveText(
