@@ -106,6 +106,11 @@ these are caught.
 - **All generated/injected content is HTML-escaped** (ADR-0012). The
   `resume_md_attacked` fixture feeds hostile markdown (script tags, etc.) to
   confirm escaping holds — don't introduce raw injection.
+- **Keep `build/build.py`'s module docstring in sync with `check()`**: the
+  docstring `Output:` list and the `DOMAIN` example must name every file
+  `check()` asserts (incl. `resume.min.json`, `.well-known/cv.json`,
+  `resume-branded.pdf`) and use the real site domain (`krasnobai.dev`), or the
+  docstring silently rots against the build it documents.
 - The résumé currently holds **real data with literal `TODO` placeholders** for
   fields the owner's public LinkedIn hides (phone, the Grid
   Dynamics start date/title, prior roles, education degree/dates). TODOs render
@@ -114,6 +119,6 @@ these are caught.
 
 ## Workflow note
 
-Release/deploy automation is intentionally disabled in this profile. Follow
-discover → design → implement → verify → review → docs → cleanup; deploy only
-when explicitly asked.
+Deploy is out of scope by default in this profile. Follow
+discover → design → implement → verify → review → docs → cleanup; run a deploy
+only when the user explicitly asks.

@@ -2,9 +2,9 @@
 """Build a resume site from markdown sources.
 
 Input:  resume/resume.<lang>.md  (YAML front-matter + structured H2/H3 body)
-Output: dist/  with index.html, resume.json, resume.<lang>.json, resume.txt,
-        resume.md, resume.pdf, llms.txt, AGENTS.md, robots.txt, sitemap.xml,
-        assets/* and (if DOMAIN is set) CNAME.
+Output: dist/  with index.html, resume.json, resume.<lang>.json, resume.min.json,
+        resume.txt, resume.md, resume.pdf, resume-branded.pdf, llms.txt, AGENTS.md,
+        robots.txt, sitemap.xml, .well-known/cv.json, assets/* and (if DOMAIN set) CNAME.
 
 Usage:
     python build/build.py            # build into dist/
@@ -12,7 +12,7 @@ Usage:
     python build/build.py --clean    # wipe dist/ first
 
 Env vars (optional):
-    DOMAIN   e.g. resume.opendevops.run  -> emits dist/CNAME and absolute URLs
+    DOMAIN   e.g. krasnobai.dev  -> emits dist/CNAME and absolute URLs
     PAGES_URL fallback absolute base when DOMAIN is unset (e.g. https://user.github.io/C0FFEEC0DE)
     PDF      "0" disables PDF generation (useful in CI if WeasyPrint libs missing)
 """

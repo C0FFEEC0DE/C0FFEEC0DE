@@ -11,7 +11,7 @@
   DATA STATUS — real data sourced from the owner's LinkedIn
   (linkedin.com/in/aleksandrkrasnobai) plus local project repos. Items marked
   `TODO` are gaps: LinkedIn hides them from public view and they must be filled
-  before going live — email, phone, Telegram handle, the Grid Dynamics start
+  before going live — phone, the Grid Dynamics start
   date and exact title, prior roles, education degree/dates. Drafted (inferred) values — the headline, summary, skills grouping,
   and project descriptions — are proposals the owner can edit.
 -->
