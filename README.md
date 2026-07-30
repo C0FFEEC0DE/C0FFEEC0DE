@@ -6,7 +6,7 @@ I build and run high-throughput distributed systems, and the platform work that 
 🌐  **Live résumé → <https://krasnobai.dev>**
      `curl -sL krasnobai.dev/resume.txt`
 
-[GitHub](https://github.com/C0FFEEC0DE) · [LinkedIn](https://www.linkedin.com/in/aleksandrkrasnobai) · hi@krasnobai.dev
+[GitHub](https://github.com/C0FFEEC0DE) · [LinkedIn](https://www.linkedin.com/in/aleksandrkrasnobai) · [Telegram](https://t.me/krasnobaicoach) · hi@krasnobai.dev
 
 ---
 

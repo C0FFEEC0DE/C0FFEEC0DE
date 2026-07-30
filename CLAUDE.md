@@ -107,7 +107,7 @@ these are caught.
   `resume_md_attacked` fixture feeds hostile markdown (script tags, etc.) to
   confirm escaping holds — don't introduce raw injection.
 - The résumé currently holds **real data with literal `TODO` placeholders** for
-  fields the owner's public LinkedIn hides (phone, Telegram, the Grid
+  fields the owner's public LinkedIn hides (phone, the Grid
   Dynamics start date/title, prior roles, education degree/dates). TODOs render
   literally; the site is **not live-ready** until they are filled. There is no
   build guard yet against deploying with visible TODOs.

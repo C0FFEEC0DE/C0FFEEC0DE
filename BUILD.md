@@ -16,7 +16,7 @@ A résumé repository that is:
 - **Downloadable via a curl one-liner** and a printable PDF.
 - **Carries a tiny pixel-art dragon** generated per visitor and shareable by link + QR — a small "thank you for stopping by" with a viral loop.
 
-The repo holds **real owner data** (Aleksandr Krasnobai) sourced from LinkedIn plus the local project repos, with **`TODO` placeholders** for the fields LinkedIn hides from public view (phone, Telegram handle, the Grid Dynamics start date and exact title, prior roles, education degree/dates). Fill the `TODO`s in `resume/resume.en.md` and `resume/resume.ru.md` before going live — the structure stays identical.
+The repo holds **real owner data** (Aleksandr Krasnobai) sourced from LinkedIn plus the local project repos, with **`TODO` placeholders** for the fields LinkedIn hides from public view (phone, the Grid Dynamics start date and exact title, prior roles, education degree/dates). Fill the `TODO`s in `resume/resume.en.md` and `resume/resume.ru.md` before going live — the structure stays identical.
 
 ## Repository layout
 
