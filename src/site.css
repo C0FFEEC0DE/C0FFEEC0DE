@@ -1,0 +1,183 @@
+/* C0FFEEC0DE — single Forest theme (ADR-0017, reduced from the multi-palette
+   set per owner preference). One green palette with a light and a dark
+   variant; `data-theme` selects light/dark (set on load by i18n.js and via the
+   ◐ toggle). Bootstrap's component vars are mapped once from --c-* at :root.
+   The Forest palette keeps the warm, human, low-cognitive-load feel
+   (ADR-0008 + ADR-0018): paper-neutral greens, one green accent, generous
+   space, soft rounding — warmth and personality without clutter. */
+/* Self-hosted JetBrains Mono (OFL-1.1, latin subset) — the coder's display
+   face for headings + greeting. Self-hosted (no CDN) so the page stays
+   offline-fast and WeasyPrint can embed it in the branded PDF (ADR-0018).
+   The OFL license is retained alongside (src/jetbrains-mono-LICENSE.txt). */
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal; font-weight: 400; font-display: swap;
+  src: url("jetbrains-mono-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal; font-weight: 700; font-display: swap;
+  src: url("jetbrains-mono-700.woff2") format("woff2");
+}
+:root {
+  --c-bg: #f4f6f2; --c-surface: #fff; --c-text: #1f2a1f; --c-muted: #5b6b5b;
+  --c-accent: #2f7d3a; --c-accent-soft: #dcebd9; --c-line: #e0e6dd;
+  --shadow: 0 2px 6px rgba(20, 40, 20, .07); --max: 860px; --radius: 16px;
+  --c-head-font: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  --bs-body-bg: var(--c-bg); --bs-body-color: var(--c-text); --bs-emphasis-color: var(--c-text);
+  --bs-secondary-color: var(--c-muted); --bs-secondary-rgb: 91, 107, 91;
+  --bs-border-color: var(--c-line); --bs-link-color: var(--c-accent);
+  --bs-link-color-rgb: 47, 125, 58; --bs-primary: var(--c-accent); --bs-primary-rgb: 47, 125, 58;
+  --bs-font-sans-serif: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+:root[data-theme="dark"] {
+  --c-bg: #131a14; --c-surface: #1d251e; --c-text: #e6eee6; --c-muted: #97a897;
+  --c-accent: #7cc68a; --c-accent-soft: #1f3322; --c-line: #2a352b;
+  --shadow: 0 2px 6px rgba(0, 0, 0, .25);
+  --bs-secondary-rgb: 151, 168, 151; --bs-primary-rgb: 124, 198, 138; --bs-link-color-rgb: 124, 198, 138;
+}
+/* no-JS auto dark (no toggle pressed yet → follow the OS preference) */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="dark"]) {
+    --c-bg: #131a14; --c-surface: #1d251e; --c-text: #e6eee6; --c-muted: #97a897;
+    --c-accent: #7cc68a; --c-accent-soft: #1f3322; --c-line: #2a352b;
+    --shadow: 0 2px 6px rgba(0, 0, 0, .25);
+    --bs-secondary-rgb: 151, 168, 151; --bs-primary-rgb: 124, 198, 138; --bs-link-color-rgb: 124, 198, 138;
+  }
+}
+
+/* The `hidden` attribute must win over Bootstrap/component `display` rules. */
+[hidden] { display: none !important; }
+
+body { background: var(--c-bg); color: var(--c-text); }
+/* Bootstrap's reboot underlines links by default; we keep that (WCAG 1.4.1 —
+   links must be distinguishable beyond color). Only .btn stays non-underlined. */
+a { color: var(--c-accent); }
+a:hover { color: var(--c-accent); }
+/* coder display headings — JetBrains Mono, on-brand for the persona (ADR-0018) */
+h1, h2, h3 { font-family: var(--c-head-font); font-weight: 650; letter-spacing: -0.005em; color: var(--c-text); }
+h1 { font-size: clamp(1.9rem, 5vw, 2.8rem); margin: 0; }
+h2 { font-size: 1.15rem; margin: 0 0 .6rem; }
+h3 { font-size: 1rem; margin: 0 0 .2rem; }
+p { margin: .35rem 0; }
+
+.skip-link { position: absolute; left: -999px; z-index: 1000; }
+.skip-link:focus { left: 8px; top: 8px; background: var(--c-surface); padding: .4rem .7rem; border-radius: 8px; }
+
+/* Top bar */
+.topbar {
+  display: flex; justify-content: flex-end; gap: .5rem;
+  padding: .9rem clamp(1rem, 4vw, 2.5rem);
+}
+.lang-toggle .btn, .theme-toggle { border-radius: 999px; }
+.lang-toggle .btn[aria-pressed="true"] {
+  background: var(--c-accent); color: #fff; border-color: var(--c-accent);
+}
+/* dark accent is light → use dark text on filled accent controls for AA contrast */
+:root[data-theme="dark"] .lang-toggle .btn[aria-pressed="true"],
+:root[data-theme="dark"] .btn-primary { color: #15171c; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="dark"]) .lang-toggle .btn[aria-pressed="true"],
+  :root:not([data-theme="light"]):not([data-theme="dark"]) .btn-primary { color: #15171c; }
+}
+.btn-primary {
+  --bs-btn-bg: var(--c-accent); --bs-btn-border-color: var(--c-accent);
+  --bs-btn-hover-bg: var(--c-accent); --bs-btn-hover-border-color: var(--c-accent);
+  --bs-btn-active-bg: var(--c-accent); --bs-btn-color: #fff;
+}
+:root[data-theme="dark"] .btn-primary { --bs-btn-color: #15171c; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="dark"]) .btn-primary { --bs-btn-color: #15171c; }
+}
+.btn-outline-secondary { --bs-btn-color: var(--c-muted); --bs-btn-border-color: var(--c-line); }
+
+/* Hero */
+.hero { max-width: var(--max); margin: 0 auto; padding: clamp(1.5rem, 5vw, 3rem) clamp(1rem, 4vw, 2.5rem) 2rem; }
+.hero-text { min-width: 0; }
+/* the greeting reads like a handwritten margin note */
+.greeting { color: var(--c-accent); margin: 0 0 .4rem; font-family: var(--c-head-font); font-style: italic; font-weight: 600; }
+.label { color: var(--c-muted); font-size: 1.05rem; margin: .25rem 0 1rem; }
+.hero-text .lead { color: var(--c-muted); max-width: 40ch; font-size: 1rem; }
+.cta { margin: 1.4rem 0 1rem; display: flex; gap: .6rem; flex-wrap: wrap; align-items: center; }
+
+/* curl one-liner */
+.curl { margin-top: 1rem; display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.curl-label { color: var(--c-muted); font-size: .85rem; width: 100%; margin-bottom: -.1rem; }
+#curl-line {
+  font-family: "SFMono-Regular", ui-monospace, Menlo, Consolas, monospace;
+  font-size: .82rem; background: var(--c-surface); border: 1px solid var(--c-line);
+  padding: .4rem .6rem; border-radius: 8px; overflow-x: auto; color: var(--c-text);
+}
+
+/* Dragon */
+.dragon-box { text-align: center; max-width: 230px; }
+#dragon {
+  image-rendering: pixelated; image-rendering: crisp-edges;
+  width: 128px; height: 128px; border-radius: 14px;
+  background: var(--c-surface); box-shadow: var(--shadow);
+  animation: bob 4s ease-in-out infinite;
+}
+@keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+@media (prefers-reduced-motion: reduce) { #dragon { animation: none; } }
+.dragon-id { font-size: .72rem; color: var(--c-muted); margin: .35rem 0 .8rem; font-variant-numeric: tabular-nums; }
+.share-box { display: flex; flex-direction: column; align-items: center; gap: .5rem; }
+.dragon-line { font-size: .82rem; color: var(--c-muted); margin: 0; max-width: 26ch; }
+/* ADR-0021: the dragon share link, revealed inline on "Share my dragon" press.
+   Small monospace line, surface bg, horizontal scroll — fits the narrow
+   dragon box. Hidden until the visitor shares (see share.js). */
+.share-link {
+  width: 100%; max-width: 210px; font-family: "SFMono-Regular", ui-monospace, Menlo, Consolas, monospace;
+  font-size: .72rem; background: var(--c-surface); color: var(--c-text);
+  border: 1px solid var(--c-line); border-radius: 8px; padding: .3rem .5rem;
+  overflow-x: auto; white-space: nowrap;
+}
+.qr { background: #fff; padding: 8px; border-radius: 10px; box-shadow: var(--shadow); }
+.qr img, .qr canvas { display: block; }
+/* Responsive hero — stack the identity/CTAs above the dragon on narrow
+   viewports (text-first reading order, mobile-first). The dragon centers and
+   is capped; the row stops vertically centering once stacked so a short
+   identity block is not centered against the dragon. ADR-0020. */
+@media (max-width: 640px) {
+  .hero .row { align-items: flex-start; }
+  .dragon-box { margin: 1.5rem auto 0; max-width: 200px; }
+}
+
+/* Résumé sections — quiet, no heavy cards */
+.resume { max-width: var(--max); margin: 0 auto; padding: 0 clamp(1rem, 4vw, 2.5rem) 3rem; }
+.block {
+  background: var(--c-surface); border: 1px solid var(--c-line); border-radius: var(--radius);
+  padding: 1.1rem 1.3rem; margin: .8rem 0; box-shadow: var(--shadow);
+}
+.summary { color: var(--c-muted); }
+.contact { color: var(--c-muted); }
+.contact a { color: var(--c-text); }
+.meta { color: var(--c-muted); font-size: .85rem; margin-bottom: .4rem; }
+.job, .project, .edu { margin-bottom: 1.1rem; }
+.job:last-child, .project:last-child, .edu:last-child { margin-bottom: 0; }
+.role { color: var(--c-text); }
+.at { color: var(--c-muted); }
+.org { color: var(--c-accent); }
+.skills { display: flex; flex-direction: column; gap: .35rem; }
+.skill-name { color: var(--c-accent); font-weight: 600; }
+.block ul { margin: .4rem 0 0; padding-left: 1.1rem; }
+.block li { margin: .15rem 0; }
+
+/* Footer */
+.footer { max-width: var(--max); margin: 0 auto; padding: 1.5rem clamp(1rem, 4vw, 2.5rem) 3rem; color: var(--c-muted); font-size: .82rem; }
+.made { font-family: var(--c-head-font); font-style: italic; color: var(--c-text); margin-bottom: .4rem; }
+.footer a { color: var(--c-muted); }
+.footer a:hover { color: var(--c-accent); }
+
+/* Print: drop chrome, keep one column. Force a light palette (!important beats
+   the non-important dark block) so Ctrl+P always prints dark-on-light even when
+   dark mode is active — the live page is not the real print path (the branded
+   PDF is), but this keeps it readable. Forest green is retained for accent. */
+@media print {
+  :root {
+    --c-bg: #fff !important; --c-surface: #fff !important; --c-text: #1f2a1f !important;
+    --c-muted: #5b6b5b !important; --c-accent: #2f7d3a !important; --c-line: #e0e6dd !important;
+  }
+  .topbar, .hero-text .cta, .curl, .dragon-box, .lang-toggle, .theme-toggle { display: none !important; }
+  body { background: #fff; }
+  .block { box-shadow: none; border: none; padding: .2rem 0; page-break-inside: avoid; }
+}

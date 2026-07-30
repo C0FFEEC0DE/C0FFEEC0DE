@@ -1,0 +1,58 @@
+name: Build & Deploy résumé to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Cancel superseded runs, but never a deploy in progress.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+
+      - name: Install build deps
+        run: pip install --no-input pyyaml weasyprint pytest
+
+      - name: Test
+        run: python -m pytest build/test_build.py -q
+
+      - name: Build + check
+        env:
+          # Set DOMAIN as a repository variable/secret (Settings → Secrets and variables → Actions)
+          # to enable a custom domain (emits dist/CNAME). Leave unset for the default Pages URL.
+          DOMAIN: ${{ vars.DOMAIN }}
+          PAGES_URL: ${{ vars.PAGES_URL }}
+        run: python build/build.py --check
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      pages: write
+      id-token: write   # OIDC — required by actions/deploy-pages
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
