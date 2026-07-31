@@ -1,6 +1,6 @@
 # ADR-0020 — UI block layout (best-practices pass)
 
-Date: 2026-07-30 · Status: Accepted
+Date: 2026-07-30 · Status: Accepted (v2: 2026-07-31)
 
 ## Context
 
@@ -9,105 +9,103 @@ locks the human, handcrafted feel. The *content* of the site is settled; this
 ADR is about **how the blocks are arranged on the page**, reviewed against
 mainstream UI-design best practices (visual hierarchy, one primary action,
 Gestalt grouping, mobile-first responsive layout, scannability / the
-Ladders–Nielsen recruiter scan pattern).
+Ladders–Nielsen recruiter scan pattern, and accessible landmarks).
 
 The landing page has three regions:
 
 1. **Hero** — greeting, identity (name / label / summary), a CTA cluster
-   (Download PDF + AI/LLM résumé), the curl one-liner + copy button, and the
-   dragon.
-2. **Résumé section** — `render_body_fragment` sections in order
-   *Contact → Experience → Skills → Projects → Education → Certificates →
-   Languages*, each a uniform `.block` card.
-3. **Footer** — the "made by hand" note + a cluster of machine-readable links
-   (resume.json, resume.min.json, resume.txt, branded PDF, llms.txt, AGENTS.md).
+   (Download PDF + AI/LLM résumé), and the dragon. The curl one-liner + copy
+   button live in the footer machine zone (ADR-0006 / ADR-0020 v1).
+2. **Contact section** — the only résumé content rendered on the landing page
+   (ADR-0025). It is injected as `render_contact_fragment`.
+3. **Footer** — the "made by hand" note + the machine zone (curl one-liner +
+   copy button + machine-readable format links).
 
-`render_body_fragment` is shared by the landing résumé section **and** the
-branded-PDF body (ADR-0013), so any change to its section order or contact
-rendering affects both outputs. A regression test (ADR-0016) pins the contact
-URLs into `render_body_fragment`, so Contact cannot be moved out of it without
-splitting the shared fragment — which this ADR deliberately avoids.
+`render_body_fragment` is used only by the branded-PDF body now (ADR-0025);
+the landing page shares only `_contact_section` with it, so contact stays in
+lockstep while the page stays short.
 
-### What the review found
+### What the v2 review found
 
-- **The hero carries two competing action clusters** — the audience CTA
-  buttons (human PDF + AI/LLM) *and* the curl one-liner + copy. Two action
-  groups in the first fold split the visitor's focal path and work against
-  "one primary action" (Hick's law / ADR-0008). The curl line is an
-  *operator/machine* affordance, not a human primary action.
-- **The résumé section order is already the best-practice order.** Contact
-  first (reachability — a recruiter can reach you without scrolling), then
-  substance in descending professional weight (Experience carries the most
-  detail and the most recruiter fixation), then credentials (Education,
-  Certificates), then Languages last. This matches the widely-cited scan
-  pattern; no reorder is wanted.
-- **Uniform `.block` cards are a feature, not a defect.** Identical chrome
-  (border, radius, shadow) across sections gives a predictable mental model
-  (Gestalt consistency) and lowers cognitive load. Hierarchy is carried by
-  heading scale and section order, not by differential card weight.
-- **The hero's responsive behaviour is implicit.** It works (Bootstrap's row
-  wraps the `col` / `col-auto` pair, so the identity column stacks above the
-  dragon on narrow viewports) but is not pinned: `align-items-center` keeps
-  vertically centering the stacked lines, and the dragon is not explicitly
-  centered or capped on mobile.
+- **The hero's responsive behaviour is incomplete.** The CSS media query only
+  changes `align-items` on the Bootstrap `.row`; the `col` / `col-auto` columns
+  stay side-by-side on narrow viewports, so the identity text is cramped next to
+  the dragon. Best practice is a real single-column stack with the dragon
+  centered below the identity (mobile-first, text-first reading order).
+- **The Contact section is an orphan landmark.** `<section id="resume">` sits
+  between `</main>` and `<footer>`, and the skip-link jumps straight over the
+  hero. Best practice: keep all primary content inside one `<main>` landmark,
+  skip to the top of it, and let `#resume` remain a pinned in-page id.
+- **The content column is not aligned across regions.** Topbar spans the full
+  viewport, while `main` / `section` / `footer` each use Bootstrap `.container`
+  independently. Best practice: one shared column (`--max` + `--gutter`) for
+  topbar, main, and footer so the toggles align with the content edge and the
+  page feels visually coherent.
+- **The footer machine links are a prose paragraph.** The `resume.json` / `llms.txt`
+  cluster is rendered as `·`-separated inline links inside a `<p>`. This is
+  scannable for sighted users but is not a navigable list for screen-reader users.
+  Best practice: wrap the links in a semantic `<ul>` under a (visually hidden)
+  heading, while preserving the inline visual density with CSS-generated
+  separators.
 
 ## Decision
 
-1. **One primary action zone in the hero.** The hero holds identity (greeting,
-   name, label, summary) + exactly the two audience CTAs (human PDF + AI/LLM
-   résumé) + the dragon. The **curl one-liner + copy button moves to the
-   footer**, joining the existing machine-readable link cluster. The hero
-   first fold now answers *who · what · how to get it* with a single focal
-   action group; all operator/machine affordances live together in the
-   footer "machine zone". The two audience buttons stay in the hero (the
-   Playwright "hero has two audience links" guard is preserved — the curl
-   block was never inside `.cta`).
+1. **One shared content column.** Topbar, `<main>`, and footer are all
+   constrained to the same `--max: 860px` column with `--gutter` horizontal
+   padding. The topbar toggles align to the content column's right edge; the
+   page stops looking like independent full-width bands.
 
-2. **Footer as the machine/operator zone.** The curl one-liner + copy sits
-   with `resume.json`, `resume.min.json`, `resume.txt`, the branded PDF,
-   `llms.txt`, and `AGENTS.md`, so every non-human-primary affordance is
-   grouped, discoverable, and out of the hero's focal path. The curl label is
-   kept bilingual via the existing `data-i18n` machinery; `i18n.js` selects
-   `#curl-line` / `.copy-curl` document-wide, so the move needs no JS change.
+2. **Contact moves into `<main>`.** The landing page keeps exactly one `<main>`
+   landmark, with `id="main"`. The hero and the Contact section (`#resume`) both
+   live inside it. The skip-link now targets `#main` ("Skip to content"), which
+   is the textbook accessible target, instead of jumping over the hero to
+   `#resume`. The `#resume` id is preserved because it is a pinned internal
+   reference and renaming would churn tests for no gain.
 
-3. **Résumé section order is deliberately preserved** as
-   *Contact → Experience → Skills → Projects → Education → Certificates →
-   Languages*, with the rationale recorded here so future reorders are
-   informed: Contact first for reachability, then substance in descending
-   professional weight, credentials demoted, Languages last. No change to
-   `render_body_fragment`'s order.
+3. **Hero uses CSS Grid for real mobile-first stacking.** On wide viewports
+   the grid is `minmax(0, 1fr) auto` — identity on the left, dragon on the
+   right, vertically centered. On narrow viewports (`max-width: 640px`) the grid
+   collapses to a single column: identity full-width first, dragon centered and
+   capped below it. This removes the implicit Bootstrap column behaviour and
+   gives a predictable, text-first reading order.
 
-4. **Uniform content cards are kept.** Each section stays a `.block` card
-   with identical chrome; hierarchy is carried by heading scale + order, not
-   by card weight. We deliberately do **not** visually promote one section
-   over another via card styling — consistency lowers cognitive load
-   (ADR-0008).
+4. **Footer machine zone uses semantic markup.** The curl one-liner and the
+   machine-readable links are wrapped in `<section class="machine-zone" aria-labelledby="machine-heading">`.
+   A visually hidden `<h2 id="machine-heading">` labels the section, and the
+   links are an unordered list. CSS removes bullets and renders inline
+   `·`-separators, so the visual surface is unchanged for sighted users while
+   screen-reader users gain a heading and list navigation.
 
-5. **Responsive hero stacking is pinned.** A media query makes the narrow
-   viewport a single column — identity + CTAs first, dragon below (text-first
-   reading order, mobile-first). The dragon is centered and capped; the row
-   switches to `align-items: flex-start` when stacked so a short identity block
-   is not vertically centered against the dragon. Reduced-motion is already
-   respected by the dragon bob (ADR-0009); this adds no new motion.
+5. **No change to theme, color, font, dragon, bilingual, or no-JS behaviour.**
+   The Forest palette, JetBrains Mono, language toggle, dragon share path, and
+   the no-JS `prefers-color-scheme` fallback are all untouched. The only visual
+   differences are the aligned column, the narrow-hero stack, and the unchanged
+   inline footer links.
 
 ## Consequences
 
-- The hero is calmer: one identity block + one CTA cluster + the dragon. The
-  curl affordance is one scroll away in the footer, grouped with the other
-  machine links — exactly where an operator/agent looking for machine formats
-  would look.
-- `render_body_fragment` is untouched, so the branded PDF and the landing
-  résumé section stay in lockstep (ADR-0013), the contact-URL regression guard
-  (ADR-0016) still passes, and the "no header in the body" / "one h1 per
-  language" guards are unaffected.
-- No JS change: `i18n.js` already selects the curl elements document-wide.
-- The Playwright curl test (`#curl-line` contains `curl -sL … resume.txt` and
-  the current origin) is document-wide and unaffected; the "two audience
-  links" test is unaffected (curl was never in `.cta`).
-- A small responsive addition to `site.css` pins the mobile hero layout that
-  was previously only implicit.
+- Mobile visitors get a clean vertical path: identity → CTAs → dragon → Contact
+  → footer. No side-by-side crowding at 390 px.
+- Landmarks are correct: `header` (banner) → `main` (one, with hero + Contact)
+  → `footer` (contentinfo).
+- The skip-link no longer bypasses the hero; it lands at the start of the main
+  content, matching the visible page order.
+- Screen-reader users can navigate to "Machine-readable versions" by heading
+  and browse the format list as list items.
+- `render_contact_fragment` and `_contact_section` are untouched, so the branded
+  PDF and the landing Contact block stay in lockstep (ADR-0025), and the
+  contact-URL regression guard still passes.
+- No JS change is required for the new layout; the existing `i18n.js`
+  `data-i18n` machinery translates the new visually-hidden heading.
+- A small CSS addition pins the mobile hero layout that was previously only
+  half-implemented, and the ADR-0020 v2 tests add regression guards for the
+  stack and the semantic footer list.
 
 ## Revision history
-- **v1 (current):** best-practices review of block arrangement; curl moved
+- **v1 (2026-07-30):** best-practices review of block arrangement; curl moved
   hero → footer; section order and uniform cards documented as deliberate;
-  responsive hero stacking pinned.
+  responsive hero stacking described but left partly implicit.
+- **v2 (2026-07-31):** full best-practices implementation pass: shared content
+  column, Contact moved into `<main>`, skip-link targets `#main`, hero uses a
+  CSS grid that truly stacks on narrow screens, footer machine zone becomes a
+  semantic list with a visually-hidden heading.
