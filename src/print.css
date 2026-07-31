@@ -32,6 +32,14 @@ p { margin: .25rem 0; }
 /* header.hero is the name/label/summary block from render_html_fragment */
 .hero { margin-bottom: .4rem; }
 .hero .label { color: #5b6b5b; font-size: 12pt; margin: .1rem 0 .3rem; }
+.hero .tags { display: flex; flex-wrap: wrap; gap: .25rem; margin: 0 0 .2rem; }
+.hero .tag {
+  display: inline-flex; align-items: center;
+  font-family: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace; font-size: 9pt; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .02em;
+  color: #2f7d3a; background: #f4f6f2; border: 1px solid #e0e6dd; border-radius: 999px;
+  padding: .08rem .4rem;
+}
 .hero .lead { color: #5b6b5b; max-width: 60ch; margin: .2rem 0 0; }
 .summary { color: #5b6b5b; }
 

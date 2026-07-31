@@ -16,20 +16,20 @@ test("page loads and shows the name exactly once (no duplicated blocks)", async 
   expect(visibleH1).toBe(1);
 });
 
-test("default language is English with the English label", async ({ page }) => {
+test("default language is English with the label as a tag", async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator(".hero-text [data-lang='en'] .label")).toHaveText(
+  await expect(page.locator(".hero-text [data-lang='en'] .tags")).toContainText(
     "Senior DevOps / SRE Engineer",
   );
-  await expect(page.locator(".hero-text [data-lang='ru'] .label")).toBeHidden();
+  await expect(page.locator(".hero-text [data-lang='ru'] .tags")).toBeHidden();
 });
 
 test("EN/RU toggle swaps the hero header and résumé body, one language at a time", async ({ page }) => {
   await page.goto("/");
   // switch to RU
   await page.click(".lang-toggle button[data-lang='ru']");
-  await expect(page.locator(".hero-text [data-lang='ru'] .label")).toContainText("SRE");
-  await expect(page.locator(".hero-text [data-lang='en'] .label")).toBeHidden();
+  await expect(page.locator(".hero-text [data-lang='ru'] .tags")).toContainText("SRE");
+  await expect(page.locator(".hero-text [data-lang='en'] .tags")).toBeHidden();
   // résumé body follows the same toggle (ADR-0025: the landing #resume block
   // shows Contact only — the full body lives in the branded PDF)
   await expect(page.locator("#resume [data-lang='ru']")).toBeVisible();
@@ -37,7 +37,7 @@ test("EN/RU toggle swaps the hero header and résumé body, one language at a ti
   await expect(page.locator("#resume [data-lang='ru']")).toContainText("LinkedIn");
   // switch back to EN
   await page.click(".lang-toggle button[data-lang='en']");
-  await expect(page.locator(".hero-text [data-lang='en'] .label")).toHaveText(
+  await expect(page.locator(".hero-text [data-lang='en'] .tags")).toContainText(
     "Senior DevOps / SRE Engineer",
   );
   await expect(page.locator("#resume [data-lang='en']")).toBeVisible();
