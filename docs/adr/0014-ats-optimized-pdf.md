@@ -14,8 +14,11 @@ default is plain, standard, top-to-bottom text.
 `resume.pdf` (the default download) is a dedicated **ATS-optimized** render:
 - Single column, full width, 0.6–0.75in margins.
 - Standard font (Helvetica/Arial), 10.5–11pt body, 13–14pt name, bold headings.
-- Standard section headings: "Summary", "Work Experience", "Skills", "Projects",
-  "Education", "Certifications", "Languages".
+- Standard section headings: "Work Experience", "Skills", "Projects",
+  "Education", "Certifications", "Languages". The "Summary" front-matter field
+  is intentionally omitted from the ATS PDF so the document opens directly with
+  the experience section, while the one-line identity statement remains on the
+  landing page and in machine-readable metadata.
 - Contact block at the top (name, label, email, phone, location, profiles).
 - Dates on the **same line** as role/company, format "Mon YYYY – Present".
 - Plain `•` bullets; no tables, no columns, no graphics, no color dependency.

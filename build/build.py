@@ -688,8 +688,6 @@ def render_ats_html(r: dict, lang: str) -> str:
     def sec(title, inner):
         return f"<h2>{esc(title)}</h2>{inner}"
 
-    if b.get("summary"):
-        parts.append(sec(_t(lang, "Summary"), f"<p>{esc(b['summary'])}</p>"))
 
     if r.get("work"):
         body = []
