@@ -29,5 +29,7 @@ superseded record is marked **Superseded by ADR-00xx** and a new one is added.
 | 0021 | Dragon share link revealed inline | Accepted |
 | 0022 | LinkedIn share button (pre-filled link) | Accepted |
 | 0023 | Custom domain set to krasnobai.dev | Accepted |
-| 0024 | Contact profiles: GitHub, LinkedIn | Accepted |
+| 0024 | Contact profiles: GitHub, LinkedIn, Telegram | Accepted |
 | 0025 | Landing page shows Contact only; full résumé lives in the PDF | Accepted |
+| 0026 | Dragon as a hidden easter egg | Accepted |
+| 0027 | Save dragon as a token PNG | Accepted |

@@ -5,10 +5,11 @@ Date: 2026-07-30 · Status: Accepted
 ## Context
 
 ADR-0009 made the dragon deterministic from a URL seed (`?d=…`) so the same
-link reproduces the same dragon — the seed *is* the share token. `src/share.js`
-wires the "Share my dragon" button to copy that URL to the clipboard and reveal
-a "Show QR" toggle; the QR (ADR-0010, lazy + SRI-locked) is the scan-to-share
-path.
+link reproduces the same dragon — the seed *is* the share token. The dragon and
+its controls are hidden behind a footer easter egg (ADR-0026); after the visitor
+reveals it, `src/share.js` wires the "Share my dragon" button to copy that URL
+to the clipboard and reveal a "Show QR" toggle; the QR (ADR-0010, lazy +
+SRI-locked) is the scan-to-share path.
 
 The gap: **the link itself is never shown.** The visitor must trust that the
 clipboard write succeeded and cannot see, select, verify, or manually copy the
@@ -42,8 +43,8 @@ ways to leave with the same link, all client-side.
 - The visitor sees the exact link they are sharing; a silent clipboard failure
   no longer leaves them empty (the URL is on screen, pre-selected).
 - Low cognitive load (ADR-0008) is preserved: the link is hidden until the
-  visitor asks to share, so the resting dragon box is unchanged; when revealed
-  it is one small monospace line under the button, not a new card.
+  visitor reveals the dragon (ADR-0026) and presses "Share my dragon"; when
+  revealed it is one small monospace line under the button, not a new card.
 - The no-JS path is unchanged: with JS off the button has no listener, so the
   input stays `hidden` (same as the QR toggle). The `[hidden]{display:none}`
   rule (site.css) keeps it off-screen.

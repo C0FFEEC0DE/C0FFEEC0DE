@@ -20,4 +20,8 @@ Implementation:
 - The landing page is visually a pure business card, satisfying the minimal-scope decision.
 - The dragon remains a shareable, seeded easter egg — visitors who discover it still get their own dragon and a shareable URL.
 - Playwright tests must assert the dragon is hidden by default and becomes visible after the easter-egg trigger is clicked.
-- The no-JS path degrades to "no dragon visible, no broken links" (the hidden container stays hidden and the share anchor has no `href` until JS reveals it).
+- The no-JS path degrades to "no dragon visible, no broken links" (the hidden
+  container stays hidden and the share anchor has no `href` until JS reveals it).
+  A Playwright no-JS test blocks all scripts and asserts `#share-li` is hidden
+  and has a null `href`, so a regression that eagerly sets the anchor or exposes
+  the dragon box without JS is caught.
