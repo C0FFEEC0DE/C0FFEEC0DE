@@ -257,41 +257,41 @@ def _tag_pill(text: str) -> str:
     return f'<span class="tag">{esc(text)}</span>'
 
 
-def _resume_header_inner(r: dict, lang: str) -> str:
-    """Name / label / summary lines, no wrapper. Shared by the landing hero
-    and the branded-PDF header so the two never diverge or duplicate.
+def _resume_header_inner(r: dict, lang: str, *, include_summary: bool = True) -> str:
+    """Name / tag / optional summary lines, no wrapper. Shared by the landing
+    hero and the branded-PDF header so the two never diverge.
 
-    The label, location, and availability are surfaced as compact tag pills
-    above the name (low cognitive load — the recruiter sees 'who / what /
-    where / status' at a glance). The long summary stays as .lead below."""
+    To avoid duplicating information already shown elsewhere:
+    - The tag row shows ONLY the label (role). Location, status, and the site URL
+      are not repeated here; they appear in the contact line / footer / body.
+    - The summary is emitted only when include_summary=True (branded PDF header).
+      The landing-page business card intentionally omits the long summary,
+      because the PDF CTA is the detail path (ADR-0025).
+    """
     b = r["basics"]
     tags: list[str] = []
     if b.get("label"):
         tags.append(_tag_pill(b["label"]))
-    loc = b.get("location")
-    if isinstance(loc, dict) and loc.get("city"):
-        region = loc.get("region") or loc.get("countryCode")
-        tags.append(_tag_pill(f"{loc['city']}{(', ' + region) if region else ''}"))
-    elif isinstance(loc, str) and loc:
-        tags.append(_tag_pill(loc))
-    avail = r.get("availability")
-    if isinstance(avail, dict) and avail.get("status"):
-        status_label = {"open": "Open to roles", "not_open": "Not open"}.get(avail["status"], avail["status"])
-        tags.append(_tag_pill(status_label))
 
     parts: list[str] = []
     if tags:
         parts.append(f'<p class="tags">{"".join(tags)}</p>')
     parts.append(f'<h1>{esc(b.get("name"))}</h1>')
-    if b.get("summary"):
+    if include_summary and b.get("summary"):
         parts.append(f'<p class="lead">{esc(b["summary"])}</p>')
     return "\n".join(parts)
 
 
 def render_header_fragment(r: dict, lang: str) -> str:
-    """Header only — injected into the landing hero, one per language, so the
-    hero name/label/summary follow the language toggle (ADR bilingual)."""
-    return _resume_header_inner(r, lang)
+    """Header only — injected into the landing hero, one per language. The
+    landing page shows identity (tags + name) only, no long summary, because the
+    full résumé is behind the PDF CTA."""
+    return _resume_header_inner(r, lang, include_summary=False)
+
+
+def render_print_header(r: dict, lang: str) -> str:
+    """Header for the branded PDF, includes the summary."""
+    return _resume_header_inner(r, lang, include_summary=True)
 
 
 def _contact_section(b: dict, lang: str, *, show_url: bool = True) -> str:
@@ -428,8 +428,8 @@ def render_html_fragment(r: dict, lang: str) -> str:
     """Full fragment (header + body) for the branded PDF (ADR-0013). The
     landing page uses render_header_fragment + render_contact_fragment instead,
     so the header is shown once, not twice, and the full body lives only in the
-    PDF (ADR-0025)."""
-    return '<header class="hero">' + _resume_header_inner(r, lang) + "</header>\n" + render_body_fragment(r, lang)
+    PDF (ADR-0025). The branded-PDF header includes the summary."""
+    return '<header class="hero">' + render_print_header(r, lang) + "</header>\n" + render_body_fragment(r, lang)
 
 
 def _hl(items):

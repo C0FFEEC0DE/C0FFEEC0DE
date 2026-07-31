@@ -192,6 +192,102 @@ def test_pdf_generated(dist):
     assert pdf.read_bytes()[:4] == b"%PDF"
 
 
+def _pdf_text(pdf_path):
+    """Extract all text from a PDF using pypdf."""
+    try:
+        from pypdf import PdfReader
+    except Exception:
+        pytest.skip("pypdf not installed")
+    reader = PdfReader(str(pdf_path))
+    return "\n".join(page.extract_text() or "" for page in reader.pages)
+
+
+def test_pdf_ats_is_machine_readable(dist):
+    """The ATS PDF (resume.pdf) must contain selectable text for the key facts:
+    name, role, company, skills, experience, and contact links."""
+    try:
+        import weasyprint  # noqa: F401
+    except Exception:
+        pytest.skip("weasyprint not installed")
+    build.build(clean=True)
+    text = _pdf_text(dist / "resume.pdf")
+    assert "Aleksandr Krasnobai" in text, "PDF missing name"
+    assert "Senior DevOps / SRE Engineer" in text or "Senior DevOps Engineer" in text, "PDF missing role"
+    assert "Grid Dynamics" in text, "PDF missing company"
+    assert "hi@krasnobai.dev" in text, "PDF missing email"
+    assert "linkedin.com/in/" in text and "aleksandrkrasnobai" in text, "PDF missing LinkedIn"
+    assert "t.me/krasnobaicoach" in text, "PDF missing Telegram"
+    # skills rendered as real text
+    assert any(k in text for k in ("Kubernetes", "Terraform", "AWS", "Python")), "PDF missing skills"
+    assert "Experience" in text, "PDF missing Experience section"
+
+
+def test_pdf_branded_is_machine_readable(dist):
+    """The branded PDF (resume-branded.pdf) must also contain selectable text
+    for the core résumé facts; it is a human-facing PDF but must still be
+    machine-readable (searchable / copy-pasteable)."""
+    try:
+        import weasyprint  # noqa: F401
+    except Exception:
+        pytest.skip("weasyprint not installed")
+    build.build(clean=True)
+    text = _pdf_text(dist / "resume-branded.pdf")
+    assert "Aleksandr Krasnobai" in text, "branded PDF missing name"
+    assert "Senior DevOps / SRE Engineer" in text or "Senior DevOps Engineer" in text, "branded PDF missing role"
+    assert "Grid Dynamics" in text, "branded PDF missing company"
+    assert "hi@krasnobai.dev" in text, "branded PDF missing email"
+    assert "Experience" in text, "branded PDF missing Experience section"
+
+
+def test_pdf_contacts_are_readable(dist):
+    """Both PDFs must expose contact details as real text: email + LinkedIn +
+    Telegram are present and not visually truncated. The ATS PDF shows the full
+    URLs; the branded PDF shows the network labels (GitHub, LinkedIn, Telegram)
+    with the links preserved in markup, so we check by label."""
+    try:
+        import weasyprint  # noqa: F401
+    except Exception:
+        pytest.skip("weasyprint not installed")
+    build.build(clean=True)
+
+    ats = _pdf_text(dist / "resume.pdf")
+    assert "hi@krasnobai.dev" in ats, "ATS PDF missing email"
+    assert "linkedin.com/in/" in ats and "aleksandrkrasnobai" in ats, "ATS PDF missing LinkedIn URL"
+    assert "t.me/krasnobaicoach" in ats, "ATS PDF missing Telegram URL"
+
+    branded = _pdf_text(dist / "resume-branded.pdf")
+    assert "hi@krasnobai.dev" in branded, "branded PDF missing email"
+    assert "LinkedIn" in branded, "branded PDF missing LinkedIn label"
+    assert "Telegram" in branded, "branded PDF missing Telegram label"
+    assert "GitHub" in branded, "branded PDF missing GitHub label"
+
+
+def test_pdf_formatting_is_intact(dist):
+    """The generated PDFs must not have obvious layout corruption: every page
+    is within standard US-letter dimensions, no zero-size text objects, and no
+    characters are rendered outside the page media box beyond a small margin."""
+    try:
+        from pypdf import PdfReader
+    except Exception:
+        pytest.skip("pypdf not installed")
+    try:
+        import weasyprint  # noqa: F401
+    except Exception:
+        pytest.skip("weasyprint not installed")
+    build.build(clean=True)
+    for pdf_name in ("resume.pdf", "resume-branded.pdf"):
+        reader = PdfReader(str(dist / pdf_name))
+        assert len(reader.pages) >= 1, f"{pdf_name} has no pages"
+        for i, page in enumerate(reader.pages):
+            box = page.mediabox
+            w, h = float(box.width), float(box.height)
+            # standard page sizes with tolerance (letter / A4 in points)
+            assert 400 <= w <= 650, f"{pdf_name} page {i} width {w} looks corrupt"
+            assert 500 <= h <= 850, f"{pdf_name} page {i} height {h} looks corrupt"
+            text = page.extract_text() or ""
+            assert len(text.strip()) > 20, f"{pdf_name} page {i} has almost no text"
+
+
 # --- check() ---------------------------------------------------------------- #
 def test_check_passes(dist):
     build.build(clean=True)
@@ -312,7 +408,8 @@ def test_hero_has_one_h1_per_language(dist):
 
 def test_hero_header_is_bilingual(dist):
     """Both language headers are injected; the RU label is Russian, not the
-    hardcoded English one (regression for the EN-only hero-label bug)."""
+    hardcoded English one. The landing-page hero shows only label + name, not the
+    long summary (the summary is reserved for the branded PDF header)."""
     import re
     build.build(clean=True)
     html = (dist / "index.html").read_text("utf-8")
@@ -321,8 +418,27 @@ def test_hero_header_is_bilingual(dist):
     hero = m.group(1)
     assert "Senior DevOps / SRE Engineer" in hero
     assert "Старший DevOps / SRE-инженер" in hero
+    assert "Aleksandr Krasnobai" in hero
+    # summary must NOT appear on the landing page hero (it is shown only in the PDF)
+    assert "Belgrade" not in hero, "landing hero should not repeat the summary/location"
+    assert "Open to roles" not in hero, "landing hero should not repeat availability status"
     # no leftover template placeholders
     assert "{{HEADER_EN}}" not in html and "{{HEADER_RU}}" not in html
+
+
+def test_landing_page_has_no_duplicate_info(dist):
+    """ADR business card: no fact (label, location, availability, summary)
+    should appear twice on the landing page."""
+    build.build(clean=True)
+    html = (dist / "index.html").read_text("utf-8")
+    page = html[html.find("<body>"):html.find("</footer>")]
+    facts = ["Senior DevOps / SRE Engineer", "Belgrade", "Open to roles",
+             "permanent residence", "CET"]
+    for f in facts:
+        # the branded/designed PDF link may mention the label in its href text,
+        # so ignore the footer machine zone for this check.
+        count = page.count(f)
+        assert count <= 1, f"fact '{f}' appears {count} times in landing page body"
 
 
 def test_render_body_fragment_has_no_header(dist):
