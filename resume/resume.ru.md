@@ -18,7 +18,7 @@
 ---
 basics:
   name: "Aleksandr Krasnobai"
-  label: "Старший DevOps / SRE-инженер"   # TODO: подтвердить точный заголовок
+  label: "Старший DevOps / SRE / Platform-инженер"   # TODO: подтвердить точный заголовок
   email: "hi@krasnobai.dev"
   # phone: "+TODO"                         # TODO: реальный телефон (удалите строку, если нет)
   url: "https://krasnobai.dev"
@@ -34,7 +34,7 @@ profiles:
   - {network: "Telegram", username: "krasnobaicoach", url: "https://t.me/krasnobaicoach"}
 availability:
   status: "open"   # TODO: подтвердите, что открыты к предложениям
-  roles: ["Senior DevOps Engineer", "SRE", "Cloud Infrastructure Engineer"]
+  roles: ["Senior DevOps Engineer", "SRE", "Platform Engineer", "Cloud Infrastructure Engineer"]
   work_model: "remote"
   locations: ["Remote (EU)", "Belgrade, Serbia"]
 meta:

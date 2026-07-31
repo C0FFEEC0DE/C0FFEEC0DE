@@ -416,8 +416,8 @@ def test_hero_header_is_bilingual(dist):
     m = re.search(r'<section class="hero"[^>]*>(.*?)\n\s*</section>', html, re.S)
     assert m, "hero section not found"
     hero = m.group(1)
-    assert "Senior DevOps / SRE Engineer" in hero
-    assert "Старший DevOps / SRE-инженер" in hero
+    assert "Senior DevOps / SRE / Platform Engineer" in hero
+    assert "Старший DevOps / SRE / Platform-инженер" in hero
     assert "Aleksandr Krasnobai" in hero
     # location tags in both languages
     assert "Belgrade, Serbia — permanent residence" in hero
@@ -438,7 +438,7 @@ def test_landing_page_has_no_duplicate_info(dist):
         m = re.search(rf'<div class="lang-block" data-lang="{lang}"[^\>]*>(.*?)\n\s*</div\s*>', html, re.S)
         assert m, f"{lang} lang-block not found"
         block = m.group(1)
-        for f in ("Senior DevOps / SRE Engineer", "Belgrade", "DON'T PANIC"):
+        for f in ("Senior DevOps / SRE / Platform Engineer", "Belgrade", "DON'T PANIC"):
             assert block.count(f) <= 1, f"fact '{f}' duplicated in {lang} block"
 
 

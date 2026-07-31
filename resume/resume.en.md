@@ -18,7 +18,7 @@
 ---
 basics:
   name: "Aleksandr Krasnobai"
-  label: "Senior DevOps / SRE Engineer"   # TODO: confirm exact headline
+  label: "Senior DevOps / SRE / Platform Engineer"   # TODO: confirm exact headline
   email: "hi@krasnobai.dev"
   # phone: "+TODO"                         # TODO: real phone (delete line if unused)
   url: "https://krasnobai.dev"
@@ -34,7 +34,7 @@ profiles:
   - {network: "Telegram", username: "krasnobaicoach", url: "https://t.me/krasnobaicoach"}
 availability:
   status: "open"   # TODO: confirm you are actively open to roles
-  roles: ["Senior DevOps Engineer", "SRE", "Cloud Infrastructure Engineer"]
+  roles: ["Senior DevOps Engineer", "SRE", "Platform Engineer", "Cloud Infrastructure Engineer"]
   work_model: "remote"
   locations: ["Remote (EU)", "Belgrade, Serbia"]
 meta:

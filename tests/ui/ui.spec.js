@@ -19,7 +19,7 @@ test("page loads and shows the name exactly once (no duplicated blocks)", async 
 test("default language is English with role and location tags", async ({ page }) => {
   await page.goto("/");
   const enTags = page.locator(".hero [data-lang='en'] .tags");
-  await expect(enTags).toContainText("Senior DevOps / SRE Engineer");
+  await expect(enTags).toContainText("Senior DevOps / SRE / Platform Engineer");
   await expect(enTags).toContainText("Belgrade, Serbia — permanent residence");
   await expect(page.locator(".hero [data-lang='ru'] .tags")).toBeHidden();
 });
@@ -40,7 +40,7 @@ test("EN/RU toggle swaps the hero header and contact row, one language at a time
   // switch back to EN
   await page.click(".lang-toggle button[data-lang='en']");
   await expect(page.locator(".hero [data-lang='en'] .tags")).toContainText(
-    "Senior DevOps / SRE Engineer",
+    "Senior DevOps / SRE / Platform Engineer",
   );
   await expect(page.locator("#resume [data-lang='en']")).toBeVisible();
   await expect(page.locator("#resume [data-lang='ru']")).toBeHidden();
