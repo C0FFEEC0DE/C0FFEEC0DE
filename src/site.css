@@ -182,8 +182,10 @@ p { margin: .35rem 0; }
 .contact { padding: var(--block-gap) 0; }
 .block {
   background: var(--c-surface); border: 1px solid var(--c-line); border-radius: var(--radius);
-  padding: 1.1rem 1.3rem; margin: .8rem 0; box-shadow: var(--shadow);
+  padding: .8rem 1.1rem; margin: .8rem 0; box-shadow: var(--shadow);
 }
+/* Compact contact block — one short line shouldn't float in a tall card. */
+.contact .block { padding: .65rem 1rem; }
 .summary { color: var(--c-muted); }
 .contact { color: var(--c-muted); }
 .contact a { color: var(--c-text); }
