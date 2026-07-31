@@ -8,7 +8,7 @@ A résumé site authored from markdown, auto-built by a one-shot Python script,
 served for **three audiences** (ADR-0013): humans (bilingual landing page +
 branded PDF), machines (JSON Resume, llms.txt, AGENTS.md, cv.json, resume.txt),
 and ATS (a neutral single-column PDF). Deployed to GitHub Pages via Actions.
-Decisions are recorded as ADRs in `docs/adr/` (0001→0023) — read the relevant
+Decisions are recorded as ADRs in `docs/adr/` (0001→0027) — read the relevant
 one before changing a settled area.
 
 ## Commands
@@ -23,7 +23,7 @@ python3 build/build.py --check    # build + validate, non-zero exit on failure (
 python3 -m pytest build/test_build.py -q                       # build/pytest tests (the `dist` fixture sets PDF=1)
 python3 -m pytest build/test_build.py::test_resume_json_valid -q   # single test
 cd tests/ui && npx playwright test          # UI tests — MUST run from tests/ui (see gotcha)
-cd tests/ui && npx playwright test -g "curl one-liner"   # single UI test by name
+cd tests/ui && npx playwright test -g "footer machine formats"   # single UI test by name
 cd tests/ui && npm run test:full             # build + UI tests in one
 python3 -m compileall -q build src           # lint (syntax check all Python)
 python3 -m http.server -d dist                # local preview at http://localhost:8000
@@ -74,11 +74,14 @@ applies only before JS sets `data-theme`. `src/print.css` is the branded-PDF
 stylesheet (Forest palette, self-hosted JetBrains Mono resolved against
 WeasyPrint's `base_url` = repo root).
 
-**Dragon (ADR-0009):** fully client-side — `src/dragon.js` + `dragon-parts.js`
-seed a mulberry32 PRNG from `?d=` and draw a 16×16 pixel dragon to `<canvas>`;
-`src/share.js` adds share-link + lazy-loaded, SRI-locked QR. No backend, no
-tracking. The delight path must keep working with JS off (it degrades to an
-empty canvas, not an error).
+**Dragon (ADR-0009, ADR-0026, ADR-0027):** fully client-side —
+`src/dragon.js` + `dragon-parts.js` seed a mulberry32 PRNG from `?d=` and draw a
+16×16 pixel dragon to `<canvas>`. ADR-0026 hides the dragon behind a footer
+click easter egg, so the default landing page is a pure business card.
+`src/share.js` adds share-link + lazy-loaded, SRI-locked QR (ADR-0021) and a
+"Save my dragon" button that downloads a token PNG with the dragon + an English
+"have a nice day" caption (ADR-0027). No backend, no tracking. The delight path
+must keep working with JS off (it degrades to an empty canvas, not an error).
 
 **Regression guards (ADR-0019):** a pure-Python build test computes the WCAG AA
 contrast ratio for both modes — text/muted/accent against both `--c-bg` and
@@ -97,15 +100,21 @@ these are caught.
   (build.py `parse_resume` line ~103). The body one is what renders in the hero
   `.lead`. Keep them in sync, and keep the summary short — ADR-0008 (low
   cognitive load) is first-class: the hero holds identity + the two audience
-  CTAs + the dragon only; the curl one-liner lives in the footer (ADR-0020).
+  CTAs only. The dragon is a hidden footer easter egg (ADR-0026), and the
+  verbose curl one-liner was removed from the footer in ADR-0020 v3 (the file
+  `resume.txt` is still served, so the ADR-0006 command still works, but it is
+  no longer displayed on the page).
   One accent, one CTA cluster, generous space. Don't dump metrics/credentials
   into the summary — they belong in Experience/Certificates.
 - **ATS `resume.pdf` is intentionally NOT Forest** (ADR-0014); the branded PDF
   IS Forest. Don't "fix" the mismatch.
-- **Contact profiles must stay exactly `[GitHub, LinkedIn]`** in that order
-  (ADR-0024, which supersedes ADR-0016 — Telegram was dropped). No `t.me/` link
-  may appear on any audience surface; enforced by
-  `test_contact_profiles_required_set`.
+- **The source `basics.profiles` must stay `[GitHub, LinkedIn, Telegram]`**
+  in that order (ADR-0024 v3, which supersedes ADR-0016). The landing page's
+  visible Contact row is narrower: it shows LinkedIn + Telegram + email, while
+  GitHub appears in the footer machine-links list. All three profiles still
+  render in `resume.json`, `resume.ru.json`, `resume.txt`, `resume.md`, both
+  PDFs, `llms.txt`, and JSON-LD `sameAs`. `t.me/` links are fine in those
+  machine-readable outputs; only the landing-page Contact subset is intentional.
 - **Tests pin specific résumé data** (name, company, label, fluency, etc.). When
   you change résumé content, update the assertions in `build/test_build.py` and
   `tests/ui/ui.spec.js` — or make them data-agnostic so they survive content

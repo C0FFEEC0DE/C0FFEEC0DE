@@ -1,25 +1,28 @@
 # ADR-0020 — UI block layout (best-practices pass)
 
-Date: 2026-07-30 · Status: Accepted (v2: 2026-07-31)
+Date: 2026-07-30 · Status: Accepted (v3: 2026-07-31)
 
 ## Context
 
-ADR-0008 locks low cognitive load as a first-class constraint and ADR-0018
-locks the human, handcrafted feel. The *content* of the site is settled; this
-ADR is about **how the blocks are arranged on the page**, reviewed against
-mainstream UI-design best practices (visual hierarchy, one primary action,
-Gestalt grouping, mobile-first responsive layout, scannability / the
-Ladders–Nielsen recruiter scan pattern, and accessible landmarks).
+ADR-0008 locks low cognitive load as a first-class constraint, ADR-0018 locks the
+human, handcrafted feel, and ADR-0026 hides the dragon behind a footer easter
+egg. The *content* of the site is settled; this ADR is about **how the blocks
+are arranged on the page**, reviewed against mainstream UI-design best practices
+(visual hierarchy, one primary action, Gestalt grouping, mobile-first responsive
+layout, scannability / the Ladders–Nielsen recruiter scan pattern, and accessible
+landmarks).
 
-The landing page has three regions:
+The landing page has four visible regions:
 
-1. **Hero** — greeting, identity (name / label / summary), a CTA cluster
-   (Download PDF + AI/LLM résumé), and the dragon. The curl one-liner + copy
-   button live in the footer machine zone (ADR-0006 / ADR-0020 v1).
+1. **Hero** — greeting and identity (name / label / summary). The dragon no
+   longer lives here by default; it is revealed from the footer (ADR-0026).
 2. **Contact section** — the only résumé content rendered on the landing page
-   (ADR-0025). It is injected as `render_contact_fragment`.
-3. **Footer** — the "made by hand" note + the machine zone (curl one-liner +
-   copy button + machine-readable format links).
+   (ADR-0025), injected as `render_contact_fragment`. It shows email +
+   LinkedIn + Telegram.
+3. **CTA section** — a single primary action: "Download résumé (PDF)".
+4. **Footer** — the "made by hand" note + a compact, inline list of
+   machine-readable format links. The verbose machine zone (visually-hidden
+   heading + curl one-liner + copy button) was removed in v3.
 
 `render_body_fragment` is used only by the branded-PDF body now (ADR-0025);
 the landing page shares only `_contact_section` with it, so contact stays in
@@ -29,8 +32,8 @@ lockstep while the page stays short.
 
 - **The hero's responsive behaviour is incomplete.** The CSS media query only
   changes `align-items` on the Bootstrap `.row`; the `col` / `col-auto` columns
-  stay side-by-side on narrow viewports, so the identity text is cramped next to
-  the dragon. Best practice is a real single-column stack with the dragon
+  stay side-by-side on narrow viewports, so the identity text is cramped next
+  to the dragon. Best practice is a real single-column stack with the dragon
   centered below the identity (mobile-first, text-first reading order).
 - **The Contact section is an orphan landmark.** `<section id="resume">` sits
   between `</main>` and `<footer>`, and the skip-link jumps straight over the
@@ -41,17 +44,31 @@ lockstep while the page stays short.
   independently. Best practice: one shared column (`--max` + `--gutter`) for
   topbar, main, and footer so the toggles align with the content edge and the
   page feels visually coherent.
-- **The footer machine links are a prose paragraph.** The `resume.json` / `llms.txt`
-  cluster is rendered as `·`-separated inline links inside a `<p>`. This is
-  scannable for sighted users but is not a navigable list for screen-reader users.
-  Best practice: wrap the links in a semantic `<ul>` under a (visually hidden)
-  heading, while preserving the inline visual density with CSS-generated
-  separators.
+- **The footer machine links are a prose paragraph.** The `resume.json` /
+  `llms.txt` cluster is rendered as `·`-separated inline links inside a `<p>`.
+  This is scannable for sighted users but is not a navigable list for
+  screen-reader users. Best practice: wrap the links in a semantic `<ul>` under
+  a (visually hidden) heading, while preserving the inline visual density with
+  CSS-generated separators.
+
+### What the v3 simplification changed
+
+The v2 machine zone added a `<section class="machine-zone">` with a visually
+hidden "Machine-readable versions" heading, a curl one-liner + copy button,
+and the format list. A further pass found that heading + one-liner made the
+footer too verbose for an intentionally minimal business card. The v3 footer
+keeps only:
+
+- the handcrafted `.made` note, and
+- the `.machine-links` `<ul>` as an inline, semantic list.
+
+The curl one-liner is no longer shown on the page, but `resume.txt` is still
+served and the command from ADR-0006 still works for anyone who knows the URL.
 
 ## Decision
 
 1. **One shared content column.** Topbar, `<main>`, and footer are all
-   constrained to the same `--max: 860px` column with `--gutter` horizontal
+   constrained to the same `--max: 640px` column with `--gutter` horizontal
    padding. The topbar toggles align to the content column's right edge; the
    page stops looking like independent full-width bands.
 
@@ -62,46 +79,51 @@ lockstep while the page stays short.
    `#resume`. The `#resume` id is preserved because it is a pinned internal
    reference and renaming would churn tests for no gain.
 
-3. **Hero uses CSS Grid for real mobile-first stacking.** On wide viewports
-   the grid is `minmax(0, 1fr) auto` — identity on the left, dragon on the
-   right, vertically centered. On narrow viewports (`max-width: 640px`) the grid
-   collapses to a single column: identity full-width first, dragon centered and
-   capped below it. This removes the implicit Bootstrap column behaviour and
-   gives a predictable, text-first reading order.
+3. **Hero is text-only and stacks naturally.** The hero holds only identity
+   (name / label / summary). The dragon was moved out of the hero by ADR-0026
+   and now lives in a separate hidden section below the CTA; it is revealed by
+   clicking the footer "made" note. This keeps the first fold minimal and avoids
+   any side-by-side crowding on narrow viewports.
 
-4. **Footer machine zone uses semantic markup.** The curl one-liner and the
-   machine-readable links are wrapped in `<section class="machine-zone" aria-labelledby="machine-heading">`.
-   A visually hidden `<h2 id="machine-heading">` labels the section, and the
-   links are an unordered list. CSS removes bullets and renders inline
-   `·`-separators, so the visual surface is unchanged for sighted users while
-   screen-reader users gain a heading and list navigation.
+4. **Footer is minimal.** The footer contains only the `.made` handcrafted note
+   and the `.machine-links` inline `<ul>`. There is no `<section
+   class="machine-zone">`, no visually-hidden "Machine-readable versions"
+   heading, no curl one-liner, and no copy button. The list remains semantic
+   and visually compact (CSS removes bullets and renders `·`-separators), so
+   screen-reader users can still browse it as a list.
 
-5. **No change to theme, color, font, dragon, bilingual, or no-JS behaviour.**
-   The Forest palette, JetBrains Mono, language toggle, dragon share path, and
-   the no-JS `prefers-color-scheme` fallback are all untouched. The only visual
-   differences are the aligned column, the narrow-hero stack, and the unchanged
-   inline footer links.
+5. **No change to theme, color, font, bilingual, or no-JS behaviour.** The
+   Forest palette, system sans-serif, language toggle, dragon functionality
+   (seeding, sharing, saving), and the no-JS `prefers-color-scheme` fallback are
+   all untouched. The only visual differences are the aligned content column,
+   the minimal text-only hero, and the simplified footer.
 
 ## Consequences
 
-- Mobile visitors get a clean vertical path: identity → CTAs → dragon → Contact
-  → footer. No side-by-side crowding at 390 px.
-- Landmarks are correct: `header` (banner) → `main` (one, with hero + Contact)
-  → `footer` (contentinfo).
+- Mobile visitors get a clean vertical path: identity → Contact → CTA → footer.
+  No side-by-side crowding at 390 px.
+- Landmarks are correct: `header` (banner) → `main` (one, with hero + Contact +
+  CTA + the hidden dragon container) → `footer` (contentinfo).
 - The skip-link no longer bypasses the hero; it lands at the start of the main
   content, matching the visible page order.
-- Screen-reader users can navigate to "Machine-readable versions" by heading
-  and browse the format list as list items.
+- Screen-reader users can still navigate the machine-readable format list as a
+  `<ul>`, but there is no longer a dedicated "Machine-readable versions"
+  heading above it.
+- The curl one-liner from ADR-0006 is no longer advertised in the UI. The file
+  `resume.txt` is still served and the command still works; only the on-page
+  copy button and label were removed.
 - `render_contact_fragment` and `_contact_section` are untouched, so the branded
   PDF and the landing Contact block stay in lockstep (ADR-0025), and the
   contact-URL regression guard still passes.
-- No JS change is required for the new layout; the existing `i18n.js`
-  `data-i18n` machinery translates the new visually-hidden heading.
-- A small CSS addition pins the mobile hero layout that was previously only
-  half-implemented, and the ADR-0020 v2 tests add regression guards for the
-  stack and the semantic footer list.
+- No JS change is required for the v3 footer; the existing `i18n.js`
+  `data-i18n` machinery is unaffected.
+- A small CSS addition pins the narrow-viewport layout, and the ADR-0020 v2/v3
+  tests add regression guards for the single-column mobile layout and the
+  semantic footer list. The v3 tests assert the machine zone and curl one-liner
+  are gone from the footer.
 
 ## Revision history
+
 - **v1 (2026-07-30):** best-practices review of block arrangement; curl moved
   hero → footer; section order and uniform cards documented as deliberate;
   responsive hero stacking described but left partly implicit.
@@ -109,3 +131,8 @@ lockstep while the page stays short.
   column, Contact moved into `<main>`, skip-link targets `#main`, hero uses a
   CSS grid that truly stacks on narrow screens, footer machine zone becomes a
   semantic list with a visually-hidden heading.
+- **v3 (2026-07-31):** simplify the footer further: drop the machine-zone
+  section, the "Machine-readable versions" heading, and the on-page curl
+  one-liner + copy button. Keep the `.machine-links` inline list and the
+  handcrafted `.made` note. ADR-0006 still honored because `resume.txt` remains
+  served.

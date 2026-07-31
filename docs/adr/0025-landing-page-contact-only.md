@@ -26,15 +26,18 @@ removed from the landing page and lives exclusively in the branded PDF (via
 The Contact markup is shared between the landing page and the branded PDF
 through a single `_contact_section` helper, so the contact surface stays in
 lockstep across the two even though the rest of the body now diverges. The hero
-(name/label/summary + the two audience CTAs + the dragon) is unchanged.
+is unchanged except that the dragon has moved to a hidden footer easter egg
+(ADR-0026) and the single primary CTA sits in its own section below Contact
+(ADR-0020 v3).
 
 This supersedes the ADR-0013 statement that `render_body_fragment` is used by
 both the landing `#resume` block and the branded-PDF body. ADR-0013's
 three-audience decision stands; only the landing-page human render is narrowed.
 
 ## Consequences
-- The landing page is short: hero + Contact + footer. Experience/Skills/Projects/
-  Education/Certificates/Languages no longer appear in `index.html`.
+- The landing page is short: hero + Contact + CTA + footer.
+  Experience/Skills/Projects/Education/Certificates/Languages no longer appear
+  in `index.html`.
 - `render_body_fragment` is now used only by `render_html_fragment` (the branded
   PDF); `render_contact_fragment` is used only by the landing page. The two
   renderers diverge intentionally except for Contact, which stays shared.
@@ -44,6 +47,6 @@ three-audience decision stands; only the landing-page human render is narrowed.
   re-injects `render_body_fragment` into the landing page is caught in CI.
 - The UI test that asserted the `#resume` block contained an Experience entry
   ("Grid Dynamics") now asserts Contact content ("LinkedIn") instead.
-- The skip-link still targets `#resume` (now the Contact section); its label is
-  unchanged. Reversing this decision (re-showing the body on the page) requires
-  a new ADR (or superseding this one).
+- The skip-link targets `#main` (the start of the single `<main>` landmark),
+  not `#resume`, as decided in ADR-0020 v2. Reversing this decision (re-showing
+  the body on the page) requires a new ADR (or superseding this one).
