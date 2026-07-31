@@ -23,6 +23,7 @@
   --c-bg: #f4f6f2; --c-surface: #fff; --c-text: #1f2a1f; --c-muted: #5b6b5b;
   --c-accent: #2f7d3a; --c-accent-soft: #dcebd9; --c-line: #e0e6dd;
   --shadow: 0 2px 6px rgba(20, 40, 20, .07); --max: 860px; --radius: 16px;
+  --gutter: clamp(1rem, 4vw, 2.5rem); --block-gap: clamp(1.5rem, 4vw, 2.5rem);
   --c-head-font: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
   --bs-body-bg: var(--c-bg); --bs-body-color: var(--c-text); --bs-emphasis-color: var(--c-text);
   --bs-secondary-color: var(--c-muted); --bs-secondary-rgb: 91, 107, 91;
@@ -49,6 +50,12 @@
 /* The `hidden` attribute must win over Bootstrap/component `display` rules. */
 [hidden] { display: none !important; }
 
+/* Visually-hidden utility — accessible to screen readers, invisible on screen. */
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+
 body { background: var(--c-bg); color: var(--c-text); }
 /* Bootstrap's reboot underlines links by default; we keep that (WCAG 1.4.1 —
    links must be distinguishable beyond color). Only .btn stays non-underlined. */
@@ -64,10 +71,11 @@ p { margin: .35rem 0; }
 .skip-link { position: absolute; left: -999px; z-index: 1000; }
 .skip-link:focus { left: 8px; top: 8px; background: var(--c-surface); padding: .4rem .7rem; border-radius: 8px; }
 
-/* Top bar */
+/* Top bar — aligned to the content column (ADR-0020 v2) */
 .topbar {
+  max-width: var(--max); margin: 0 auto;
   display: flex; justify-content: flex-end; gap: .5rem;
-  padding: .9rem clamp(1rem, 4vw, 2.5rem);
+  padding: .9rem var(--gutter);
 }
 .lang-toggle .btn, .theme-toggle { border-radius: 999px; }
 .lang-toggle .btn[aria-pressed="true"] {
@@ -91,8 +99,11 @@ p { margin: .35rem 0; }
 }
 .btn-outline-secondary { --bs-btn-color: var(--c-muted); --bs-btn-border-color: var(--c-line); }
 
-/* Hero */
-.hero { max-width: var(--max); margin: 0 auto; padding: clamp(1.5rem, 5vw, 3rem) clamp(1rem, 4vw, 2.5rem) 2rem; }
+/* Single shared content column for hero + Contact (ADR-0020 v2) */
+.page { max-width: var(--max); margin: 0 auto; padding: 0 var(--gutter); }
+
+/* Hero — lives inside .page, which owns the column; keep only vertical rhythm */
+.hero { padding: clamp(1.5rem, 5vw, 3rem) 0 var(--block-gap); }
 .hero-text { min-width: 0; }
 /* the greeting reads like a handwritten margin note */
 .greeting { color: var(--c-accent); margin: 0 0 .4rem; font-family: var(--c-head-font); font-style: italic; font-weight: 600; }
@@ -100,13 +111,13 @@ p { margin: .35rem 0; }
 .hero-text .lead { color: var(--c-muted); max-width: 40ch; font-size: 1rem; }
 .cta { margin: 1.4rem 0 1rem; display: flex; gap: .6rem; flex-wrap: wrap; align-items: center; }
 
-/* curl one-liner */
-.curl { margin-top: 1rem; display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
-.curl-label { color: var(--c-muted); font-size: .85rem; width: 100%; margin-bottom: -.1rem; }
-#curl-line {
-  font-family: "SFMono-Regular", ui-monospace, Menlo, Consolas, monospace;
-  font-size: .82rem; background: var(--c-surface); border: 1px solid var(--c-line);
-  padding: .4rem .6rem; border-radius: 8px; overflow-x: auto; color: var(--c-text);
+/* Hero layout: identity on the left, dragon on the right; single column on narrow
+   viewports so the text is never cramped next to the dragon (mobile-first). */
+.hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--gutter);
+  align-items: center;
 }
 
 /* Dragon */
@@ -135,15 +146,23 @@ p { margin: .35rem 0; }
 .qr img, .qr canvas { display: block; }
 /* Responsive hero — stack the identity/CTAs above the dragon on narrow
    viewports (text-first reading order, mobile-first). The dragon centers and
-   is capped; the row stops vertically centering once stacked so a short
-   identity block is not centered against the dragon. ADR-0020. */
+   is capped. ADR-0020. */
 @media (max-width: 640px) {
-  .hero .row { align-items: flex-start; }
-  .dragon-box { margin: 1.5rem auto 0; max-width: 200px; }
+  .hero-grid {
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: 1.2rem;
+  }
+  .dragon-box {
+    margin-inline: auto;
+    max-width: 200px;
+    order: 1; /* source order already places it after .hero-text, but be explicit */
+  }
 }
 
-/* Résumé sections — quiet, no heavy cards */
-.resume { max-width: var(--max); margin: 0 auto; padding: 0 clamp(1rem, 4vw, 2.5rem) 3rem; }
+/* Contact section (ADR-0025: the landing page shows Contact only). Lives inside
+   .page, which owns the column; keep only vertical rhythm. */
+.contact { padding: var(--block-gap) 0; }
 .block {
   background: var(--c-surface); border: 1px solid var(--c-line); border-radius: var(--radius);
   padding: 1.1rem 1.3rem; margin: .8rem 0; box-shadow: var(--shadow);
@@ -162,11 +181,31 @@ p { margin: .35rem 0; }
 .block ul { margin: .4rem 0 0; padding-left: 1.1rem; }
 .block li { margin: .15rem 0; }
 
-/* Footer */
-.footer { max-width: var(--max); margin: 0 auto; padding: 1.5rem clamp(1rem, 4vw, 2.5rem) 3rem; color: var(--c-muted); font-size: .82rem; }
+/* Footer — same column + gutter as .page; shared top rhythm (ADR-0020 v2) */
+.footer { max-width: var(--max); margin: 0 auto; padding: var(--block-gap) var(--gutter) 3rem; color: var(--c-muted); font-size: .82rem; }
 .made { font-family: var(--c-head-font); font-style: italic; color: var(--c-text); margin-bottom: .4rem; }
 .footer a { color: var(--c-muted); }
 .footer a:hover { color: var(--c-accent); }
+
+/* curl one-liner */
+.curl { margin-top: 1rem; display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.curl-label { color: var(--c-muted); font-size: .85rem; width: 100%; margin-bottom: -.1rem; }
+#curl-line {
+  font-family: "SFMono-Regular", ui-monospace, Menlo, Consolas, monospace;
+  font-size: .82rem; background: var(--c-surface); border: 1px solid var(--c-line);
+  padding: .4rem .6rem; border-radius: 8px; overflow-x: auto; color: var(--c-text);
+}
+
+/* Machine-readable formats in the footer — semantic list, inline visual style. */
+.machine-zone { margin-top: .6rem; }
+.machine-links {
+  display: flex; flex-wrap: wrap; gap: .25rem .6rem;
+  list-style: none; margin: .35rem 0 0; padding: 0;
+}
+.machine-links li { display: inline-flex; align-items: center; white-space: nowrap; }
+.machine-links li:not(:last-child)::after {
+  content: "·"; color: var(--c-muted); margin-left: .6rem;
+}
 
 /* Print: drop chrome, keep one column. Force a light palette (!important beats
    the non-important dark block) so Ctrl+P always prints dark-on-light even when
@@ -177,7 +216,7 @@ p { margin: .35rem 0; }
     --c-bg: #fff !important; --c-surface: #fff !important; --c-text: #1f2a1f !important;
     --c-muted: #5b6b5b !important; --c-accent: #2f7d3a !important; --c-line: #e0e6dd !important;
   }
-  .topbar, .hero-text .cta, .curl, .dragon-box, .lang-toggle, .theme-toggle { display: none !important; }
+  .topbar, .hero-text .cta, .curl, .dragon-box, .lang-toggle, .theme-toggle, .machine-zone { display: none !important; }
   body { background: #fff; }
   .block { box-shadow: none; border: none; padding: .2rem 0; page-break-inside: avoid; }
 }

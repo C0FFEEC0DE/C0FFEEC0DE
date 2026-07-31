@@ -161,11 +161,49 @@ test("machine-readable endpoints are served", async ({ page }) => {
 
 test("skip-link and document structure are accessible", async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator(".skip-link")).toHaveAttribute("href", "#resume");
+  // ADR-0020 v2: skip-link targets the main landmark ("Skip to content")
+  await expect(page.locator(".skip-link")).toHaveAttribute("href", "#main");
+  await expect(page.locator("#main")).toHaveAttribute("id", "main");
+  // Contact lives inside <main> now, keeping its pinned id
   await expect(page.locator("#resume")).toHaveAttribute("id", "resume");
+  await expect(page.locator("main #resume")).toHaveCount(1);
   // the page has exactly one <main> and a labelled language group
   await expect(page.locator("main")).toHaveCount(1);
   await expect(page.locator(".lang-toggle")).toHaveAttribute("role", "group");
+});
+
+test("mobile: hero stacks identity above a centered dragon", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  const heroText = await page.locator(".hero-text").boundingBox();
+  const dragon = await page.locator(".dragon-box").boundingBox();
+  expect(heroText).not.toBeNull();
+  expect(dragon).not.toBeNull();
+  // identity sits above the dragon on narrow screens
+  expect(dragon.y).toBeGreaterThanOrEqual(heroText.y + heroText.height - 2);
+  // identity uses most of the viewport width
+  expect(heroText.width).toBeGreaterThan(300);
+  // dragon is centered horizontally
+  expect(dragon.x + dragon.width / 2).toBeCloseTo(390 / 2, -1);
+});
+
+test("footer machine formats are a semantic list with six links", async ({ page }) => {
+  await page.goto("/");
+  const items = page.locator(".machine-links li");
+  await expect(items).toHaveCount(6);
+  const hrefs = await page.locator(".machine-links a").evaluateAll((els) => els.map((a) => a.getAttribute("href")));
+  expect(hrefs).toEqual([
+    "resume.json",
+    "resume.min.json",
+    "resume.txt",
+    "resume-branded.pdf",
+    "llms.txt",
+    "AGENTS.md",
+  ]);
+  for (const href of hrefs) {
+    const res = await page.request.get(href);
+    expect(res.status(), `${href} should be reachable from machine-links`).toBe(200);
+  }
 });
 
 test("hero has two audience links: human PDF + AI/LLM résumé", async ({ page }) => {

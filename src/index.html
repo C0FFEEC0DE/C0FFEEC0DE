@@ -19,7 +19,7 @@
   <!-- Minimal cognitive load: one accent, generous space, no autoplay/flashing, one CTA. -->
 </head>
 <body>
-<a class="skip-link" href="#resume">Skip to résumé</a>
+<a class="skip-link" href="#main">Skip to content</a>
 
 <header class="topbar">
   <div class="lang-toggle btn-group btn-group-sm" role="group" aria-label="Language">
@@ -31,51 +31,63 @@
   </button>
 </header>
 
-<main class="hero container">
-  <div class="row align-items-center g-4">
-    <div class="hero-text col">
-      <p class="greeting" data-i18n="greeting" hidden></p>
-      <div class="lang-block" data-lang="en">{{HEADER_EN}}</div>
-      <div class="lang-block" data-lang="ru" hidden>{{HEADER_RU}}</div>
-      <div class="cta">
-        <a class="btn btn-primary" href="resume.pdf" download>📄 <span data-i18n="download">Download résumé (PDF)</span></a>
-        <a class="btn btn-outline-secondary ai-link" href="resume.json">🤖 <span data-i18n="ai_resume">Résumé for AI / LLM</span></a>
+<main id="main" class="page">
+  <section class="hero">
+    <div class="hero-grid">
+      <div class="hero-text">
+        <p class="greeting" data-i18n="greeting" hidden></p>
+        <div class="lang-block" data-lang="en">{{HEADER_EN}}</div>
+        <div class="lang-block" data-lang="ru" hidden>{{HEADER_RU}}</div>
+        <div class="cta">
+          <a class="btn btn-primary" href="resume.pdf" download>📄 <span data-i18n="download">Download résumé (PDF)</span></a>
+          <a class="btn btn-outline-secondary ai-link" href="resume.json">🤖 <span data-i18n="ai_resume">Résumé for AI / LLM</span></a>
+        </div>
+      </div>
+      <div class="dragon-box" aria-label="Your little dragon">
+        <canvas id="dragon" width="128" height="128" aria-hidden="true"></canvas>
+        <div class="dragon-id" id="dragon-id"></div>
+        <div class="share-box">
+          <p class="dragon-line" data-i18n="dragon_line"></p>
+          <button type="button" class="btn btn-outline-secondary btn-sm share-btn" data-i18n="share">Share my dragon</button>
+          <input type="text" class="share-link" id="share-link" readonly hidden data-i18n-aria="share_link_label">
+          <a class="btn btn-outline-secondary btn-sm share-li" id="share-li" target="_blank" rel="noopener noreferrer" hidden data-i18n="share_li" data-i18n-aria="share_li_aria">Share on LinkedIn</a>
+          <div id="qr" class="qr" hidden></div>
+          <button type="button" class="btn btn-outline-secondary btn-sm qr-toggle" hidden data-i18n="showqr">Show QR</button>
+        </div>
       </div>
     </div>
-    <div class="dragon-box col-auto" aria-label="Your little dragon">
-      <canvas id="dragon" width="128" height="128" aria-hidden="true"></canvas>
-      <div class="dragon-id" id="dragon-id"></div>
-      <div class="share-box">
-        <p class="dragon-line" data-i18n="dragon_line"></p>
-        <button type="button" class="btn btn-outline-secondary btn-sm share-btn" data-i18n="share">Share my dragon</button>
-        <input type="text" class="share-link" id="share-link" readonly hidden data-i18n-aria="share_link_label">
-        <a class="btn btn-outline-secondary btn-sm share-li" id="share-li" target="_blank" rel="noopener noreferrer" hidden data-i18n="share_li" data-i18n-aria="share_li_aria">Share on LinkedIn</a>
-        <div id="qr" class="qr" hidden></div>
-        <button type="button" class="btn btn-outline-secondary btn-sm qr-toggle" hidden data-i18n="showqr">Show QR</button>
-      </div>
+  </section>
+
+  <section id="resume" class="contact" tabindex="-1">
+    <!-- Bilingual contact block; only the active language is shown (ADR-0025). -->
+    <div class="lang-block" data-lang="en">
+      {{RESUME_EN_HTML}}
     </div>
-  </div>
+    <div class="lang-block" data-lang="ru" hidden>
+      {{RESUME_RU_HTML}}
+    </div>
+  </section>
 </main>
 
-<section id="resume" class="resume container" tabindex="-1">
-  <!-- Bilingual resume blocks; only the active language is shown. -->
-  <div class="lang-block" data-lang="en">
-    {{RESUME_EN_HTML}}
-  </div>
-  <div class="lang-block" data-lang="ru" hidden>
-    {{RESUME_RU_HTML}}
-  </div>
-</section>
-
-<footer class="footer container">
+<footer class="footer">
   <p class="made" data-i18n="made">Made by hand from markdown — not a template. The little dragon is yours.</p>
   <p data-i18n="footer">Built from markdown · JSON Resume + llms.txt · a tiny dragon for the road.</p>
-  <div class="curl">
-    <span class="curl-label" data-i18n="curl_label"></span>
-    <code id="curl-line"></code>
-    <button type="button" class="btn btn-outline-secondary btn-sm copy-curl" data-i18n="copy">Copy</button>
-  </div>
-  <p><a href="resume.json">resume.json</a> · <a href="resume.min.json">resume.min.json</a> · <a href="resume.txt">resume.txt</a> · <a href="resume-branded.pdf" data-i18n="branded">designed PDF</a> · <a href="llms.txt">llms.txt</a> · <a href="AGENTS.md">AGENTS.md</a></p>
+  <section class="machine-zone" aria-labelledby="machine-heading">
+    <h2 id="machine-heading" class="visually-hidden" data-i18n="machine_zone">Machine-readable versions</h2>
+    <div class="curl">
+      <span class="curl-label" data-i18n="curl_label"></span>
+      <code id="curl-line"></code>
+      <button type="button" class="btn btn-outline-secondary btn-sm copy-curl" data-i18n="copy">Copy</button>
+    </div>
+    <ul class="machine-links">
+      <li><a href="resume.json">resume.json</a></li>
+      <li><a href="resume.min.json">resume.min.json</a></li>
+      <li><a href="resume.txt">resume.txt</a></li>
+      <li><a href="resume-branded.pdf" data-i18n="branded">designed PDF</a></li>
+      <li><a href="llms.txt">llms.txt</a></li>
+      <li><a href="AGENTS.md">AGENTS.md</a></li>
+    </ul>
+  </section>
 </footer>
 
 <script type="application/ld+json">

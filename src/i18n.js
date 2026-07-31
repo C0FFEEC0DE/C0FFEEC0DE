@@ -22,6 +22,7 @@
       branded: "designed PDF",
       made: "Made by hand from markdown — not a template. The little dragon is yours.",
       footer: "Built from markdown · JSON Resume + llms.txt · a tiny dragon for the road.",
+      machine_zone: "Machine-readable versions",
     },
     ru: {
       greeting_morning: "Доброе утро —",
@@ -41,6 +42,7 @@
       branded: "дизайн-PDF",
       made: "Сделано вручную из markdown — не шаблон. Дракончик — ваш.",
       footer: "Собрано из markdown · JSON Resume + llms.txt · маленький дракончик на удачу.",
+      machine_zone: "Машиночитаемые версии",
     },
   };
 
