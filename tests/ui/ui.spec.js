@@ -108,13 +108,16 @@ test("share button reveals the QR toggle, and the QR becomes visible", async ({ 
   await expect(page.locator("#qr")).toBeVisible();
 });
 
-test("share reveals a LinkedIn button pre-filled with the dragon URL", async ({ page }) => {
+test("share reveals LinkedIn and save-dragon buttons pre-filled with the dragon URL", async ({ page }) => {
   await page.goto("/");
   await page.click(".made");
   await expect(page.locator("#share-li")).toBeHidden();
+  await expect(page.locator("#save-dragon")).toBeHidden();
   await page.click(".share-btn");
   const li = page.locator("#share-li");
+  const save = page.locator("#save-dragon");
   await expect(li).toBeVisible();
+  await expect(save).toBeVisible();
   const href = await li.getAttribute("href");
   const u = new URL(href);
   expect(u.origin + u.pathname).toBe("https://www.linkedin.com/sharing/share-offsite/");
@@ -126,6 +129,19 @@ test("share reveals a LinkedIn button pre-filled with the dragon URL", async ({ 
   await expect(li).toHaveAttribute("aria-label", /new tab/);
   await page.click(".lang-toggle button[data-lang='ru']");
   await expect(li).toHaveAttribute("aria-label", /новой вкладке/);
+});
+
+test("save-dragon button downloads a token PNG named after the seed", async ({ page }) => {
+  await page.goto("/");
+  await page.click(".made");
+  await page.click(".share-btn");
+  await expect(page.locator("#save-dragon")).toBeVisible();
+
+  const [download] = await Promise.all([
+    page.waitForEvent("download"),
+    page.click("#save-dragon"),
+  ]);
+  expect(download.suggestedFilename()).toMatch(/^dragon-[a-z0-9]+\.png$/);
 });
 
 test("the page is fixed light Forest and has no theme toggle", async ({ page }) => {

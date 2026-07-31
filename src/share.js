@@ -10,6 +10,7 @@
   const shareBtn = document.querySelector(".share-btn");
   const shareLink = document.getElementById("share-link");
   const liShare = document.getElementById("share-li");
+  const saveBtn = document.getElementById("save-dragon");
   const qrBox = document.getElementById("qr");
   const qrToggle = document.querySelector(".qr-toggle");
 
@@ -71,6 +72,19 @@
     });
   }
 
+  function downloadToken(seed) {
+    const token = document.createElement("canvas");
+    window.DRAGON.drawToken(token, seed, "have a nice day");
+    const dataUrl = token.toDataURL("image/png");
+    const a = document.createElement("a");
+    a.href = dataUrl;
+    a.download = `dragon-${seed}.png`;
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => a.remove(), 0);
+  }
+
   async function showQr(seed) {
     qrToggle.hidden = true;
     qrBox.hidden = false;
@@ -112,7 +126,9 @@
       }
       if (qrToggle) qrToggle.hidden = false;
       if (liShare) liShare.hidden = false;
+      if (saveBtn) saveBtn.hidden = false;
     });
+    if (saveBtn) saveBtn.addEventListener("click", () => downloadToken(seed));
     if (qrToggle) qrToggle.addEventListener("click", () => showQr(seed));
   }
 

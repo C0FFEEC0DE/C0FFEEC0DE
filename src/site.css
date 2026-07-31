@@ -209,6 +209,15 @@ p { margin: .35rem 0; }
   align-items: center;
   gap: .5rem;
 }
+.share-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  justify-content: center;
+}
+.share-actions .btn {
+  white-space: nowrap;
+}
 .dragon-line {
   font-size: .82rem;
   color: var(--c-muted);

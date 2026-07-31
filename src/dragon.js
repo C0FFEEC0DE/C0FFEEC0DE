@@ -165,10 +165,51 @@
     ctx.putImageData(img, 0, 0);
   }
 
+  // Draw a "token" PNG: the dragon + a polite caption at the bottom. Used by the
+  // save-to-disk feature so the downloaded image feels like a little collectible.
+  function drawToken(canvas, seed, caption) {
+    const rng = mulberry32(fnv1a(seed));
+    const { grid, palette: C } = compose(rng);
+
+    const W = 240, H = 280;
+    const SCALE = 10;
+    const DX = Math.round((W - GRID * SCALE) / 2);
+    const DY = 34;
+
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext("2d");
+
+    // token background + border
+    ctx.fillStyle = "#ffffff";
+    ctx.strokeStyle = C.accent;
+    ctx.lineWidth = 3;
+    if (ctx.roundRect) {
+      ctx.beginPath(); ctx.roundRect(0, 0, W, H, 24); ctx.fill(); ctx.stroke();
+    } else {
+      ctx.fillRect(0, 0, W, H); ctx.strokeRect(0, 0, W, H);
+    }
+
+    // pixel dragon scaled up with crisp edges
+    ctx.imageSmoothingEnabled = false;
+    for (let y = 0; y < GRID; y++) {
+      for (let x = 0; x < GRID; x++) {
+        const c = grid[y * GRID + x];
+        if (c) { ctx.fillStyle = c; ctx.fillRect(DX + x * SCALE, DY + y * SCALE, SCALE, SCALE); }
+      }
+    }
+
+    // caption
+    ctx.fillStyle = C.spike;
+    ctx.font = '600 16px -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(caption || "have a nice day", W / 2, H - 36);
+  }
+
   function hexToRgb(h) {
     const s = h.replace("#", "");
     return [parseInt(s.slice(0, 2), 16), parseInt(s.slice(2, 4), 16), parseInt(s.slice(4, 6), 16)];
   }
 
-  global.DRAGON = { draw, compose, fnv1a, mulberry32 };
+  global.DRAGON = { draw, drawToken, compose, fnv1a, mulberry32 };
 })(window);

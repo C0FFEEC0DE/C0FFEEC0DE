@@ -54,9 +54,12 @@
     <div class="dragon-id" id="dragon-id"></div>
     <div class="share-box">
       <p class="dragon-line" data-i18n="dragon_line"></p>
-      <button type="button" class="btn btn-outline-secondary btn-sm share-btn" data-i18n="share">Share my dragon</button>
+      <div class="share-actions">
+        <button type="button" class="btn btn-outline-secondary btn-sm share-btn" data-i18n="share">Share my dragon</button>
+        <a class="btn btn-outline-secondary btn-sm share-li" id="share-li" target="_blank" rel="noopener noreferrer" hidden data-i18n="share_li" data-i18n-aria="share_li_aria">Share on LinkedIn</a>
+        <button type="button" class="btn btn-outline-secondary btn-sm save-btn" id="save-dragon" hidden data-i18n="save_dragon">Save my dragon</button>
+      </div>
       <input type="text" class="share-link" id="share-link" readonly hidden data-i18n-aria="share_link_label">
-      <a class="btn btn-outline-secondary btn-sm share-li" id="share-li" target="_blank" rel="noopener noreferrer" hidden data-i18n="share_li" data-i18n-aria="share_li_aria">Share on LinkedIn</a>
       <div id="qr" class="qr" hidden></div>
       <button type="button" class="btn btn-outline-secondary btn-sm qr-toggle" hidden data-i18n="showqr">Show QR</button>
     </div>
