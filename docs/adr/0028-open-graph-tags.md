@@ -8,7 +8,7 @@ ADR-0022 added a "Share on LinkedIn" button that opens LinkedIn's composer
 with the dragon URL pre-filled. LinkedIn builds the post preview by scraping
 the shared page for Open Graph (`og:*`) meta tags. The page previously only had
 a generic `<title>` and `<meta name="description">`, so the preview showed
-"C0FFEE C0DER — résumé" and a generic description rather than the owner's
+the GitHub handle and a generic description rather than the owner's
 name, role, and summary.
 
 ## Decision

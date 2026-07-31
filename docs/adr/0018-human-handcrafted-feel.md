@@ -12,8 +12,8 @@ should feel a person, not a CMS.
 
 For the minimal business-card redesign the owner chose to keep the warmth and
 the small handcrafted signals, but to move the typography to a **system
-sans-serif**. A monospace display face, while on-brand for a "C0FFEE C0DER"
-persona, added visual noise to a page whose sole job is to hand a recruiter a
+sans-serif**. A monospace display face, while on-brand for the owner's GitHub handle,
+added visual noise to a page whose sole job is to hand a recruiter a
 name, a role, and a PDF. The human feel is now conveyed by color, copy, rounded
 surfaces, and a hidden dragon easter egg (ADR-0026) rather than by a display
 font.
