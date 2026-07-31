@@ -278,12 +278,15 @@ def test_sitemap_only_with_base(dist, monkeypatch):
 
 # --- no-duplication: header lives once in the hero, body has no header ------- #
 def test_resume_body_has_no_header(dist):
-    """The résumé block must NOT contain its own <header class="hero"> — the
-    name/label/summary live once in the hero (regression for the duplicated
-    blocks bug)."""
+    """The Contact block (#resume) must NOT contain an <h1> — the name lives
+    once in the hero (regression for the duplicated blocks bug)."""
+    import re
     build.build(clean=True)
     html = (dist / "index.html").read_text("utf-8")
-    resume = html[html.find('id="resume"'):]
+    # Contact now comes before the hero; slice only the first <section id="resume"> block.
+    m = re.search(r'<section id="resume"[^>]*>(.*?)\n\s*</section>', html, re.S)
+    assert m, "#resume section not found"
+    resume = m.group(1)
     assert '<header class="hero">' not in resume
     assert "<h1>" not in resume
 
@@ -294,8 +297,10 @@ def test_hero_has_one_h1_per_language(dist):
     import re
     build.build(clean=True)
     html = (dist / "index.html").read_text("utf-8")
-    hero_end = html.find('id="resume"')
-    hero = html[:hero_end]
+    # Extract the hero section by class; it now follows the Contact section.
+    m = re.search(r'<section class="hero"[^>]*>(.*?)\n\s*</section>', html, re.S)
+    assert m, "hero section not found"
+    hero = m.group(1)
     h1s = re.findall(r"<h1>.*?</h1>", hero, re.S)
     assert len(h1s) == 2, f"expected one h1 per language in hero, got {len(h1s)}"
     assert all("Krasnobai" in h for h in h1s)
@@ -307,9 +312,12 @@ def test_hero_has_one_h1_per_language(dist):
 def test_hero_header_is_bilingual(dist):
     """Both language headers are injected; the RU label is Russian, not the
     hardcoded English one (regression for the EN-only hero-label bug)."""
+    import re
     build.build(clean=True)
     html = (dist / "index.html").read_text("utf-8")
-    hero = html[: html.find('id="resume"')]
+    m = re.search(r'<section class="hero"[^>]*>(.*?)\n\s*</section>', html, re.S)
+    assert m, "hero section not found"
+    hero = m.group(1)
     assert "Senior DevOps / SRE Engineer" in hero
     assert "Старший DevOps / SRE-инженер" in hero
     # no leftover template placeholders

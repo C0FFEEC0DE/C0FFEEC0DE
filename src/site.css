@@ -102,13 +102,30 @@ p { margin: .35rem 0; }
 /* Single shared content column for hero + Contact (ADR-0020 v2) */
 .page { max-width: var(--max); margin: 0 auto; padding: 0 var(--gutter); }
 
-/* Hero — lives inside .page, which owns the column; keep only vertical rhythm */
+/* Hero — lives inside .page, which owns the column; keep only vertical rhythm.
+   Contact is intentionally placed before the hero, so the hero sits between
+   the contact card and the footer machine zone. */
 .hero { padding: clamp(1.5rem, 5vw, 3rem) 0 var(--block-gap); }
+.contact { padding-top: var(--block-gap); }
 .hero-text { min-width: 0; }
+.hero-text { display: flex; flex-direction: column; }
+/* Tag pills — compact identity facts above the name (low cognitive load). */
+.tags {
+  display: flex; flex-wrap: wrap; gap: .35rem;
+  margin: 0 0 .5rem;
+}
+.tag {
+  display: inline-flex; align-items: center;
+  font-family: var(--c-head-font); font-size: .72rem; font-weight: 600;
+  letter-spacing: .02em; text-transform: uppercase;
+  color: var(--c-accent); background: var(--c-accent-soft);
+  border: 1px solid var(--c-line); border-radius: 999px;
+  padding: .2rem .55rem;
+}
 /* the greeting reads like a handwritten margin note */
 .greeting { color: var(--c-accent); margin: 0 0 .4rem; font-family: var(--c-head-font); font-style: italic; font-weight: 600; }
 .label { color: var(--c-muted); font-size: 1.05rem; margin: .25rem 0 1rem; }
-.hero-text .lead { color: var(--c-muted); max-width: 40ch; font-size: 1rem; }
+.hero-text .lead { color: var(--c-muted); max-width: 52ch; font-size: 1rem; }
 .cta { margin: 1.4rem 0 1rem; display: flex; gap: .6rem; flex-wrap: wrap; align-items: center; }
 
 /* Hero layout: identity on the left, dragon on the right; single column on narrow

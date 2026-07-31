@@ -32,6 +32,17 @@
 </header>
 
 <main id="main" class="page">
+  <section id="resume" class="contact" tabindex="-1">
+    <!-- Bilingual contact block; only the active language is shown (ADR-0025).
+         Placed first so reachability is immediate (low cognitive load). -->
+    <div class="lang-block" data-lang="en">
+      {{RESUME_EN_HTML}}
+    </div>
+    <div class="lang-block" data-lang="ru" hidden>
+      {{RESUME_RU_HTML}}
+    </div>
+  </section>
+
   <section class="hero">
     <div class="hero-grid">
       <div class="hero-text">
@@ -55,16 +66,6 @@
           <button type="button" class="btn btn-outline-secondary btn-sm qr-toggle" hidden data-i18n="showqr">Show QR</button>
         </div>
       </div>
-    </div>
-  </section>
-
-  <section id="resume" class="contact" tabindex="-1">
-    <!-- Bilingual contact block; only the active language is shown (ADR-0025). -->
-    <div class="lang-block" data-lang="en">
-      {{RESUME_EN_HTML}}
-    </div>
-    <div class="lang-block" data-lang="ru" hidden>
-      {{RESUME_RU_HTML}}
     </div>
   </section>
 </main>

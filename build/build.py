@@ -253,13 +253,36 @@ def esc(s) -> str:
     return html.escape("" if s is None else str(s), quote=True)
 
 
+def _tag_pill(text: str) -> str:
+    return f'<span class="tag">{esc(text)}</span>'
+
+
 def _resume_header_inner(r: dict, lang: str) -> str:
     """Name / label / summary lines, no wrapper. Shared by the landing hero
-    and the branded-PDF header so the two never diverge or duplicate."""
+    and the branded-PDF header so the two never diverge or duplicate.
+
+    The label, location, and availability are surfaced as compact tag pills
+    above the name (low cognitive load — the recruiter sees 'who / what /
+    where / status' at a glance). The long summary stays as .lead below."""
     b = r["basics"]
-    parts: list[str] = [f'<h1>{esc(b.get("name"))}</h1>']
+    tags: list[str] = []
     if b.get("label"):
-        parts.append(f'<p class="label">{esc(b["label"])}</p>')
+        tags.append(_tag_pill(b["label"]))
+    loc = b.get("location")
+    if isinstance(loc, dict) and loc.get("city"):
+        region = loc.get("region") or loc.get("countryCode")
+        tags.append(_tag_pill(f"{loc['city']}{(', ' + region) if region else ''}"))
+    elif isinstance(loc, str) and loc:
+        tags.append(_tag_pill(loc))
+    avail = r.get("availability")
+    if isinstance(avail, dict) and avail.get("status"):
+        status_label = {"open": "Open to roles", "not_open": "Not open"}.get(avail["status"], avail["status"])
+        tags.append(_tag_pill(status_label))
+
+    parts: list[str] = []
+    if tags:
+        parts.append(f'<p class="tags">{"".join(tags)}</p>')
+    parts.append(f'<h1>{esc(b.get("name"))}</h1>')
     if b.get("summary"):
         parts.append(f'<p class="lead">{esc(b["summary"])}</p>')
     return "\n".join(parts)
@@ -271,15 +294,19 @@ def render_header_fragment(r: dict, lang: str) -> str:
     return _resume_header_inner(r, lang)
 
 
-def _contact_section(b: dict, lang: str) -> str:
+def _contact_section(b: dict, lang: str, *, show_url: bool = True) -> str:
     """The Contact block, shared by the landing page and the branded PDF so the
-    contact surface never diverges between them (ADR-0013 lockstep on contact)."""
+    contact surface never diverges between them (ADR-0013 lockstep on contact).
+
+    The landing page uses show_url=False because the visitor is already on the
+    site; every other surface (PDF, resume.json, resume.txt, llms.txt) keeps
+    the canonical URL."""
     contacts = []
     if b.get("email"):
         contacts.append(f'<a href="mailto:{esc(b["email"])}">{esc(b["email"])}</a>')
     if b.get("phone"):
         contacts.append(esc(b["phone"]))
-    if b.get("url"):
+    if show_url and b.get("url"):
         contacts.append(f'<a href="{esc(b["url"])}">{esc(b["url"])}</a>')
     for p in b.get("profiles", []) or []:
         contacts.append(f'<a href="{esc(p.get("url"))}">{esc(p.get("network"))}</a>')
@@ -293,8 +320,9 @@ def render_contact_fragment(r: dict, lang: str) -> str:
     """Contact section only — injected into the landing résumé block
     (ADR-0025). The full résumé body lives in the branded PDF and the
     machine-readable outputs; the landing page shows identity (hero) + contact
-    only and funnels to the PDF for the detail."""
-    return _contact_section(r["basics"], lang)
+    only and funnels to the PDF for the detail. The canonical site URL is not
+    repeated in the on-site contact line."""
+    return _contact_section(r["basics"], lang, show_url=False)
 
 
 def render_body_fragment(r: dict, lang: str) -> str:
