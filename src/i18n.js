@@ -22,8 +22,6 @@
       showqr: "Show QR",
       branded: "designed PDF",
       made: "Made by hand from markdown — not a template. The little dragon is yours.",
-      footer: "Built from markdown · JSON Resume + llms.txt · a tiny dragon for the road.",
-      machine_zone: "Machine-readable versions",
     },
     ru: {
       greeting_morning: "Доброе утро —",
@@ -41,8 +39,6 @@
       showqr: "Показать QR",
       branded: "дизайн-PDF",
       made: "Сделано вручную из markdown — не шаблон. Дракончик — ваш.",
-      footer: "Собрано из markdown · JSON Resume + llms.txt · маленький дракончик на удачу.",
-      machine_zone: "Машиночитаемые версии",
     },
   };
 
@@ -106,17 +102,6 @@
     const made = document.querySelector(".made");
     if (made) made.addEventListener("click", revealDragon);
 
-    const copyBtn = document.querySelector(".copy-curl");
-    if (copyBtn) copyBtn.addEventListener("click", () => {
-      const line = document.getElementById("curl-line");
-      if (line) {
-        try { navigator.clipboard.writeText(line.textContent); }
-        catch { /* clipboard may be blocked; ignore */ }
-        const orig = copyBtn.textContent;
-        copyBtn.textContent = "✓";
-        setTimeout(() => { copyBtn.textContent = orig; }, 1200);
-      }
-    });
   }
 
   document.addEventListener("DOMContentLoaded", init);

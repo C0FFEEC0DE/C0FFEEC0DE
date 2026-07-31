@@ -128,14 +128,6 @@ test("share reveals a LinkedIn button pre-filled with the dragon URL", async ({ 
   await expect(li).toHaveAttribute("aria-label", /новой вкладке/);
 });
 
-test("the curl one-liner points at resume.txt and reflects the current origin", async ({ page }) => {
-  await page.goto("/");
-  const curl = await page.locator("#curl-line").textContent();
-  expect(curl).toContain("curl -sL");
-  expect(curl).toContain("resume.txt");
-  expect(curl).toContain("localhost:8000");
-});
-
 test("the page is fixed light Forest and has no theme toggle", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator(".theme-toggle")).toHaveCount(0);
@@ -194,7 +186,7 @@ test("mobile: single-column business card layout", async ({ page }) => {
   expect(hero.width).toBeGreaterThan(300);
 });
 
-test("footer machine formats are a semantic list with seven links", async ({ page }) => {
+test("footer machine formats are a semantic list with seven links and no extra text", async ({ page }) => {
   await page.goto("/");
   const items = page.locator(".machine-links li");
   await expect(items).toHaveCount(7);
@@ -212,6 +204,11 @@ test("footer machine formats are a semantic list with seven links", async ({ pag
     const res = await page.request.get(href);
     expect(res.status(), `${href} should be reachable from machine-links`).toBe(200);
   }
+  // the verbose footer line and "Machine-readable versions" heading were removed
+  const footer = page.locator("footer");
+  await expect(footer).not.toContainText("Built from markdown");
+  await expect(footer).not.toContainText("Machine-readable versions");
+  await expect(page.locator("footer .curl")).toHaveCount(0);
 });
 
 test("hero has one primary CTA: download PDF", async ({ page }) => {
