@@ -420,8 +420,8 @@ def test_hero_header_is_bilingual(dist):
     assert "Старший DevOps / SRE / Platform-инженер" in hero
     assert "Aleksandr Krasnobai" in hero
     # location tags in both languages
-    assert "Belgrade, Serbia — permanent residence" in hero
-    assert "Белград, Сербия — ПМЖ" in hero
+    assert "Belgrade, Serbia — work authorized" in hero
+    assert "Белград, Сербия — право на работу" in hero
     # one-line punchline lead (apostrophe is HTML-escaped in the rendered HTML)
     assert "DON'T PANIC" in hero or "DON&#x27;T PANIC" in hero
     # no leftover template placeholders

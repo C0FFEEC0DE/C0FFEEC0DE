@@ -27,7 +27,7 @@ basics:
     city: "Belgrade"
     region: "Serbia"
     countryCode: "RS"
-    note: "permanent residence"
+    note: "work authorized"
 profiles:
   - {network: "GitHub",   username: "C0FFEEC0DE", url: "https://github.com/C0FFEEC0DE"}
   - {network: "LinkedIn", username: "aleksandrkrasnobai", url: "https://www.linkedin.com/in/aleksandrkrasnobai"}
@@ -101,4 +101,4 @@ location: Ulyanovsk, Russia
 
 ## Contact
 
-Best reached by email: hi@krasnobai.dev — usually reply within a day. Open to senior DevOps / SRE and cloud-infrastructure roles in remote-friendly teams (based in Belgrade, Serbia — permanent residence, CET, no visa sponsorship).
+Best reached by email: hi@krasnobai.dev — usually reply within a day. Open to senior DevOps / SRE and cloud-infrastructure roles in remote-friendly teams (based in Belgrade, Serbia — work authorized, CET, no visa sponsorship).

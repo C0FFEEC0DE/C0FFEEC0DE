@@ -27,7 +27,7 @@ basics:
     city: "Белград"
     region: "Сербия"
     countryCode: "RS"
-    note: "ПМЖ"
+    note: "право на работу"
 profiles:
   - {network: "GitHub",   username: "C0FFEEC0DE", url: "https://github.com/C0FFEEC0DE"}
   - {network: "LinkedIn", username: "aleksandrkrasnobai", url: "https://www.linkedin.com/in/aleksandrkrasnobai"}
@@ -101,4 +101,4 @@ location: Ульяновск, Россия
 
 ## Contact
 
-Быстрее всего по почте: hi@krasnobai.dev — обычно отвечаю в течение дня. Открыт к старшим DevOps / SRE и cloud-infrastructure ролям в удалённо-дружественных командах (Белград, Сербия — ПМЖ, часовой пояс CET, без визовой поддержки).
+Быстрее всего по почте: hi@krasnobai.dev — обычно отвечаю в течение дня. Открыт к старшим DevOps / SRE и cloud-infrastructure ролям в удалённо-дружественных командах (Белград, Сербия — право на работу, часовой пояс CET, без визовой поддержки).
