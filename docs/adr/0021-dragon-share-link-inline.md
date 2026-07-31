@@ -1,6 +1,6 @@
 # ADR-0021 — Dragon share link revealed inline
 
-Date: 2026-07-30 · Status: Accepted
+Date: 2026-07-30 · Status: Accepted (v2: 2026-07-31)
 
 ## Context
 
@@ -8,8 +8,7 @@ ADR-0009 made the dragon deterministic from a URL seed (`?d=…`) so the same
 link reproduces the same dragon — the seed *is* the share token. The dragon and
 its controls are hidden behind a footer easter egg (ADR-0026); after the visitor
 reveals it, `src/share.js` wires the "Share my dragon" button to copy that URL
-to the clipboard and reveal a "Show QR" toggle; the QR (ADR-0010, lazy +
-SRI-locked) is the scan-to-share path.
+to the clipboard.
 
 The gap: **the link itself is never shown.** The visitor must trust that the
 clipboard write succeeded and cannot see, select, verify, or manually copy the
@@ -22,7 +21,7 @@ link on button press** so it is concretely shareable, not just invisibly copied.
 ## Decision
 
 On "Share my dragon" press, **reveal the share URL inline** in addition to the
-existing clipboard copy and QR-toggle reveal. Concretely:
+existing clipboard copy. Concretely:
 
 - A readonly `<input class="share-link" id="share-link">` lives in the dragon
   `.share-box`, `hidden` until the first share press.
@@ -34,9 +33,9 @@ existing clipboard copy and QR-toggle reveal. Concretely:
   revealed link is accessible in both languages.
 
 No backend, no tracking, no third-party share SDK — only the existing `?d=…`
-URL, now visible. The QR remains the scan path; the clipboard copy remains the
-one-tap path; the inline input is the visible/selectable/fallback path. Three
-ways to leave with the same link, all client-side.
+URL, now visible. The clipboard copy remains the one-tap path; the inline input
+is the visible/selectable/fallback path. Two ways to leave with the same link,
+all client-side.
 
 ## Consequences
 
@@ -46,15 +45,17 @@ ways to leave with the same link, all client-side.
   visitor reveals the dragon (ADR-0026) and presses "Share my dragon"; when
   revealed it is one small monospace line under the button, not a new card.
 - The no-JS path is unchanged: with JS off the button has no listener, so the
-  input stays `hidden` (same as the QR toggle). The `[hidden]{display:none}`
-  rule (site.css) keeps it off-screen.
+  input stays `hidden`. The `[hidden]{display:none}` rule (site.css) keeps it
+  off-screen.
 - A small, reusable `data-i18n-aria` handling is added to `i18n.js`'s
   `applyLang` (set `aria-label` from `STRINGS[key]`), so future bilingual
   aria-labels follow the language toggle without bespoke code. A Playwright
   test asserts the link is revealed and contains the `?d=` URL on button press.
-- ADR-0009 (seed = share token) and ADR-0010 (lazy QR) are unchanged; this ADR
-  only adds a visible rendering of the link ADR-0009 already produces.
+- ADR-0009 (seed = share token) is unchanged; this ADR only adds a visible
+  rendering of the link ADR-0009 already produces.
 
 ## Revision history
-- **v1 (current):** reveal the dragon share URL inline (readonly input) on
+- **v1 (2026-07-30):** reveal the dragon share URL inline (readonly input) on
   "Share my dragon" press; add `data-i18n-aria` for its bilingual label.
+- **v2 (2026-07-31):** removed the QR code path (now superseded by ADR-0028);
+  the inline share link remains the visible fallback alongside clipboard copy.

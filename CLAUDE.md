@@ -8,7 +8,7 @@ A résumé site authored from markdown, auto-built by a one-shot Python script,
 served for **three audiences** (ADR-0013): humans (bilingual landing page +
 branded PDF), machines (JSON Resume, llms.txt, AGENTS.md, cv.json, resume.txt),
 and ATS (a neutral single-column PDF). Deployed to GitHub Pages via Actions.
-Decisions are recorded as ADRs in `docs/adr/` (0001→0027) — read the relevant
+Decisions are recorded as ADRs in `docs/adr/` (0001→0028) — read the relevant
 one before changing a settled area.
 
 ## Commands
@@ -74,14 +74,16 @@ applies only before JS sets `data-theme`. `src/print.css` is the branded-PDF
 stylesheet (Forest palette, self-hosted JetBrains Mono resolved against
 WeasyPrint's `base_url` = repo root).
 
-**Dragon (ADR-0009, ADR-0026, ADR-0027):** fully client-side —
+**Dragon (ADR-0009, ADR-0026, ADR-0027, ADR-0028):** fully client-side —
 `src/dragon.js` + `dragon-parts.js` seed a mulberry32 PRNG from `?d=` and draw a
 16×16 pixel dragon to `<canvas>`. ADR-0026 hides the dragon behind a footer
 click easter egg, so the default landing page is a pure business card.
-`src/share.js` adds share-link + lazy-loaded, SRI-locked QR (ADR-0021) and a
-"Save my dragon" button that downloads a token PNG with the dragon + an English
-"have a nice day" caption (ADR-0027). No backend, no tracking. The delight path
-must keep working with JS off (it degrades to an empty canvas, not an error).
+`src/share.js` adds a shareable link (ADR-0021), a LinkedIn share button
+(ADR-0022), and a "Save my dragon" button that downloads a token PNG with the
+dragon + an English "have a nice day" caption (ADR-0027). Open Graph tags
+(ADR-0028) give LinkedIn the owner's name, role, summary, and a static dragon
+image for the share preview. No backend, no tracking. The delight path must keep
+working with JS off (it degrades to an empty canvas, not an error).
 
 **Regression guards (ADR-0019):** a pure-Python build test computes the WCAG AA
 contrast ratio for both modes — text/muted/accent against both `--c-bg` and

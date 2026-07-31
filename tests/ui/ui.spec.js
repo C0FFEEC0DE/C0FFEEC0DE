@@ -1,6 +1,7 @@
 // UI tests for the C0FFEEC0DE résumé landing page.
 // Covers: minimal business-card layout, bilingual toggle, hidden dragon easter
-// egg, share/QR, curl one-liner, accessibility, and seed reproducibility.
+// egg, share link, LinkedIn share, save-dragon token, Open Graph tags,
+// accessibility, and seed reproducibility.
 const { test, expect } = require("@playwright/test");
 
 test("page loads and shows the name exactly once (no duplicated blocks)", async ({ page }) => {
@@ -90,22 +91,20 @@ test("the dragon is reproducible from a ?d= seed after reveal", async ({ page })
   expect(gridA).toBe(gridB);
 });
 
-test("share button reveals the QR toggle, and the QR becomes visible", async ({ page }) => {
+test("share button reveals the inline share link and LinkedIn + save buttons", async ({ page }) => {
   await page.goto("/");
   await page.click(".made");
-  // the Show QR button and the inline share link are hidden until the visitor shares
-  await expect(page.locator(".qr-toggle")).toBeHidden();
+  // the inline share link is hidden until the visitor shares
   await expect(page.locator("#share-link")).toBeHidden();
   await page.click(".share-btn");
-  await expect(page.locator(".qr-toggle")).toBeVisible();
   // the share URL is revealed inline and carries the ?d= seed
   const link = page.locator("#share-link");
   await expect(link).toBeVisible();
   await expect(link).toHaveValue(/[?&]d=/);
   await expect(link).toHaveAttribute("aria-label", "Your dragon share link");
-  // opening the QR makes the #qr box visible
-  await page.click(".qr-toggle");
-  await expect(page.locator("#qr")).toBeVisible();
+  // no QR toggle is present
+  await expect(page.locator(".qr-toggle")).toHaveCount(0);
+  await expect(page.locator("#qr")).toHaveCount(0);
 });
 
 test("share reveals LinkedIn and save-dragon buttons pre-filled with the dragon URL", async ({ page }) => {
@@ -174,6 +173,20 @@ test("machine-readable endpoints are served", async ({ page }) => {
   expect(min.availability.status).toBe("open");
   const cv = await (await page.request.get(".well-known/cv.json")).json();
   expect(cv.schema).toBe("cv.json");
+});
+
+test("Open Graph meta tags use the résumé name, role, and summary", async ({ page }) => {
+  await page.goto("/");
+  const title = await page.locator("meta[property='og:title']").getAttribute("content");
+  expect(title).toContain("Aleksandr Krasnobai");
+  expect(title).toContain("Senior DevOps / SRE / Platform Engineer");
+  const desc = await page.locator("meta[property='og:description']").getAttribute("content");
+  expect(desc).toContain("DON'T PANIC");
+  const img = await page.locator("meta[property='og:image']").getAttribute("content");
+  expect(img).toMatch(/dragon-og\.png$/);
+  const res = await page.request.get(img);
+  expect(res.status()).toBe(200);
+  expect((await res.headers())["content-type"] || "").toContain("png");
 });
 
 test("skip-link and document structure are accessible", async ({ page }) => {

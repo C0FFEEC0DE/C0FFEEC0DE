@@ -60,16 +60,18 @@ post the dragon straight to LinkedIn.
   and referer leakage; a Playwright test asserts both tokens and that the
   aria-label follows the EN/RU toggle.
 - The shared page's LinkedIn preview card depends on Open Graph / meta tags on
-  the shared page, not on this button. The page currently exposes `<title>`
-  and a meta description only; richer `og:` tags (and a static `og:image`, since
-  the dragon is canvas-rendered and cannot serve as one) are a future
-  enhancement, not part of this ADR.
-- ADR-0009 (seed = share token), ADR-0010 (lazy QR), and ADR-0021 (inline link)
-  are unchanged; this ADR only adds a channel-specific link to the URL they
-  already produce. A Playwright test asserts the button is hidden before share,
-  visible after, and that its `href` decodes to the LinkedIn share endpoint
-  carrying the `?d=` URL with `target="_blank"`.
+  the shared page, not on this button. The page now exposes `og:title`,
+  `og:description`, `og:url`, `og:type`, `og:image`, and profile tags via
+  ADR-0028, so LinkedIn shows the owner's name, role, summary, and a static
+  dragon image in the preview card.
+- ADR-0009 (seed = share token) and ADR-0021 (inline link) are unchanged; this
+  ADR only adds a channel-specific link to the URL they already produce. A
+  Playwright test asserts the button is hidden before share, visible after, and
+  that its `href` decodes to the LinkedIn share endpoint carrying the `?d=` URL
+  with `target="_blank"`.
 
 ## Revision history
-- **v1 (current):** add a hidden "Share on LinkedIn" anchor revealed on share
+- **v1 (2026-07-30):** add a hidden "Share on LinkedIn" anchor revealed on share
   press; `share.js` pre-fills its href with the encoded dragon URL.
+- **v2 (2026-07-31):** note that Open Graph tags (ADR-0028) now feed LinkedIn's
+  preview card.

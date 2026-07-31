@@ -868,6 +868,14 @@ def _abs(base: str, path: str) -> str:
 # --------------------------------------------------------------------------- #
 # JSON-LD
 # --------------------------------------------------------------------------- #
+def _split_name(name: str) -> tuple[str, str]:
+    """Best-effort split into first/last name for Open Graph profile tags."""
+    parts = (name or "").strip().split()
+    if len(parts) >= 2:
+        return parts[0], " ".join(parts[1:])
+    return parts[0] if parts else "", ""
+
+
 def build_jsonld(r: dict) -> str:
     b = r["basics"]
     sameas = [p.get("url") for p in b.get("profiles", []) if p.get("url")]
@@ -888,6 +896,37 @@ def build_jsonld(r: dict) -> str:
     # context if an attacker edits the markdown front-matter.
     out = json.dumps(obj, ensure_ascii=False, indent=2)
     return out.replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
+
+
+def build_og_tags(r: dict, base: str) -> str:
+    """Open Graph meta tags for social-share previews (LinkedIn, etc.).
+
+    The dragon is canvas-rendered, so the og:image is a static PNG committed in
+    src/dragon-og.png and copied to dist/assets/ during the build.
+    """
+    b = r["basics"]
+    name = b.get("name", "")
+    label = b.get("label", "")
+    title = f"{name} — {label}" if name and label else (name or label)
+    desc = b.get("summary", "")
+    url = base.rstrip("/")
+    img = f"{url}/assets/dragon-og.png" if url else "/assets/dragon-og.png"
+    first, last = _split_name(name)
+    parts = [
+        f'<meta property="og:title" content="{esc(title)}">',
+        f'<meta property="og:description" content="{esc(desc)}">',
+        f'<meta property="og:url" content="{esc(url or "/")}">',
+        '<meta property="og:type" content="profile">',
+        f'<meta property="og:image" content="{esc(img)}">',
+        '<meta property="og:image:width" content="512">',
+        '<meta property="og:image:height" content="513">',
+        '<meta property="og:locale" content="en_US">',
+    ]
+    if first:
+        parts.append(f'<meta property="profile:first_name" content="{esc(first)}">')
+    if last:
+        parts.append(f'<meta property="profile:last_name" content="{esc(last)}">')
+    return "\n  ".join(parts)
 
 
 # --------------------------------------------------------------------------- #
@@ -974,6 +1013,7 @@ def build(clean: bool = False, do_pdf: bool = True):
         "HEADER_EN": render_header_fragment(resumes["en"], "en"),
         "HEADER_RU": render_header_fragment(resumes["ru"], "ru"),
         "JSONLD": jsonld,
+        "OG_TAGS": build_og_tags(resumes["en"], base),
         "BASE": base.rstrip("/"),
     })
     (DIST / "index.html").write_text(out, encoding="utf-8")
@@ -995,6 +1035,9 @@ def build(clean: bool = False, do_pdf: bool = True):
     # Copy frontend assets (CSS, JS, PNG). Self-hosted fonts were removed in
     # the minimal business-card redesign (ADR-0018 v2); the page uses system
     # sans-serif and the branded PDF embeds nothing beyond that.
+    og_src = SRC_DIR / "dragon-og.png"
+    if og_src.exists():
+        shutil.copy2(og_src, assets / "dragon-og.png")
     for f in SRC_DIR.iterdir():
         if (f.suffix in (".css", ".js") or f.name.endswith(".png")):
             shutil.copy2(f, assets / f.name)
@@ -1036,6 +1079,10 @@ def check(resumes: dict) -> list[str]:
         errors.append("missing dist/index.html")
     if not (DIST / "assets").is_dir():
         errors.append("missing dist/assets/")
+    if not (DIST / "assets" / "dragon-og.png").exists():
+        errors.append("missing dist/assets/dragon-og.png (Open Graph image)")
+    if not (DIST / "index.html").exists():
+        errors.append("missing dist/index.html")
     domain = os.environ.get("DOMAIN", "").strip()
     has_cname = (DIST / "CNAME").exists()
     if domain and not has_cname:

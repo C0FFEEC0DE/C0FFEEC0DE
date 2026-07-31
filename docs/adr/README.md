@@ -15,7 +15,7 @@ superseded record is marked **Superseded by ADR-00xx** and a new one is added.
 | 0007 | Bilingual EN/RU via paired markdown + client toggle | Accepted |
 | 0008 | Low-cognitive-load design as a first-class constraint | Accepted |
 | 0009 | Procedural pixel-art dragon, seeded from the URL | Accepted |
-| 0010 | QR via lazy-loaded, SRI-locked CDN dependency | Accepted |
+| 0010 | QR via lazy-loaded, SRI-locked CDN dependency | Superseded by ADR-0028 |
 | 0011 | Pure-Python build with minimal dependencies | Accepted |
 | 0012 | Security: escape all generated/injected content | Accepted |
 | 0013 | Three explicit resume audiences: human, LLM-agent, ATS | Accepted |
@@ -33,3 +33,4 @@ superseded record is marked **Superseded by ADR-00xx** and a new one is added.
 | 0025 | Landing page shows Contact only; full résumé lives in the PDF | Accepted |
 | 0026 | Dragon as a hidden easter egg | Accepted |
 | 0027 | Save dragon as a token PNG | Accepted |
+| 0028 | Open Graph tags for social share previews | Accepted |

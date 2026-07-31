@@ -1,6 +1,6 @@
 # ADR-0010 — QR via lazy-loaded, SRI-locked CDN dependency
 
-Date: 2026-07-30 · Status: Accepted
+Date: 2026-07-30 · Status: **Superseded by ADR-0028**
 
 ## Context
 A scannable QR gives the "tap-to-collect" feel of an NFC token. The dragon must
@@ -16,3 +16,9 @@ message (fail-safe; no security impact).
 - Most visitors (who don't scan) download no extra JS.
 - A CDN outage or hash mismatch never breaks the rest of the page.
 - The dependency surface is one small, stable, self-contained browser build.
+
+## Revision history
+- **v1 (2026-07-30):** added lazy QR path to the dragon share box.
+- **v2 (2026-07-31):** superseded. The QR feature and its CDN dependency were
+  removed in favour of a simpler share surface (copy link + LinkedIn + save PNG).
+  See ADR-0028.

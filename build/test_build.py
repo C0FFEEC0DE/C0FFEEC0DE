@@ -64,6 +64,7 @@ def test_build_produces_core_files(dist):
     assert (dist / "assets" / "site.css").is_file()
     assert (dist / "assets" / "print.css").is_file()
     assert (dist / "assets" / "dragon.js").is_file()
+    assert (dist / "assets" / "dragon-og.png").is_file(), "missing Open Graph image"
 
 
 def test_resume_json_valid(dist):
@@ -440,6 +441,22 @@ def test_landing_page_has_no_duplicate_info(dist):
         block = m.group(1)
         for f in ("Senior DevOps / SRE / Platform Engineer", "Belgrade", "DON'T PANIC"):
             assert block.count(f) <= 1, f"fact '{f}' duplicated in {lang} block"
+
+
+def test_open_graph_tags_present_and_escaped(dist):
+    """Open Graph tags must use the résumé name/role/summary and be escaped."""
+    build.build(clean=True)
+    html = (dist / "index.html").read_text("utf-8")
+    assert 'property="og:title"' in html
+    assert "Aleksandr Krasnobai" in html
+    assert "Senior DevOps / SRE / Platform Engineer" in html
+    assert 'property="og:description"' in html
+    assert "DON'T PANIC" in html or "DON&#x27;T PANIC" in html
+    assert 'property="og:image"' in html
+    assert "dragon-og.png" in html
+    assert 'property="og:type"' in html
+    assert 'property="profile:first_name"' in html
+    assert 'property="profile:last_name"' in html
 
 
 def test_render_body_fragment_has_no_header(dist):

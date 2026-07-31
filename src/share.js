@@ -1,6 +1,6 @@
-/* share.js — visitor's dragon "token": seed management, render, share link, QR.
-   No backend. Seed lives in the URL (?d=) + localStorage so the same link always
-   shows the same dragon. QR is lazy-loaded only when requested. */
+/* share.js — visitor's dragon "token": seed management, render, share link,
+   LinkedIn pre-fill, and save-to-disk PNG. No backend. Seed lives in the URL
+   (?d=) + localStorage so the same link always shows the same dragon. */
 (function () {
   "use strict";
 
@@ -11,13 +11,6 @@
   const shareLink = document.getElementById("share-link");
   const liShare = document.getElementById("share-li");
   const saveBtn = document.getElementById("save-dragon");
-  const qrBox = document.getElementById("qr");
-  const qrToggle = document.querySelector(".qr-toggle");
-
-  // QR lib (pinned, SRI-locked). Self-contained browser build exposing global
-  // `qrcode(typeNum, ecl)` with createDataURL(). If it fails to load we degrade quietly.
-  const QR_SRC = "https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js";
-  const QR_INTEGRITY = "sha384-lQXOAyZwHXE55JFyrOMB7nY2Wv+m5ZWNtJcHrd1rceRQXAYNLak8ukN5TjBTcIwz";
 
   function makeSeed() {
     if (window.crypto && crypto.getRandomValues) {
@@ -60,18 +53,6 @@
     if (btn) { const orig = btn.textContent; btn.textContent = "✓"; setTimeout(() => { btn.textContent = orig; }, 1200); }
   }
 
-  function loadQr() {
-    return new Promise((resolve, reject) => {
-      if (window.qrcode) return resolve();
-      const s = document.createElement("script");
-      s.src = QR_SRC;
-      if (QR_INTEGRITY) { s.integrity = QR_INTEGRITY; s.crossOrigin = "anonymous"; }
-      s.onload = () => resolve();
-      s.onerror = () => reject(new Error("QR lib failed"));
-      document.head.appendChild(s);
-    });
-  }
-
   function downloadToken(seed) {
     const token = document.createElement("canvas");
     window.DRAGON.drawToken(token, seed, "have a nice day");
@@ -83,26 +64,6 @@
     document.body.appendChild(a);
     a.click();
     setTimeout(() => a.remove(), 0);
-  }
-
-  async function showQr(seed) {
-    qrToggle.hidden = true;
-    qrBox.hidden = false;
-    qrBox.textContent = "…";
-    try {
-      await loadQr();
-      const url = shareUrl(seed);
-      const qr = window.qrcode(0, "M"); // type 0 = auto size, medium error correction
-      qr.addData(url);
-      qr.make();
-      const dataUrl = qr.createDataURL(4, 2); // cellSize 4, margin 2
-      qrBox.innerHTML = "";
-      const img = document.createElement("img");
-      img.src = dataUrl; img.alt = "QR code linking to your dragon";
-      qrBox.appendChild(img);
-    } catch (e) {
-      qrBox.textContent = "QR unavailable — just copy the link below.";
-    }
   }
 
   function init() {
@@ -124,12 +85,10 @@
         shareLink.hidden = false;
         try { shareLink.select(); } catch (_) { /* readonly select may throw; ignore */ }
       }
-      if (qrToggle) qrToggle.hidden = false;
       if (liShare) liShare.hidden = false;
       if (saveBtn) saveBtn.hidden = false;
     });
     if (saveBtn) saveBtn.addEventListener("click", () => downloadToken(seed));
-    if (qrToggle) qrToggle.addEventListener("click", () => showQr(seed));
   }
 
   document.addEventListener("DOMContentLoaded", init);

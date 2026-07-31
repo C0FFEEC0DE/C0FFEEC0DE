@@ -5,10 +5,10 @@ Date: 2026-07-31 · Status: Accepted
 ## Context
 
 ADR-0009 made the dragon deterministic from a URL seed, and ADR-0021 made that
-URL visible and selectable. Visitors can already copy the link or show a QR
-code, but there is no way to keep the dragon as an image. The owner wanted a
-small, on-brand way to download the current dragon as a collectible token,
-without adding backend complexity or changing the live canvas.
+URL visible and selectable. Visitors can already copy the link, but there is no
+way to keep the dragon as an image. The owner wanted a small, on-brand way to
+download the current dragon as a collectible token, without adding backend
+complexity or changing the live canvas.
 
 ## Decision
 
