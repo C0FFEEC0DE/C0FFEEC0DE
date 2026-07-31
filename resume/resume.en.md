@@ -22,11 +22,12 @@ basics:
   email: "hi@krasnobai.dev"
   # phone: "+TODO"                         # TODO: real phone (delete line if unused)
   url: "https://krasnobai.dev"
-  summary: "Senior DevOps / SRE engineer based in Belgrade, Serbia — permanent residence, CET, no visa sponsorship. I build and run high-throughput distributed systems, and the platform work that lets a team ship."
+  summary: "DON'T PANIC — I keep distributed systems running."
   location:
     city: "Belgrade"
-    region: "RS"
+    region: "Serbia"
     countryCode: "RS"
+    note: "permanent residence"
 profiles:
   - {network: "GitHub",   username: "C0FFEEC0DE", url: "https://github.com/C0FFEEC0DE"}
   - {network: "LinkedIn", username: "aleksandrkrasnobai", url: "https://www.linkedin.com/in/aleksandrkrasnobai"}
@@ -46,7 +47,7 @@ languages_hint:
 
 ## Summary
 
-Senior DevOps / SRE engineer based in Belgrade, Serbia — permanent residence, CET, no visa sponsorship. I build and run high-throughput distributed systems, and the platform work that lets a team ship.
+DON'T PANIC — I keep distributed systems running.
 
 ## Experience
 

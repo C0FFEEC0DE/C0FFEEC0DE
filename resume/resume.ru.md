@@ -22,11 +22,12 @@ basics:
   email: "hi@krasnobai.dev"
   # phone: "+TODO"                         # TODO: реальный телефон (удалите строку, если нет)
   url: "https://krasnobai.dev"
-  summary: "Старший DevOps / SRE-инженер из Белграда, Сербия — ПМЖ, часовой пояс CET, без визовой поддержки. Строю и сопровождаю высоконагруженные распределённые системы и платформу, которая позволяет команде быстро выпускать продукт."
+  summary: "DON'T PANIC — я слежу, чтобы распределённые системы работали."
   location:
     city: "Белград"
-    region: "RS"
+    region: "Сербия"
     countryCode: "RS"
+    note: "ПМЖ"
 profiles:
   - {network: "GitHub",   username: "C0FFEEC0DE", url: "https://github.com/C0FFEEC0DE"}
   - {network: "LinkedIn", username: "aleksandrkrasnobai", url: "https://www.linkedin.com/in/aleksandrkrasnobai"}
@@ -46,7 +47,7 @@ languages_hint:
 
 ## Summary
 
-Старший DevOps / SRE-инженер из Белграда, Сербия — ПМЖ, часовой пояс CET, без визовой поддержки. Строю и сопровождаю высоконагруженные распределённые системы и платформу, которая позволяет команде быстро выпускать продукт.
+DON'T PANIC — я слежу, чтобы распределённые системы работали.
 
 ## Experience
 

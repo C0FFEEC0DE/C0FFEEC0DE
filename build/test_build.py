@@ -408,8 +408,8 @@ def test_hero_has_one_h1_per_language(dist):
 
 def test_hero_header_is_bilingual(dist):
     """Both language headers are injected; the RU label is Russian, not the
-    hardcoded English one. The landing-page hero shows only label + name, not the
-    long summary (the summary is reserved for the branded PDF header)."""
+    hardcoded English one. The hero shows role tag + location tag + name +
+    one-line summary/lead."""
     import re
     build.build(clean=True)
     html = (dist / "index.html").read_text("utf-8")
@@ -419,26 +419,27 @@ def test_hero_header_is_bilingual(dist):
     assert "Senior DevOps / SRE Engineer" in hero
     assert "Старший DevOps / SRE-инженер" in hero
     assert "Aleksandr Krasnobai" in hero
-    # summary must NOT appear on the landing page hero (it is shown only in the PDF)
-    assert "Belgrade" not in hero, "landing hero should not repeat the summary/location"
-    assert "Open to roles" not in hero, "landing hero should not repeat availability status"
+    # location tags in both languages
+    assert "Belgrade, Serbia — permanent residence" in hero
+    assert "Белград, Сербия — ПМЖ" in hero
+    # one-line punchline lead (apostrophe is HTML-escaped in the rendered HTML)
+    assert "DON'T PANIC" in hero or "DON&#x27;T PANIC" in hero
     # no leftover template placeholders
     assert "{{HEADER_EN}}" not in html and "{{HEADER_RU}}" not in html
 
 
 def test_landing_page_has_no_duplicate_info(dist):
-    """ADR business card: no fact (label, location, availability, summary)
-    should appear twice on the landing page."""
+    """ADR business card: each fact should appear at most once per visible
+    language block, not duplicated inside the same block."""
     build.build(clean=True)
     html = (dist / "index.html").read_text("utf-8")
-    page = html[html.find("<body>"):html.find("</footer>")]
-    facts = ["Senior DevOps / SRE Engineer", "Belgrade", "Open to roles",
-             "permanent residence", "CET"]
-    for f in facts:
-        # the branded/designed PDF link may mention the label in its href text,
-        # so ignore the footer machine zone for this check.
-        count = page.count(f)
-        assert count <= 1, f"fact '{f}' appears {count} times in landing page body"
+    # Check each language block independently; the RU block is hidden by default.
+    for lang in ("en", "ru"):
+        m = re.search(rf'<div class="lang-block" data-lang="{lang}"[^\>]*>(.*?)\n\s*</div\s*>', html, re.S)
+        assert m, f"{lang} lang-block not found"
+        block = m.group(1)
+        for f in ("Senior DevOps / SRE Engineer", "Belgrade", "DON'T PANIC"):
+            assert block.count(f) <= 1, f"fact '{f}' duplicated in {lang} block"
 
 
 def test_render_body_fragment_has_no_header(dist):

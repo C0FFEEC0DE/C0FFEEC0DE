@@ -261,23 +261,33 @@ def _resume_header_inner(r: dict, lang: str, *, include_summary: bool = True) ->
     """Name / tag / optional summary lines, no wrapper. Shared by the landing
     hero and the branded-PDF header so the two never diverge.
 
-    To avoid duplicating information already shown elsewhere:
-    - The tag row shows ONLY the label (role). Location, status, and the site URL
-      are not repeated here; they appear in the contact line / footer / body.
-    - The summary is emitted only when include_summary=True (branded PDF header).
-      The landing-page business card intentionally omits the long summary,
-      because the PDF CTA is the detail path (ADR-0025).
+    The tag row shows the role label and the location. The summary/lead is
+    emitted only when include_summary=True (branded PDF header); the landing
+    page shows it too now as a one-line punchline, because it is the core
+    identity statement and does not duplicate the tags.
     """
     b = r["basics"]
     tags: list[str] = []
     if b.get("label"):
         tags.append(_tag_pill(b["label"]))
+    loc = b.get("location")
+    if isinstance(loc, dict) and loc.get("city"):
+        region = loc.get("region") or loc.get("countryCode")
+        city = loc["city"]
+        tag_text = city
+        if region:
+            tag_text += f", {region}"
+        if loc.get("note"):
+            tag_text += f" — {loc['note']}"
+        tags.append(_tag_pill(tag_text))
+    elif isinstance(loc, str) and loc:
+        tags.append(_tag_pill(loc))
 
     parts: list[str] = []
     if tags:
         parts.append(f'<p class="tags">{"".join(tags)}</p>')
     parts.append(f'<h1>{esc(b.get("name"))}</h1>')
-    if include_summary and b.get("summary"):
+    if b.get("summary"):
         parts.append(f'<p class="lead">{esc(b["summary"])}</p>')
     return "\n".join(parts)
 
@@ -317,16 +327,16 @@ def _contact_section(b: dict, lang: str, *, show_url: bool = True) -> str:
 
 
 def _business_card_contacts(b: dict, lang: str) -> str:
-    """Compact contact row for the landing-page business card: email +
-    LinkedIn + Telegram only. GitHub is intentionally omitted here and lives
-    in the footer machine links."""
+    """Compact contact row for the landing-page business card: LinkedIn +
+    Telegram + email. GitHub is intentionally omitted here and lives in the
+    footer machine links."""
     items: list[str] = []
-    if b.get("email"):
-        items.append(f'<a href="mailto:{esc(b["email"])}">{esc(b["email"])}</a>')
     for p in b.get("profiles", []) or []:
         network = p.get("network", "")
         if network in ("LinkedIn", "Telegram"):
             items.append(f'<a href="{esc(p.get("url"))}">{esc(network)}</a>')
+    if b.get("email"):
+        items.append(f'<a href="mailto:{esc(b["email"])}">{esc(b["email"])}</a>')
     if not items:
         return ""
     sep = '<span class="sep" aria-hidden="true">·</span>'

@@ -16,19 +16,21 @@ test("page loads and shows the name exactly once (no duplicated blocks)", async 
   expect(visibleH1).toBe(1);
 });
 
-test("default language is English with the label as a tag", async ({ page }) => {
+test("default language is English with role and location tags", async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator(".hero [data-lang='en'] .tags")).toContainText(
-    "Senior DevOps / SRE Engineer",
-  );
+  const enTags = page.locator(".hero [data-lang='en'] .tags");
+  await expect(enTags).toContainText("Senior DevOps / SRE Engineer");
+  await expect(enTags).toContainText("Belgrade, Serbia — permanent residence");
   await expect(page.locator(".hero [data-lang='ru'] .tags")).toBeHidden();
 });
 
 test("EN/RU toggle swaps the hero header and contact row, one language at a time", async ({ page }) => {
   await page.goto("/");
+  await expect(page.locator(".hero [data-lang='en'] .lead")).toContainText("DON'T PANIC");
   // switch to RU
   await page.click(".lang-toggle button[data-lang='ru']");
   await expect(page.locator(".hero [data-lang='ru'] .tags")).toContainText("SRE");
+  await expect(page.locator(".hero [data-lang='ru'] .tags")).toContainText("Белград, Сербия — ПМЖ");
   await expect(page.locator(".hero [data-lang='en'] .tags")).toBeHidden();
   // contact row follows the same toggle
   await expect(page.locator("#resume [data-lang='ru']")).toBeVisible();
