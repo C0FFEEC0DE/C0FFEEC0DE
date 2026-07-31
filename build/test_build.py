@@ -4,6 +4,7 @@ Run from repo root:  python -m pytest build/test_build.py -q
 """
 import json
 import os
+import re
 import sys
 
 import pytest
@@ -283,8 +284,8 @@ def test_resume_body_has_no_header(dist):
     import re
     build.build(clean=True)
     html = (dist / "index.html").read_text("utf-8")
-    # Contact now comes before the hero; slice only the first <section id="resume"> block.
-    m = re.search(r'<section id="resume"[^>]*>(.*?)\n\s*</section>', html, re.S)
+    # Slice only the first <section id="resume"> block (class may precede id).
+    m = re.search(r'<section[^>]*\sid="resume"[^>]*>(.*?)\n\s*</section>', html, re.S)
     assert m, "#resume section not found"
     resume = m.group(1)
     assert '<header class="hero">' not in resume
@@ -338,25 +339,31 @@ def test_render_body_fragment_has_no_header(dist):
 
 
 def test_landing_page_shows_contact_only(dist):
-    """ADR-0025: the landing #resume block shows Contact only — the full résumé
-    body (Experience, Skills, Projects, Education, Certificates, Languages)
-    lives in the branded PDF, not on the page. Guards against re-injecting
-    render_body_fragment into the landing page."""
+    """ADR-0025: the landing #resume block shows the compact business-card
+    contacts only — email + LinkedIn + Telegram. The full résumé body
+    (Experience, Skills, Projects, Education, Certificates, Languages) lives in
+    the branded PDF, not on the page."""
     build.build(clean=True)
     html = (dist / "index.html").read_text("utf-8")
     resume = html[html.find('id="resume"'):html.find("<footer")]
-    # Contact is the one block kept (both languages)
-    assert "Contact" in resume and "Контакты" in resume
+    # both languages are present, each with the three top contacts
+    assert 'class="contact-row"' in resume
+    assert "LinkedIn" in resume and "Telegram" in resume
+    assert "mailto:" in resume
+    # GitHub is intentionally moved to the footer machine links, not the top contacts
+    github_in_resume = re.search(r'id="resume".*GitHub', resume, re.S)
+    assert not github_in_resume, "GitHub must not appear in the #resume contact row"
     # none of the other résumé sections leak onto the landing page
     for absent in ("Work Experience", "Skills", "Projects", "Education",
                    "Certificates", "Languages", "Опыт работы", "Навыки",
                    "Проекты", "Образование", "Сертификаты", "Языки"):
         assert absent not in resume, f"landing page leaked section: {absent}"
-    # the branded PDF body still carries the full résumé
+    # the branded PDF body still carries the full résumé (including GitHub)
     en = build.parse_resume(build.RESUME_DIR / "resume.en.md")
     body = build.render_body_fragment(en, "en")
     assert "Work Experience" in body
     assert "Skills" in body
+    assert "GitHub" in body
 
 
 # --- ATS format: single column, standard font, real text, no graphics ------- #
@@ -441,112 +448,75 @@ def test_resume_md_is_clean_markdown(dist):
     assert "<script" not in md
 
 
-# --- hero CTA: two explicit links — human PDF + machine/AI résumé ----------- #
-def test_hero_cta_has_two_audience_links(dist):
-    """The hero has exactly two primary links with distinct audiences: the
-    human PDF (resume.pdf) and the machine/AI résumé (resume.json). The
-    branded PDF is NOT in the hero (it lives in the footer)."""
+# --- hero CTA: single primary PDF download button ----------------------------
+def test_hero_cta_is_pdf_download(dist):
+    """The minimal business card has one primary CTA: download the ATS PDF
+    (resume.pdf). The AI/LLM résumé and branded PDF live in the footer machine
+    links, not in the hero."""
     import re
     build.build(clean=True)
     html = (dist / "index.html").read_text("utf-8")
-    cta = re.search(r'<div class="cta">(.*?)</div>', html, re.S).group(1)
+    cta = re.search(r'<section class="cta-section"[^>]*>(.*?)</section>', html, re.S).group(1)
     links = re.findall(r'href="([^"]+)"', cta)
-    assert "resume.pdf" in links, "hero must link the human PDF"
-    assert "resume.json" in links, "hero must link the machine/AI résumé"
-    assert "resume-branded.pdf" not in links, "branded PDF stays in the footer"
-    assert len(links) == 2, f"hero CTA should have two links, got {links}"
+    assert links == ["resume.pdf"], f"hero CTA should have exactly one PDF link, got {links}"
+    assert 'data-i18n="download"' in cta, "CTA uses the bilingual download label"
 
 
-def test_ai_link_label_is_bilingual(dist):
-    build.build(clean=True)
-    html = (dist / "index.html").read_text("utf-8")
-    assert 'data-i18n="ai_resume"' in html
-
-
-# --- ADR-0017: single Forest theme + ADR-0018 human feel -------------------- #
+# --- ADR-0017: fixed light Forest theme + system sans-serif ------------------ #
 def test_single_forest_theme_no_picker(dist):
-    """ADR-0017 was reduced to a single Forest theme per owner preference: the
-    palette picker is gone, there is no data-palette attribute anywhere, and
-    Forest is the bare :root default. The human feel (ADR-0018) — self-hosted
-    JetBrains Mono headings + OFL license — is still present."""
+    """ADR-0017 v4: fixed light Forest theme. The palette picker is gone, there
+    is no data-palette attribute, no dark block, no theme toggle, and the page
+    uses system sans-serif (ADR-0018 v2)."""
     build.build(clean=True)
     html = (dist / "index.html").read_text("utf-8")
-    # the palette picker must be gone
+    # the palette picker and theme toggle must be gone
     assert 'id="palette-select"' not in html, "palette picker should be removed"
     assert "palette-pick" not in html, "palette-pick label should be removed"
+    assert 'class="theme-toggle"' not in html, "theme toggle should be removed"
     css = (dist / "assets" / "site.css").read_text("utf-8")
-    # no data-palette attribute anywhere — Forest is the bare :root default
+    # no data-palette or data-theme dark axis remains
     assert "data-palette" not in css, "no data-palette should remain in CSS"
-    # ADR-0018: JetBrains Mono headings + self-hosted woff2
-    assert "--c-head-font:" in css and "JetBrains Mono" in css
-    assert "@font-face" in css and "jetbrains-mono-400.woff2" in css
+    assert ':root[data-theme="dark"]' not in css, "no dark theme block should remain in CSS"
+    assert "@media (prefers-color-scheme: dark)" not in css, "no no-JS dark query should remain"
+    # ADR-0018 v2: system sans-serif, no JetBrains Mono
+    assert "--c-head-font:" not in css, "--c-head-font should be removed"
+    assert "JetBrains Mono" not in css, "JetBrains Mono should be removed from CSS"
+    assert "@font-face" not in css, "no @font-face should remain in site CSS"
     for w in ("jetbrains-mono-400.woff2", "jetbrains-mono-700.woff2"):
-        assert (dist / "assets" / w).is_file(), f"missing {w} in assets"
-    # OFL-1.1 requires the license accompany redistribution
-    assert (dist / "assets" / "jetbrains-mono-LICENSE.txt").is_file(), (
-        "JetBrains Mono OFL license must ship with the font")
+        assert not (dist / "assets" / w).exists(), f"{w} should not be copied to assets"
+    assert not (dist / "assets" / "jetbrains-mono-LICENSE.txt").exists(), (
+        "JetBrains Mono OFL license should not ship now that the font is gone")
 
 
-def test_forest_has_light_and_dark_blocks(dist):
-    """The single Forest theme defines a bare :root (light) block and a
-    :root[data-theme="dark"] block, and the dark block declares the same full
-    --c-* var set as the light block so dark mode fully overrides light (no
-    light value can leak through in dark mode)."""
+def test_forest_has_single_light_block(dist):
+    """The fixed Forest theme defines exactly one :root block with the light
+    palette; there is no dark override."""
     import re
     build.build(clean=True)
     css = (dist / "assets" / "site.css").read_text("utf-8")
     light = re.search(r"(?<![\w-]):root\s*\{([^}]*)\}", css)
     assert light, "bare :root (light) block missing"
-    dark = re.search(r':root\[data-theme="dark"\]\s*\{([^}]*)\}', css)
-    assert dark, ":root[data-theme=dark] block missing"
     light_vars = set(re.findall(r"--(c-[a-z-]+)\s*:", light.group(1)))
-    dark_vars = set(re.findall(r"--(c-[a-z-]+)\s*:", dark.group(1)))
     assert light_vars, "light block declares no --c-* vars"
-    # --c-head-font is mode-independent (the font stack doesn't flip with mode),
-    # so the dark block intentionally omits it; every other --c-* color token
-    # that light declares must be re-declared in dark so no light color leaks.
-    mode_sensitive = light_vars - {"c-head-font"}
-    assert dark_vars == mode_sensitive, (
-        f"dark var set {dark_vars} != light color set {mode_sensitive}; a missing "
-        "var would let the light value leak through in dark mode")
-    # the canonical Forest values are present
+    # the canonical Forest light values are present
     assert "--c-accent: #2f7d3a" in light.group(1), "forest light accent wrong"
-    assert "--c-accent: #7cc68a" in dark.group(1), "forest dark accent wrong"
+    assert "--c-bg: #f4f6f2" in light.group(1), "forest light background wrong"
 
 
 def test_branded_pdf_palette_matches_forest(dist):
     """The branded PDF (src/print.css, rendered via WeasyPrint) must use the
     Forest palette, not the old calm blue/brown — so the downloadable PDF
-    matches the on-screen Forest theme (the @cr review caught it drifting to
-    the pre-reduction calm colors)."""
+    matches the on-screen Forest theme. It also uses system sans-serif."""
     build.build(clean=True)
     css = (build.SRC_DIR / "print.css").read_text("utf-8")
     assert "#2f7d3a" in css, "branded PDF must use the Forest green accent"
     assert "#3a5ae0" not in css, "old calm blue accent must not survive in print.css"
     assert "#2a2620" not in css, "old calm brown text must not survive in print.css"
+    assert "JetBrains Mono" not in css, "JetBrains Mono should be removed from print.css"
+    assert "@font-face" not in css, "no @font-face should remain in print.css"
 
 
-def test_no_js_dark_query_is_scoped_to_no_js(dist):
-    """Every prefers-color-scheme:dark selector must be scoped to no-JS
-    (data-theme absent) so it only applies before JS sets data-theme —
-    otherwise it would pollute JS-on dark mode (static guard for the @cr no-JS
-    verification gap, since Playwright always runs with JS on)."""
-    import re
-    build.build(clean=True)
-    css = (dist / "assets" / "site.css").read_text("utf-8")
-    # the no-JS scoped selector must exist (forest-dark + button-text dark rules)
-    assert ":not([data-theme=\"light\"]):not([data-theme=\"dark\"])" in css, (
-        "no-JS scoped dark selector missing")
-    # no UN-scoped ":root:not([data-theme=\"light\"])" may remain — i.e. every
-    # occurrence must be immediately followed by ":not([data-theme=\"dark\"])".
-    broad = re.findall(
-        r":root:not\(\[data-theme=\"light\"]\)(?!\s*:not\(\[data-theme=\"dark\"]\))",
-        css,
-    )
-    assert not broad, f"un-scoped prefers-dark selector still present: {broad}"
-
-
-# --- ADR-0019: automated WCAG contrast guard for the single theme/mode ------- #
+# --- ADR-0019: automated WCAG contrast guard for the fixed light theme -------- #
 def _hex_lum(color):
     """Relative luminance of a #rgb / #rrggbb color (sRGB, WCAG 2.x)."""
     h = color.strip().lstrip("#")
@@ -568,12 +538,14 @@ def _contrast(fg, bg):
 
 
 def _theme_vars(css):
-    """Parse site.css into {"light": {var: hex}, "dark": {...}} from the
-    top-level :root (light) and :root[data-theme="dark"] (dark) blocks.
-    Top-level only: the @media print :root and the no-JS media :root:not(...)
-    are nested inside @media, so the brace-depth walker sees them as the body
-    of the @media rule, not as top-level selectors — they are skipped."""
+    """Parse site.css into {"light": {var: hex}} from the top-level :root
+    block. Comments are stripped first so they do not pollute selector detection.
+    The @media print :root block is nested inside @media, so the brace-depth
+    walker sees it as the body of the @media rule and skips it."""
     import re
+    # strip CSS comments — they can contain braces and appear before :root,
+    # which would otherwise make the selector include the comment text.
+    css = re.sub(r"/\*[\s\S]*?\*/", "", css)
     out = {}
     i, n = 0, len(css)
     while i < n:
@@ -602,60 +574,51 @@ def _theme_vars(css):
 
 
 def test_forest_theme_meets_aa_contrast(dist):
-    """ADR-0019: compute WCAG contrast for the Forest theme, light AND dark, and
+    """ADR-0019: compute WCAG contrast for the fixed light Forest theme and
     assert AA (>=4.5:1) for body text, muted text, link/accent text on both the
     page background and the block surface, plus filled-button text on the
     accent. Machine-enforced so a future color edit can't silently regress."""
     build.build(clean=True)
     css = (dist / "assets" / "site.css").read_text("utf-8")
     theme = _theme_vars(css)
-    assert set(theme) == {"light", "dark"}, f"parsed modes {sorted(theme)}"
+    assert set(theme) == {"light"}, f"parsed modes {sorted(theme)}"
 
-    # filled button / active-toggle text color: white in light, near-black in dark
-    BTN_FG = {"light": "#ffffff", "dark": "#15171c"}
+    # filled button text color is white on the green accent
+    BTN_FG = "#ffffff"
     failures = []
-    for mode in ("light", "dark"):
-        v = theme[mode]
-        for key in ("c-bg", "c-surface", "c-text", "c-muted", "c-accent"):
-            assert v.get(key), f"{mode}: missing --{key}"
-        bg, surface = v["c-bg"], v["c-surface"]
-        text, muted, accent = v["c-text"], v["c-muted"], v["c-accent"]
-        # Block interiors (.block { background: var(--c-surface) }) hold most of
-        # the page's text — summary, meta, role, contact links — so contrast must
-        # be enforced against c-surface too, not only c-bg.
-        checks = {
-            "text/bg": (text, bg),
-            "muted/bg": (muted, bg),
-            "accent/bg (link text)": (accent, bg),
-            "text/surface (block body)": (text, surface),
-            "muted/surface (block meta)": (muted, surface),
-            "accent/surface (block link)": (accent, surface),
-            "button-fg/accent": (BTN_FG[mode], accent),
-        }
-        for name, (fg, b) in checks.items():
-            r = _contrast(fg, b)
-            if r < 4.5:
-                failures.append(f"{mode} {name} {fg} on {b} = {r:.2f}:1")
+    v = theme["light"]
+    for key in ("c-bg", "c-surface", "c-text", "c-muted", "c-accent"):
+        assert v.get(key), f"light: missing --{key}"
+    bg, surface = v["c-bg"], v["c-surface"]
+    text, muted, accent = v["c-text"], v["c-muted"], v["c-accent"]
+    # Block interiors (.block { background: var(--c-surface) }) hold most of
+    # the page's text — summary, meta, role, contact links — so contrast must
+    # be enforced against c-surface too, not only c-bg.
+    checks = {
+        "text/bg": (text, bg),
+        "muted/bg": (muted, bg),
+        "accent/bg (link text)": (accent, bg),
+        "text/surface (block body)": (text, surface),
+        "muted/surface (block meta)": (muted, surface),
+        "accent/surface (block link)": (accent, surface),
+        "button-fg/accent": (BTN_FG, accent),
+    }
+    for name, (fg, b) in checks.items():
+        r = _contrast(fg, b)
+        if r < 4.5:
+            failures.append(f"light {name} {fg} on {b} = {r:.2f}:1")
     assert not failures, (
         "WCAG AA (<4.5:1) contrast failures:\n  " + "\n  ".join(failures))
 
 
-def test_button_text_color_matches_mode(dist):
-    """The filled-button text color must be white in light and #15171c in dark
-    (the global rule), so the contrast guard's BTN_FG assumption holds — a
-    future edit that flips this would otherwise make the contrast guard test
-    the wrong pair."""
+def test_button_text_color_is_white_on_accent(dist):
+    """The filled-button text color is white on the Forest accent (#2f7d3a),
+    so the contrast guard's BTN_FG assumption holds."""
     import re
     build.build(clean=True)
     css = (dist / "assets" / "site.css").read_text("utf-8")
-    # light: .btn-primary --bs-btn-color: #fff
     assert re.search(r"\.btn-primary\s*\{[^}]*--bs-btn-color:\s*#fff", css), (
         "light .btn-primary must use white text")
-    # dark: :root[data-theme="dark"] .btn-primary --bs-btn-color: #15171c
-    assert ':root[data-theme="dark"] .btn-primary' in css
-    assert re.search(
-        r':root\[data-theme="dark"\]\s*\.btn-primary\s*\{[^}]*--bs-btn-color:\s*#15171c',
-        css), "dark .btn-primary must use #15171c text"
 
 
 # --- ADR-0024 v2: contact profiles are GitHub, LinkedIn, Telegram ---------- #

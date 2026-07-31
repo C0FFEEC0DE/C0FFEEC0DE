@@ -1,4 +1,4 @@
-# ADR-0017 — Single Forest theme
+# ADR-0017 — Single fixed Forest theme
 
 Date: 2026-07-30 · Status: Accepted
 
@@ -12,60 +12,54 @@ could try looks before settling. After living with them, the owner asked to
 is pointless UI and adds cognitive load, so the whole selection mechanism is
 removed: Forest becomes the bare `:root` default with no `data-palette` axis.
 
+Later, for the minimal business-card redesign, the owner asked to fix the page
+in the **light Forest** mode and remove the dark variant and the toggle
+entirely. A one-page résumé business card does not need a theme switch; the
+light palette is readable, friendly, and keeps the layout simple.
+
 ## Decision
-Ship a **single** theme — **Forest** — with a light and a dark variant:
+Ship a **single, fixed light Forest theme**. There is no dark variant and no
+visitor-facing theme switch:
 
 - **Forest light** — paper-neutral greens (`--c-bg #f4f6f2`, `--c-surface #fff`,
   `--c-text #1f2a1f`, `--c-muted #5b6b5b`), one green accent `#2f7d3a`,
   `--c-accent-soft #dcebd9`, `--c-line #e0e6dd`, soft rounding, warm low shadow.
-- **Forest dark** — `--c-bg #131a14`, `--c-surface #1d251e`, `--c-text #e6eee6`,
-  `--c-muted #97a897`, light accent `#7cc68a` (dark text on it for AA).
 
 Mechanics:
-- `:root` carries the Forest light tokens plus the full Bootstrap component-var
+- `:root` carries the Forest light tokens plus the Bootstrap component-var
   mappings (`--bs-body-bg`, `--bs-body-color`, `--bs-link-color`, the `--bs-*-rgb`
-  triplets, `--bs-font-sans-serif`). `:root[data-theme="dark"]` re-declares every
-  mode-sensitive `--c-*` token and the dark triplets, so dark mode fully overrides
-  light (no light color leaks through). `--c-head-font` is mode-independent and
-  lives only in the light block.
-- `data-theme` (light/dark) is the **only** color axis. It is set on load by
-  `i18n.js` (from `localStorage("theme")` or `prefers-color-scheme`) and toggled
-  by the ◐ button. There is no `data-palette` attribute anywhere.
-- The no-JS path: `@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]):not([data-theme="dark"]) { …forest dark… } }`
-  applies Forest dark before JS runs; once JS sets `data-theme` it stops
-  matching. With JS off and a light OS, the bare `:root` Forest light applies.
+  triplets, `--bs-font-sans-serif`). There is no `:root[data-theme="dark"]` block.
+- The `data-theme` attribute is **not set anywhere** — not by `i18n.js`, not by
+  the page. The bare `:root` is the only source of color.
+- The no-JS `@media (prefers-color-scheme: dark)` fallback is removed: with a
+  fixed light theme, the OS preference is intentionally ignored. The page is
+  always Forest light, both with and without JavaScript.
+- The theme-toggle button (◐) is removed from the top bar.
 
 ## Consequences
-- The top bar is simpler (language toggle + ◐ only); no picker, no `data-palette`
-  axis, no palette allow-list or `applyPalette`/`initPalette` in `i18n.js`.
-  Cognitive load drops, matching ADR-0008.
-- The theme is no longer user-switchable live; changing it is a source edit to
-  the `:root` / `:root[data-theme="dark"]` blocks in `src/site.css`. The
-  thirteen-palette history is preserved in git, so re-adding a theme is a
-  matter of restoring a palette block + an `<option>` + the `PALETTES`
-  allow-list — but that is now opt-in, not the default.
-- A build test asserts the picker is gone, no `data-palette` remains, and
-  the Forest light + dark blocks exist with the dark block re-declaring every
-  mode-sensitive color token; Playwright asserts the ◐ toggle flips the accent
-  between `#2f7d3a` (light) and `#7cc68a` (dark).
-- Contrast is **machine-enforced** (ADR-0019): the build computes the WCAG ratio
-  for the Forest theme in both modes across text/muted/accent on both
-  `--c-bg` and `--c-surface`, plus button-on-accent, and fails below 4.5:1.
-- **Print is theme-agnostic.** `@media print` forces the Forest light tokens
-  with `!important`, so Ctrl+P always renders dark-on-light even when dark mode
-  is active. The live page is not the real print path (the branded PDF is — see
-  ADR-0014), but this keeps an impromptu browser print readable. A Playwright
-  test pins this by emulating print media under dark mode.
-- **The branded PDF matches the theme.** `src/print.css` (rendered via
-  WeasyPrint into `resume-branded.pdf`) uses the Forest palette (accent
-  `#2f7d3a`, text `#1f2a1f`, muted `#5b6b5b`, line `#e0e6dd`), so the
-  downloadable PDF matches the on-screen Forest theme rather than the old calm
-  blue/brown. A build test pins this so the PDF can't drift back to the
-  pre-reduction calm colors.
+- The top bar is now just the language toggle. Cognitive load drops further,
+  matching ADR-0008.
+- `src/site.css` shrinks: one `:root` block, no dark overrides, no no-JS dark
+  media query, no dark-mode button text rules.
+- `src/i18n.js` no longer reads/writes `localStorage("theme")` and no longer
+  flips `data-theme` / `data-bs-theme`.
+- Contrast is still machine-enforced (ADR-0019), but now only the light mode
+  pairs are checked: text/muted/accent on `--c-bg` and `--c-surface`, plus
+  button-text-on-accent.
+- **Print is trivially theme-agnostic.** `@media print` already forces the
+  Forest light tokens with `!important`; because the live page never leaves
+  light, the print override is now a defensive guard rather than a mode flip.
+- **The branded PDF matches the live page.** `src/print.css` keeps the Forest
+  palette (accent `#2f7d3a`, text `#1f2a1f`, muted `#5b6b5b`, line `#e0e6dd`).
+- The dark-mode Playwright tests are removed. The remaining no-JS tests assert
+  that scripts blocked still yield the same Forest light background and that
+  no `data-theme` attribute is injected.
 
 ## Revision history
-- **v3 (current):** reduced to the single Forest theme; picker and
-  `data-palette` axis removed per owner preference.
+- **v4 (current):** fixed light Forest theme only; dark variant, toggle, and
+  no-JS dark query removed per owner preference for the minimal business card.
+- **v3:** reduced to the single Forest theme; picker and `data-palette` axis
+  removed per owner preference.
 - **v2:** added Vapor (vaporwave), Phosphor (green CRT), Amber (amber CRT) —
   thirteen palettes; added a machine-enforced contrast guard (ADR-0019) and an
   accent-distinctness guard.

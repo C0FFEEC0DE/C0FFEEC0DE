@@ -1,13 +1,13 @@
 // UI tests for the C0FFEEC0DE résumé landing page.
-// Covers: the no-duplication fix, bilingual toggle, the dragon token,
-// share/QR, curl one-liner, theme toggle, accessibility, and seed reproducibility.
+// Covers: minimal business-card layout, bilingual toggle, hidden dragon easter
+// egg, share/QR, curl one-liner, accessibility, and seed reproducibility.
 const { test, expect } = require("@playwright/test");
 
 test("page loads and shows the name exactly once (no duplicated blocks)", async ({ page }) => {
   await page.goto("/");
   // exactly one <h1> is visible — the EN hero header (the RU one is hidden)
-  await expect(page.locator(".hero-text [data-lang='en'] h1")).toBeVisible();
-  await expect(page.locator(".hero-text [data-lang='ru'] h1")).toBeHidden();
+  await expect(page.locator(".hero [data-lang='en'] h1")).toBeVisible();
+  await expect(page.locator(".hero [data-lang='ru'] h1")).toBeHidden();
   const visibleH1 = await page.evaluate(() => {
     return Array.from(document.querySelectorAll("h1")).filter(
       (h) => h.offsetParent !== null || h.getClientRects().length > 0,
@@ -18,27 +18,26 @@ test("page loads and shows the name exactly once (no duplicated blocks)", async 
 
 test("default language is English with the label as a tag", async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator(".hero-text [data-lang='en'] .tags")).toContainText(
+  await expect(page.locator(".hero [data-lang='en'] .tags")).toContainText(
     "Senior DevOps / SRE Engineer",
   );
-  await expect(page.locator(".hero-text [data-lang='ru'] .tags")).toBeHidden();
+  await expect(page.locator(".hero [data-lang='ru'] .tags")).toBeHidden();
 });
 
-test("EN/RU toggle swaps the hero header and résumé body, one language at a time", async ({ page }) => {
+test("EN/RU toggle swaps the hero header and contact row, one language at a time", async ({ page }) => {
   await page.goto("/");
   // switch to RU
   await page.click(".lang-toggle button[data-lang='ru']");
-  await expect(page.locator(".hero-text [data-lang='ru'] .tags")).toContainText("SRE");
-  await expect(page.locator(".hero-text [data-lang='en'] .tags")).toBeHidden();
-  // résumé body follows the same toggle (ADR-0025: the landing #resume block
-  // shows Contact only — the full body lives in the branded PDF)
+  await expect(page.locator(".hero [data-lang='ru'] .tags")).toContainText("SRE");
+  await expect(page.locator(".hero [data-lang='en'] .tags")).toBeHidden();
+  // contact row follows the same toggle
   await expect(page.locator("#resume [data-lang='ru']")).toBeVisible();
   await expect(page.locator("#resume [data-lang='en']")).toBeHidden();
   await expect(page.locator("#resume [data-lang='ru']")).toContainText("LinkedIn");
   await expect(page.locator("#resume [data-lang='ru']")).toContainText("Telegram");
   // switch back to EN
   await page.click(".lang-toggle button[data-lang='en']");
-  await expect(page.locator(".hero-text [data-lang='en'] .tags")).toContainText(
+  await expect(page.locator(".hero [data-lang='en'] .tags")).toContainText(
     "Senior DevOps / SRE Engineer",
   );
   await expect(page.locator("#resume [data-lang='en']")).toBeVisible();
@@ -54,8 +53,11 @@ test("language toggle buttons reflect aria-pressed correctly", async ({ page }) 
   await expect(page.locator(".lang-toggle button[data-lang='en']")).toHaveAttribute("aria-pressed", "false");
 });
 
-test("the dragon renders pixels onto the canvas and shows a seed id", async ({ page }) => {
+test("the dragon is hidden by default and revealed by clicking the footer note", async ({ page }) => {
   await page.goto("/");
+  await expect(page.locator("#dragon-box")).toBeHidden();
+  await page.click(".made");
+  await expect(page.locator("#dragon-box")).toBeVisible();
   await expect(page.locator("#dragon-id")).toHaveText(/^#\w{4,}$/);
   const nonTransparent = await page.evaluate(() => {
     const c = document.getElementById("dragon");
@@ -68,8 +70,9 @@ test("the dragon renders pixels onto the canvas and shows a seed id", async ({ p
   expect(nonTransparent).toBeGreaterThan(0);
 });
 
-test("the dragon is reproducible from a ?d= seed", async ({ page }) => {
+test("the dragon is reproducible from a ?d= seed after reveal", async ({ page }) => {
   await page.goto("/?d=abc12345");
+  await page.click(".made");
   await expect(page.locator("#dragon-id")).toHaveText("#abc12345");
   const gridA = await page.evaluate(() => {
     const c = document.getElementById("dragon");
@@ -77,6 +80,7 @@ test("the dragon is reproducible from a ?d= seed", async ({ page }) => {
   });
   // reload — same seed must produce the identical pixel buffer
   await page.goto("/?d=abc12345");
+  await page.click(".made");
   const gridB = await page.evaluate(() => {
     const c = document.getElementById("dragon");
     return c.getContext("2d").getImageData(0, 0, c.width, c.height).data.join(",");
@@ -86,23 +90,25 @@ test("the dragon is reproducible from a ?d= seed", async ({ page }) => {
 
 test("share button reveals the QR toggle, and the QR becomes visible", async ({ page }) => {
   await page.goto("/");
+  await page.click(".made");
   // the Show QR button and the inline share link are hidden until the visitor shares
   await expect(page.locator(".qr-toggle")).toBeHidden();
   await expect(page.locator("#share-link")).toBeHidden();
   await page.click(".share-btn");
   await expect(page.locator(".qr-toggle")).toBeVisible();
-  // ADR-0021: the share URL is revealed inline and carries the ?d= seed
+  // the share URL is revealed inline and carries the ?d= seed
   const link = page.locator("#share-link");
   await expect(link).toBeVisible();
   await expect(link).toHaveValue(/[?&]d=/);
   await expect(link).toHaveAttribute("aria-label", "Your dragon share link");
-  // opening the QR makes the #qr box visible (img on success, fallback text on CDN failure)
+  // opening the QR makes the #qr box visible
   await page.click(".qr-toggle");
   await expect(page.locator("#qr")).toBeVisible();
 });
 
 test("share reveals a LinkedIn button pre-filled with the dragon URL", async ({ page }) => {
   await page.goto("/");
+  await page.click(".made");
   await expect(page.locator("#share-li")).toBeHidden();
   await page.click(".share-btn");
   const li = page.locator("#share-li");
@@ -115,7 +121,6 @@ test("share reveals a LinkedIn button pre-filled with the dragon URL", async ({ 
   await expect(li).toHaveAttribute("target", "_blank");
   await expect(li).toHaveAttribute("rel", /noopener/);
   await expect(li).toHaveAttribute("rel", /noreferrer/);
-  // target="_blank" is announced to AT via a bilingual aria-label (data-i18n-aria)
   await expect(li).toHaveAttribute("aria-label", /new tab/);
   await page.click(".lang-toggle button[data-lang='ru']");
   await expect(li).toHaveAttribute("aria-label", /новой вкладке/);
@@ -129,14 +134,15 @@ test("the curl one-liner points at resume.txt and reflects the current origin", 
   expect(curl).toContain("localhost:8000");
 });
 
-test("theme toggle flips the data-theme attribute between light and dark", async ({ page }) => {
+test("the page is fixed light Forest and has no theme toggle", async ({ page }) => {
   await page.goto("/");
-  const before = await page.evaluate(() => document.documentElement.getAttribute("data-theme"));
-  await page.click(".theme-toggle");
-  const after = await page.evaluate(() => document.documentElement.getAttribute("data-theme"));
-  expect(["light", "dark"]).toContain(before);
-  expect(["light", "dark"]).toContain(after);
-  expect(after).not.toBe(before);
+  await expect(page.locator(".theme-toggle")).toHaveCount(0);
+  const theme = await page.evaluate(() => document.documentElement.getAttribute("data-theme"));
+  expect(theme).toBeNull();
+  const accent = await page.evaluate(
+    () => getComputedStyle(document.documentElement).getPropertyValue("--c-accent").trim().toLowerCase(),
+  );
+  expect(accent).toBe("#2f7d3a");
 });
 
 test("the PDF download links resolve (default ATS + branded)", async ({ page }) => {
@@ -162,36 +168,34 @@ test("machine-readable endpoints are served", async ({ page }) => {
 
 test("skip-link and document structure are accessible", async ({ page }) => {
   await page.goto("/");
-  // ADR-0020 v2: skip-link targets the main landmark ("Skip to content")
   await expect(page.locator(".skip-link")).toHaveAttribute("href", "#main");
   await expect(page.locator("#main")).toHaveAttribute("id", "main");
-  // Contact lives inside <main> now, keeping its pinned id
   await expect(page.locator("#resume")).toHaveAttribute("id", "resume");
   await expect(page.locator("main #resume")).toHaveCount(1);
-  // the page has exactly one <main> and a labelled language group
   await expect(page.locator("main")).toHaveCount(1);
   await expect(page.locator(".lang-toggle")).toHaveAttribute("role", "group");
 });
 
-test("mobile: hero stacks identity above a centered dragon", async ({ page }) => {
+test("mobile: single-column business card layout", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
-  const heroText = await page.locator(".hero-text").boundingBox();
-  const dragon = await page.locator(".dragon-box").boundingBox();
-  expect(heroText).not.toBeNull();
-  expect(dragon).not.toBeNull();
-  // identity sits above the dragon on narrow screens
-  expect(dragon.y).toBeGreaterThanOrEqual(heroText.y + heroText.height - 2);
+  const hero = await page.locator(".hero").boundingBox();
+  const contact = await page.locator("#resume").boundingBox();
+  const cta = await page.locator(".cta-section").boundingBox();
+  expect(hero).not.toBeNull();
+  expect(contact).not.toBeNull();
+  expect(cta).not.toBeNull();
+  // vertical reading order: hero → contact → CTA
+  expect(contact.y).toBeGreaterThanOrEqual(hero.y + hero.height - 2);
+  expect(cta.y).toBeGreaterThanOrEqual(contact.y + contact.height - 2);
   // identity uses most of the viewport width
-  expect(heroText.width).toBeGreaterThan(300);
-  // dragon is centered horizontally
-  expect(dragon.x + dragon.width / 2).toBeCloseTo(390 / 2, -1);
+  expect(hero.width).toBeGreaterThan(300);
 });
 
-test("footer machine formats are a semantic list with six links", async ({ page }) => {
+test("footer machine formats are a semantic list with seven links", async ({ page }) => {
   await page.goto("/");
   const items = page.locator(".machine-links li");
-  await expect(items).toHaveCount(6);
+  await expect(items).toHaveCount(7);
   const hrefs = await page.locator(".machine-links a").evaluateAll((els) => els.map((a) => a.getAttribute("href")));
   expect(hrefs).toEqual([
     "resume.json",
@@ -200,6 +204,7 @@ test("footer machine formats are a semantic list with six links", async ({ page 
     "resume-branded.pdf",
     "llms.txt",
     "AGENTS.md",
+    "https://github.com/krasnobai",
   ]);
   for (const href of hrefs) {
     const res = await page.request.get(href);
@@ -207,83 +212,37 @@ test("footer machine formats are a semantic list with six links", async ({ page 
   }
 });
 
-test("hero has two audience links: human PDF + AI/LLM résumé", async ({ page }) => {
+test("hero has one primary CTA: download PDF", async ({ page }) => {
   await page.goto("/");
-  const cta = page.locator(".hero-text .cta a");
-  await expect(cta).toHaveCount(2);
-  await expect(page.locator(".hero-text .cta a.btn-primary")).toHaveAttribute("href", "resume.pdf");
-  await expect(page.locator(".hero-text .cta a.ai-link")).toHaveAttribute("href", "resume.json");
-  // the branded PDF is not a hero button (it lives in the footer)
-  const brandedInHero = await page.locator(".hero-text .cta a[href='resume-branded.pdf']").count();
-  expect(brandedInHero).toBe(0);
-});
-
-test("the AI/LLM résumé link label is bilingual and resolves to valid JSON", async ({ page }) => {
-  await page.goto("/");
-  await expect(page.locator(".hero-text .cta a.ai-link")).toContainText("Résumé for AI / LLM");
+  const cta = page.locator(".cta-section a");
+  await expect(cta).toHaveCount(1);
+  await expect(page.locator(".cta-section a.btn-primary")).toHaveAttribute("href", "resume.pdf");
+  await expect(page.locator(".cta-section a")).toContainText("Download résumé (PDF)");
   await page.click(".lang-toggle button[data-lang='ru']");
-  await expect(page.locator(".hero-text .cta a.ai-link")).toContainText("Резюме для AI / LLM");
-  const res = await page.request.get("resume.json");
-  expect(res.status()).toBe(200);
-  const json = await res.json();
-  expect(json.basics.name).toBe("Aleksandr Krasnobai");
+  await expect(page.locator(".cta-section a")).toContainText("Скачать резюме (PDF)");
 });
 
-test("there is no palette picker — Forest is the single theme", async ({ page }) => {
+test("there is no palette picker — Forest is the single fixed theme", async ({ page }) => {
   await page.goto("/");
-  // the picker was removed when ADR-0017 was reduced to one theme
   await expect(page.locator("#palette-select")).toHaveCount(0);
   await expect(page.locator(".palette-pick")).toHaveCount(0);
-  // no data-palette attribute is ever set; the bare :root is Forest
   const pal = await page.evaluate(() => document.documentElement.getAttribute("data-palette"));
   expect(pal).toBeNull();
   const accent = await page.evaluate(
     () => getComputedStyle(document.documentElement).getPropertyValue("--c-accent").trim().toLowerCase(),
   );
-  expect(accent).toBe("#2f7d3a"); // forest light accent
+  expect(accent).toBe("#2f7d3a");
 });
 
-test("the light/dark toggle switches the Forest accent between its two values", async ({ page }) => {
-  await page.addInitScript(() => { localStorage.setItem("theme", "light"); });
-  await page.goto("/");
-  const accentLight = await page.evaluate(
-    () => getComputedStyle(document.documentElement).getPropertyValue("--c-accent").trim().toLowerCase(),
-  );
-  expect(accentLight).toBe("#2f7d3a"); // forest light accent
-  await page.click(".theme-toggle");
-  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-  const accentDark = await page.evaluate(
-    () => getComputedStyle(document.documentElement).getPropertyValue("--c-accent").trim().toLowerCase(),
-  );
-  // forest-dark accent is #7cc68a — assert the EXACT value so a light leak fails
-  expect(accentDark).toBe("#7cc68a");
-  expect(accentDark).not.toBe(accentLight);
-});
-
-test("headings use JetBrains Mono (ADR-0018 human/coder feel)", async ({ page }) => {
+test("headings use system sans-serif (ADR-0018 v2)", async ({ page }) => {
   await page.goto("/");
   const ff = await page.evaluate(() => getComputedStyle(document.querySelector("h1")).fontFamily);
-  expect(ff.toLowerCase()).toMatch(/jetbrains|mono/);
+  expect(ff.toLowerCase()).toMatch(/segoe|roboto|helvetica|arial|system-ui|-apple-system/);
+  expect(ff.toLowerCase()).not.toMatch(/jetbrains/);
 });
 
-test("the self-hosted JetBrains Mono woff2 is served from assets", async ({ page }) => {
+test("printing keeps a light palette", async ({ page, context }) => {
   await page.goto("/");
-  for (const w of ["jetbrains-mono-400.woff2", "jetbrains-mono-700.woff2"]) {
-    const res = await page.request.get(`assets/${w}`);
-    expect(res.status(), `${w} should be served`).toBe(200);
-    expect((await res.headers())["content-type"] || "").toMatch(/font|octet/);
-  }
-});
-
-test("printing forces a light palette even when a dark theme is active", async ({ page, context }) => {
-  await page.addInitScript(() => { localStorage.setItem("theme", "dark"); });
-  await page.goto("/");
-  // on screen: forest dark text is light
-  const screenText = await page.evaluate(
-    () => getComputedStyle(document.documentElement).getPropertyValue("--c-text").trim().toLowerCase(),
-  );
-  expect(screenText).not.toBe("#1f2a1f");
-  // under print media the !important light override kicks in (@cr print-leak fix)
   await page.emulateMedia({ media: "print" });
   const printText = await page.evaluate(
     () => getComputedStyle(document.documentElement).getPropertyValue("--c-text").trim().toLowerCase(),
@@ -294,7 +253,7 @@ test("printing forces a light palette even when a dark theme is active", async (
 
 // ADR-0019: the no-JS path is browser-tested by blocking all script resources
 // (the page's JS is entirely in external files), so data-theme is never set
-// and the CSS no-JS rules are the only thing that applies.
+// and the CSS bare :root light block is the only thing that applies.
 async function blockScripts(page) {
   await page.route("**/*", (route) => {
     if (route.request().resourceType() === "script") route.abort();
@@ -302,7 +261,7 @@ async function blockScripts(page) {
   });
 }
 
-test("no-JS: forest light is the default when scripts are blocked (light OS)", async ({ page }) => {
+test("no-JS: forest light is the default when scripts are blocked", async ({ page }) => {
   await blockScripts(page);
   await page.emulateMedia({ colorScheme: "light" });
   await page.goto("/");
@@ -314,33 +273,19 @@ test("no-JS: forest light is the default when scripts are blocked (light OS)", a
   expect(bg.replace(/\s/g, "")).toBe("rgb(244,246,242)");
 });
 
-test("no-JS: prefers-color-scheme dark yields forest dark", async ({ page }) => {
+test("no-JS: prefers-color-scheme dark is ignored (fixed light theme)", async ({ page }) => {
   await blockScripts(page);
   await page.emulateMedia({ colorScheme: "dark" });
   await page.goto("/");
-  // no JS → the no-JS scoped media query applies forest dark
   const dt = await page.evaluate(() => document.documentElement.getAttribute("data-theme"));
   expect(dt).toBeNull();
   const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-  // forest dark bg #131a14 = rgb(19,26,20)
-  expect(bg.replace(/\s/g, "")).toBe("rgb(19,26,20)");
-});
-
-test("no-JS: the theme toggle is present but inert without JS", async ({ page }) => {
-  await blockScripts(page);
-  await page.goto("/");
-  // the toggle is HTML, so it is in the DOM; clicking it cannot apply without JS
-  await expect(page.locator(".theme-toggle")).toHaveCount(1);
-  await page.click(".theme-toggle");
-  const dt = await page.evaluate(() => document.documentElement.getAttribute("data-theme"));
-  expect(dt).toBeNull();
+  expect(bg.replace(/\s/g, "")).toBe("rgb(244,246,242)");
 });
 
 test("no-JS: the LinkedIn share anchor is hidden and has no href", async ({ page }) => {
   blockScripts(page);
   await page.goto("/");
-  // ADR-0022: with JS off, share.js never sets href and never un-hides the anchor,
-  // so there is no broken/empty link in the no-JS render.
   const li = page.locator("#share-li");
   await expect(li).toBeHidden();
   expect(await li.getAttribute("href")).toBeNull();

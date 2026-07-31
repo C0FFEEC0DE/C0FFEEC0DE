@@ -1,5 +1,7 @@
-/* i18n.js — language toggle (EN/RU), light/dark theme, time-based greeting,
-   curl one-liner text + copy. Persists choices in localStorage; cookie-free. */
+/* i18n.js — language toggle (EN/RU), time-based greeting, curl one-liner text +
+   copy, and the hidden dragon easter-egg reveal. Persists only the language
+   choice in localStorage; cookie-free. The theme is fixed light Forest
+   (ADR-0017 v4), so there is no theme code here. */
 (function () {
   "use strict";
 
@@ -10,7 +12,6 @@
       greeting_evening: "Good evening —",
       lead: "Backend and infrastructure engineer who turns flaky systems into boring, dependable ones.",
       download: "Download résumé (PDF)",
-      ai_resume: "Résumé for AI / LLM",
       copy: "Copy",
       share: "Share my dragon",
       share_li: "Share on LinkedIn ↗",
@@ -30,7 +31,6 @@
       greeting_evening: "Добрый вечер —",
       lead: "Бэкенд- и инфраструктурный инженер, превращающий нестабильные системы в скучно-надёжные.",
       download: "Скачать резюме (PDF)",
-      ai_resume: "Резюме для AI / LLM",
       copy: "Копировать",
       share: "Поделиться дракончиком",
       share_li: "Поделиться в LinkedIn ↗",
@@ -70,7 +70,6 @@
       if (key === "greeting") el.hidden = false;
     });
 
-    // bilingual aria-labels (e.g. the dragon share-link input) follow the toggle
     document.querySelectorAll("[data-i18n-aria]").forEach((el) => {
       const val = s[el.getAttribute("data-i18n-aria")];
       if (val !== undefined) el.setAttribute("aria-label", val);
@@ -83,41 +82,29 @@
       b.setAttribute("aria-pressed", String(b.getAttribute("data-lang") === lang));
     });
 
-    // curl one-liner derived from current location (works on custom domain + project pages)
     const base = location.origin + location.pathname.replace(/[^/]*$/, "");
     const curl = document.getElementById("curl-line");
     if (curl) curl.textContent = `curl -sL ${base}resume.txt`;
     localStorage.setItem("lang", lang);
   }
 
-  function applyTheme(theme) {
-    document.documentElement.setAttribute("data-theme", theme);
-    // keep Bootstrap's native dark/light components in sync with our toggle
-    document.documentElement.setAttribute("data-bs-theme", theme);
-    localStorage.setItem("theme", theme);
+  function revealDragon() {
+    const box = document.getElementById("dragon-box");
+    if (!box || !box.hidden) return;
+    box.hidden = false;
+    // share.js already drew the dragon on load (even while hidden), so we only
+    // need to reveal the container.
   }
-
-  function initTheme() {
-    const saved = localStorage.getItem("theme");
-    if (saved) return applyTheme(saved);
-    const dark = window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches;
-    applyTheme(dark ? "dark" : "light");
-  }
-
-  // (ADR-0017 was reduced to a single Forest theme, so there is no palette
-  // picker; light/dark is the only color axis. data-theme is set in initTheme.)
 
   function init() {
-    initTheme();
     applyLang(pickInitialLang());
 
     document.querySelectorAll(".lang-toggle button").forEach((b) => {
       b.addEventListener("click", () => applyLang(b.getAttribute("data-lang")));
     });
-    const themeBtn = document.querySelector(".theme-toggle");
-    if (themeBtn) themeBtn.addEventListener("click", () => {
-      applyTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark");
-    });
+
+    const made = document.querySelector(".made");
+    if (made) made.addEventListener("click", revealDragon);
 
     const copyBtn = document.querySelector(".copy-curl");
     if (copyBtn) copyBtn.addEventListener("click", () => {

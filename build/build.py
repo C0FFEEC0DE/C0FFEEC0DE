@@ -316,13 +316,29 @@ def _contact_section(b: dict, lang: str, *, show_url: bool = True) -> str:
             f'<p class="contact">{" · ".join(contacts)}</p></section>')
 
 
+def _business_card_contacts(b: dict, lang: str) -> str:
+    """Compact contact row for the landing-page business card: email +
+    LinkedIn + Telegram only. GitHub is intentionally omitted here and lives
+    in the footer machine links."""
+    items: list[str] = []
+    if b.get("email"):
+        items.append(f'<a href="mailto:{esc(b["email"])}">{esc(b["email"])}</a>')
+    for p in b.get("profiles", []) or []:
+        network = p.get("network", "")
+        if network in ("LinkedIn", "Telegram"):
+            items.append(f'<a href="{esc(p.get("url"))}">{esc(network)}</a>')
+    if not items:
+        return ""
+    sep = '<span class="sep" aria-hidden="true">·</span>'
+    return f'<div class="contact-row">{sep.join(items)}</div>'
+
+
 def render_contact_fragment(r: dict, lang: str) -> str:
-    """Contact section only — injected into the landing résumé block
+    """Business-card contact row — injected into the landing #resume block
     (ADR-0025). The full résumé body lives in the branded PDF and the
-    machine-readable outputs; the landing page shows identity (hero) + contact
-    only and funnels to the PDF for the detail. The canonical site URL is not
-    repeated in the on-site contact line."""
-    return _contact_section(r["basics"], lang, show_url=False)
+    machine-readable outputs; the landing page shows identity (hero) + three
+    top contacts only and funnels to the PDF for the detail."""
+    return _business_card_contacts(r["basics"], lang)
 
 
 def render_body_fragment(r: dict, lang: str) -> str:
@@ -335,7 +351,7 @@ def render_body_fragment(r: dict, lang: str) -> str:
     def section(title, inner):
         return f'<section class="block"><h2>{esc(title)}</h2>{inner}</section>'
 
-    # Contact line (shared with the landing page via _contact_section)
+    # Contact line (full set, including GitHub, for the branded PDF)
     contact = _contact_section(b, lang)
     if contact:
         parts.append(contact)
@@ -966,10 +982,11 @@ def build(clean: bool = False, do_pdf: bool = True):
             for p in ("resume.pdf", "resume-branded.pdf"):
                 (DIST / p).write_bytes(b"")  # placeholder so links/tests know it's absent
 
-    # Copy frontend assets (incl. self-hosted woff2 fonts + their OFL license)
+    # Copy frontend assets (CSS, JS, PNG). Self-hosted fonts were removed in
+    # the minimal business-card redesign (ADR-0018 v2); the page uses system
+    # sans-serif and the branded PDF embeds nothing beyond that.
     for f in SRC_DIR.iterdir():
-        if (f.suffix in (".css", ".js", ".woff2") or f.name.endswith(".png")
-                or f.name == "jetbrains-mono-LICENSE.txt"):
+        if (f.suffix in (".css", ".js") or f.name.endswith(".png")):
             shutil.copy2(f, assets / f.name)
 
     return resumes
