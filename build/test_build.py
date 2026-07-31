@@ -658,26 +658,27 @@ def test_button_text_color_matches_mode(dist):
         css), "dark .btn-primary must use #15171c text"
 
 
-# --- ADR-0024: contact profiles are GitHub, LinkedIn (supersedes ADR-0016) --- #
+# --- ADR-0024 v2: contact profiles are GitHub, LinkedIn, Telegram ---------- #
 def test_contact_profiles_required_set(dist):
-    """Both language files must carry the ADR-0024 contact set, in order, and
+    """Both language files must carry the ADR-0024 v2 contact set, in order, and
     no stray Website profile (the site URL lives in basics.url, not profiles)."""
     build.build(clean=True)
-    expected = ["GitHub", "LinkedIn"]
+    expected = ["GitHub", "LinkedIn", "Telegram"]
     for fn in ("resume.json", "resume.ru.json"):
         r = json.loads((dist / fn).read_text("utf-8"))
         networks = [p.get("network") for p in r["basics"].get("profiles", [])]
         assert networks == expected, f"{fn} profiles = {networks}"
         assert "Website" not in networks
-    # ADR-0024: Telegram is no longer a contact channel — it must not leak into
-    # any audience surface. The contact set reaches EVERY audience, not just JSON.
+    # ADR-0024 v2: Telegram is back and must reach EVERY audience surface,
+    # not just JSON. The same handle is used everywhere.
     en_resume = build.parse_resume(build.RESUME_DIR / "resume.en.md")
-    assert "t.me/" not in build.render_ats_html(en_resume, "en")      # ATS PDF
-    assert "t.me/" not in build.render_body_fragment(en_resume, "en")  # branded PDF body
+    assert "t.me/krasnobaicoach" in build.render_ats_html(en_resume, "en")      # ATS PDF
+    assert "t.me/krasnobaicoach" in build.render_body_fragment(en_resume, "en")  # branded PDF body
     html = (dist / "index.html").read_text("utf-8")
-    assert "t.me/" not in html
-    assert "Telegram" not in (dist / "resume.txt").read_text("utf-8")
-    assert "Telegram" not in (dist / "llms.txt").read_text("utf-8")             # LLM index
-    assert "t.me/" not in (dist / "llms.txt").read_text("utf-8")
-    assert "Telegram" not in (dist / "resume.md").read_text("utf-8")             # markdown mirror
-    assert "t.me/" not in (dist / "resume.md").read_text("utf-8")
+    assert "t.me/krasnobaicoach" in html
+    assert "Telegram" in (dist / "resume.txt").read_text("utf-8")
+    assert "t.me/krasnobaicoach" in (dist / "resume.txt").read_text("utf-8")
+    assert "Telegram" in (dist / "llms.txt").read_text("utf-8")                  # LLM index
+    assert "t.me/krasnobaicoach" in (dist / "llms.txt").read_text("utf-8")
+    assert "Telegram" in (dist / "resume.md").read_text("utf-8")                # markdown mirror
+    assert "t.me/krasnobaicoach" in (dist / "resume.md").read_text("utf-8")

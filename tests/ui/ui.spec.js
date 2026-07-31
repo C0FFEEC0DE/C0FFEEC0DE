@@ -35,6 +35,7 @@ test("EN/RU toggle swaps the hero header and résumé body, one language at a ti
   await expect(page.locator("#resume [data-lang='ru']")).toBeVisible();
   await expect(page.locator("#resume [data-lang='en']")).toBeHidden();
   await expect(page.locator("#resume [data-lang='ru']")).toContainText("LinkedIn");
+  await expect(page.locator("#resume [data-lang='ru']")).toContainText("Telegram");
   // switch back to EN
   await page.click(".lang-toggle button[data-lang='en']");
   await expect(page.locator(".hero-text [data-lang='en'] .tags")).toContainText(
