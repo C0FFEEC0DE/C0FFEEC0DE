@@ -263,9 +263,9 @@ def _resume_header_inner(r: dict, lang: str, *, include_summary: bool = True) ->
 
     The tag row shows the role label and the location. The summary/lead is
     emitted only when include_summary=True. The landing page uses
-    include_summary=False because its one-line lead is supplied separately by
-    i18n.js; the branded PDF also uses include_summary=False so the PDF header
-    stays as a clean name + role/location card.
+    include_summary=True so the hero shows the one-line identity statement;
+    the branded PDF uses include_summary=False so the printable header stays a
+    clean name + role/location card.
     """
     b = r["basics"]
     tags: list[str] = []
@@ -288,16 +288,15 @@ def _resume_header_inner(r: dict, lang: str, *, include_summary: bool = True) ->
     if tags:
         parts.append(f'<p class="tags">{"".join(tags)}</p>')
     parts.append(f'<h1>{esc(b.get("name"))}</h1>')
-    if b.get("summary"):
+    if include_summary and b.get("summary"):
         parts.append(f'<p class="lead">{esc(b["summary"])}</p>')
     return "\n".join(parts)
 
 
 def render_header_fragment(r: dict, lang: str) -> str:
-    """Header only — injected into the landing hero, one per language. The
-    landing page shows identity (tags + name) only, no long summary, because the
-    full résumé is behind the PDF CTA."""
-    return _resume_header_inner(r, lang, include_summary=False)
+    """Header only — injected into the landing hero, one per language. Shows
+    identity (tags + name + one-line summary/lead)."""
+    return _resume_header_inner(r, lang, include_summary=True)
 
 
 def render_print_header(r: dict, lang: str) -> str:
