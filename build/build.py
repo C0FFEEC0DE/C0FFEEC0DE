@@ -262,9 +262,10 @@ def _resume_header_inner(r: dict, lang: str, *, include_summary: bool = True) ->
     hero and the branded-PDF header so the two never diverge.
 
     The tag row shows the role label and the location. The summary/lead is
-    emitted only when include_summary=True (branded PDF header); the landing
-    page shows it too now as a one-line punchline, because it is the core
-    identity statement and does not duplicate the tags.
+    emitted only when include_summary=True. The landing page uses
+    include_summary=False because its one-line lead is supplied separately by
+    i18n.js; the branded PDF also uses include_summary=False so the PDF header
+    stays as a clean name + role/location card.
     """
     b = r["basics"]
     tags: list[str] = []
@@ -300,8 +301,8 @@ def render_header_fragment(r: dict, lang: str) -> str:
 
 
 def render_print_header(r: dict, lang: str) -> str:
-    """Header for the branded PDF, includes the summary."""
-    return _resume_header_inner(r, lang, include_summary=True)
+    """Header for the branded PDF — name + role/location tags only, no summary."""
+    return _resume_header_inner(r, lang, include_summary=False)
 
 
 def _contact_section(b: dict, lang: str, *, show_url: bool = True) -> str:
@@ -438,7 +439,7 @@ def render_html_fragment(r: dict, lang: str) -> str:
     """Full fragment (header + body) for the branded PDF (ADR-0013). The
     landing page uses render_header_fragment + render_contact_fragment instead,
     so the header is shown once, not twice, and the full body lives only in the
-    PDF (ADR-0025). The branded-PDF header includes the summary."""
+    PDF (ADR-0025). The branded-PDF header shows name + role/location tags only."""
     return '<header class="hero">' + render_print_header(r, lang) + "</header>\n" + render_body_fragment(r, lang)
 
 
