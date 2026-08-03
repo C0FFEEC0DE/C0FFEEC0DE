@@ -16,8 +16,8 @@ name, role, and summary.
 Add Open Graph meta tags to the landing page `<head>`, populated at build time
 from the English résumé front-matter:
 
-- `og:title` — `"{name} — {label}"` (e.g. "Aleksandr Krasnobai — Senior DevOps / SRE / Platform Engineer").
-- `og:description` — the résumé summary ("DON'T PANIC — I keep distributed systems running.").
+- `og:title` — `"{name} — {label}"` (e.g. "Aleksandr Krasnobai — Staff DevOps Engineer").
+- `og:description` — the short `basics.summary` (e.g. "Staff DevOps Engineer — 18 years keeping high-throughput platforms running...").
 - `og:url` — the canonical site URL (`DOMAIN` or `PAGES_URL`).
 - `og:type` — `profile`.
 - `og:image` — `/assets/dragon-og.png`, a static 512×513 PNG committed in `src/dragon-og.png`.

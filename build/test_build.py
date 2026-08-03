@@ -81,7 +81,6 @@ def test_resume_json_valid(dist):
     assert r["projects"], "projects should parse"
     assert r["certificates"], "certificates should parse"
     assert r["languages"], "languages should parse"
-    assert r["languages"][0]["fluency"] == "Professional working"
 
 
 def test_russian_resume_json(dist):
@@ -89,6 +88,7 @@ def test_russian_resume_json(dist):
     r = json.loads((dist / "resume.ru.json").read_text("utf-8"))
     assert "инженер" in r["basics"]["label"].lower()
     assert r["work"][0]["name"] == "Grid Dynamics"
+    assert r["languages"], "languages should parse"
 
 
 def test_resume_txt_has_both_langs(dist):
@@ -213,7 +213,7 @@ def test_pdf_ats_is_machine_readable(dist):
     build.build(clean=True)
     text = _pdf_text(dist / "resume.pdf")
     assert "Aleksandr Krasnobai" in text, "PDF missing name"
-    assert "Senior DevOps / SRE Engineer" in text or "Senior DevOps Engineer" in text, "PDF missing role"
+    assert "Staff DevOps Engineer" in text, "PDF missing role"
     assert "Grid Dynamics" in text, "PDF missing company"
     assert "hi@krasnobai.dev" in text, "PDF missing email"
     assert "linkedin.com/in/" in text and "aleksandrkrasnobai" in text, "PDF missing LinkedIn"
@@ -234,7 +234,7 @@ def test_pdf_branded_is_machine_readable(dist):
     build.build(clean=True)
     text = _pdf_text(dist / "resume-branded.pdf")
     assert "Aleksandr Krasnobai" in text, "branded PDF missing name"
-    assert "Senior DevOps / SRE Engineer" in text or "Senior DevOps Engineer" in text, "branded PDF missing role"
+    assert "Staff DevOps Engineer" in text, "branded PDF missing role"
     assert "Grid Dynamics" in text, "branded PDF missing company"
     assert "hi@krasnobai.dev" in text, "branded PDF missing email"
     assert "Experience" in text, "branded PDF missing Experience section"
@@ -417,14 +417,14 @@ def test_hero_header_is_bilingual(dist):
     m = re.search(r'<section class="hero"[^>]*>(.*?)\n\s*</section>', html, re.S)
     assert m, "hero section not found"
     hero = m.group(1)
-    assert "Senior DevOps / SRE / Platform Engineer" in hero
-    assert "Старший DevOps / SRE / Platform-инженер" in hero
+    assert "Staff DevOps Engineer" in hero
+    assert "Ведущий DevOps-инженер" in hero
     assert "Aleksandr Krasnobai" in hero
     # location tags in both languages
     assert "Belgrade, Serbia — work authorized" in hero
     assert "Белград, Сербия — право на работу" in hero
-    # one-line punchline lead (apostrophe is HTML-escaped in the rendered HTML)
-    assert "DON'T PANIC" in hero or "DON&#x27;T PANIC" in hero
+    # one-line summary/lead (apostrophe is HTML-escaped in the rendered HTML)
+    assert "high-throughput platforms" in hero or "высоконагруженных платформ" in hero
     # no leftover template placeholders
     assert "{{HEADER_EN}}" not in html and "{{HEADER_RU}}" not in html
 
@@ -436,10 +436,12 @@ def test_landing_page_has_no_duplicate_info(dist):
     html = (dist / "index.html").read_text("utf-8")
     # Check each language block independently; the RU block is hidden by default.
     for lang in ("en", "ru"):
-        m = re.search(rf'<div class="lang-block" data-lang="{lang}"[^\>]*>(.*?)\n\s*</div\s*>', html, re.S)
+        m = re.search(rf'<div class="lang-block" data-lang="{lang}"[^\>]*>(.*?)\s*</div\s*>', html, re.S)
         assert m, f"{lang} lang-block not found"
         block = m.group(1)
-        for f in ("Senior DevOps / SRE / Platform Engineer", "Belgrade", "DON'T PANIC"):
+        # "Staff DevOps Engineer" is intentionally repeated: once in the role
+        # tag and once at the start of the one-line summary/lead.
+        for f in ("Belgrade", "high-throughput"):
             assert block.count(f) <= 1, f"fact '{f}' duplicated in {lang} block"
 
 
@@ -449,9 +451,9 @@ def test_open_graph_tags_present_and_escaped(dist):
     html = (dist / "index.html").read_text("utf-8")
     assert 'property="og:title"' in html
     assert "Aleksandr Krasnobai" in html
-    assert "Senior DevOps / SRE / Platform Engineer" in html
+    assert "Staff DevOps Engineer" in html
     assert 'property="og:description"' in html
-    assert "DON'T PANIC" in html or "DON&#x27;T PANIC" in html
+    assert "high-throughput platforms" in html or "500M+" in html
     assert 'property="og:image"' in html
     assert "dragon-og.png" in html
     assert 'property="og:type"' in html
@@ -531,7 +533,7 @@ def test_ats_has_real_selectable_text(dist):
     en = build.parse_resume(build.RESUME_DIR / "resume.en.md")
     ats = build.render_ats_html(en, "en")
     assert "<table" not in ats
-    assert "<h3>" in ats and "Senior DevOps Engineer" in ats
+    assert "<h3>" in ats and "Staff DevOps Engineer" in ats
     assert "<ul>" in ats and "<li>" in ats
 
 
@@ -566,8 +568,8 @@ def test_sitemap_has_urls(dist):
 def test_resume_txt_languages_and_fluency(dist):
     build.build(clean=True)
     txt = (dist / "resume.txt").read_text("utf-8")
-    assert "English (Professional working)" in txt
-    assert "Russian (native)" in txt
+    assert "English (B2" in txt or "Английский (B2" in txt
+    assert "Russian (Native)" in txt or "Русский (Native)" in txt
 
 
 def test_resume_md_is_clean_markdown(dist):

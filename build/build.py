@@ -366,6 +366,10 @@ def render_body_fragment(r: dict, lang: str) -> str:
     if contact:
         parts.append(contact)
 
+    intro = (r.get("meta") or {}).get("intro", "")
+    if intro:
+        parts.append(section(_t(lang, "Summary"), f"<p>{esc(intro)}</p>"))
+
     work = r.get("work", [])
     if work:
         items = []
@@ -479,8 +483,11 @@ def _t(lang, key):
 
 def render_text(r: dict) -> str:
     b = r["basics"]
+    intro = (r.get("meta") or {}).get("intro", "")
     out = [b.get("name", ""), b.get("label", ""), ""]
-    if b.get("summary"):
+    if intro:
+        out += [intro, ""]
+    elif b.get("summary"):
         out += [b["summary"], ""]
     contact = []
     if b.get("email"):
@@ -540,10 +547,13 @@ def render_text(r: dict) -> str:
 def render_markdown(r: dict) -> str:
     """Clean markdown mirror (no front-matter/comments)."""
     b = r["basics"]
+    intro = (r.get("meta") or {}).get("intro", "")
     out = [f"# {b.get('name','')}", ""]
     if b.get("label"):
         out += [f"*{b['label']}*", ""]
-    if b.get("summary"):
+    if intro:
+        out += [intro, ""]
+    elif b.get("summary"):
         out += [b["summary"], ""]
     # Contact (ADR-0024: GitHub, LinkedIn + email/phone/url)
     contact = []
@@ -802,7 +812,7 @@ def build_cv_json(r: dict, base: str) -> dict:
 def build_llms_txt(r: dict, base: str) -> str:
     b = r["basics"]
     name = b.get("name", "Résumé")
-    summary = b.get("summary", "")
+    summary = (r.get("meta") or {}).get("intro", b.get("summary", ""))
     links = [
         ("resume.min.json", "Metadata tier (~100 tokens) for quick agent screening"),
         ("resume.json", "Machine-readable résumé (JSON Resume schema) — English"),

@@ -20,17 +20,17 @@ test("page loads and shows the name exactly once (no duplicated blocks)", async 
 test("default language is English with role and location tags", async ({ page }) => {
   await page.goto("/");
   const enTags = page.locator(".hero [data-lang='en'] .tags");
-  await expect(enTags).toContainText("Senior DevOps / SRE / Platform Engineer");
+  await expect(enTags).toContainText("Staff DevOps Engineer");
   await expect(enTags).toContainText("Belgrade, Serbia — work authorized");
   await expect(page.locator(".hero [data-lang='ru'] .tags")).toBeHidden();
 });
 
 test("EN/RU toggle swaps the hero header and contact row, one language at a time", async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator(".hero [data-lang='en'] .lead")).toContainText("DON'T PANIC");
+  await expect(page.locator(".hero [data-lang='en'] .lead")).toContainText("high-throughput platforms");
   // switch to RU
   await page.click(".lang-toggle button[data-lang='ru']");
-  await expect(page.locator(".hero [data-lang='ru'] .tags")).toContainText("SRE");
+  await expect(page.locator(".hero [data-lang='ru'] .tags")).toContainText("DevOps");
   await expect(page.locator(".hero [data-lang='ru'] .tags")).toContainText("Белград, Сербия — право на работу");
   await expect(page.locator(".hero [data-lang='en'] .tags")).toBeHidden();
   // contact row follows the same toggle
@@ -40,9 +40,7 @@ test("EN/RU toggle swaps the hero header and contact row, one language at a time
   await expect(page.locator("#resume [data-lang='ru']")).toContainText("Telegram");
   // switch back to EN
   await page.click(".lang-toggle button[data-lang='en']");
-  await expect(page.locator(".hero [data-lang='en'] .tags")).toContainText(
-    "Senior DevOps / SRE / Platform Engineer",
-  );
+  await expect(page.locator(".hero [data-lang='en'] .tags")).toContainText("Staff DevOps Engineer");
   await expect(page.locator("#resume [data-lang='en']")).toBeVisible();
   await expect(page.locator("#resume [data-lang='ru']")).toBeHidden();
 });
@@ -179,9 +177,9 @@ test("Open Graph meta tags use the résumé name, role, and summary", async ({ p
   await page.goto("/");
   const title = await page.locator("meta[property='og:title']").getAttribute("content");
   expect(title).toContain("Aleksandr Krasnobai");
-  expect(title).toContain("Senior DevOps / SRE / Platform Engineer");
+  expect(title).toContain("Staff DevOps Engineer");
   const desc = await page.locator("meta[property='og:description']").getAttribute("content");
-  expect(desc).toContain("DON'T PANIC");
+  expect(desc).toContain("high-throughput platforms");
   const img = await page.locator("meta[property='og:image']").getAttribute("content");
   expect(img).toMatch(/dragon-og\.png$/);
   const res = await page.request.get(img);

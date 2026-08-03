@@ -34,3 +34,4 @@ superseded record is marked **Superseded by ADR-00xx** and a new one is added.
 | 0026 | Dragon as a hidden easter egg | Accepted |
 | 0027 | Save dragon as a token PNG | Accepted |
 | 0028 | Open Graph tags for social share previews | Accepted |
+| 0029 | New résumé material as the canonical source of truth | Accepted |
