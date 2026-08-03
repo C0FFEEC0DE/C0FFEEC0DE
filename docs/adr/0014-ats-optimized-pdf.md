@@ -28,4 +28,13 @@ The branded version is kept as a separate `resume-branded.pdf` for humans.
 ## Consequences
 - The default PDF can be forwarded into any ATS safely.
 - A copy-paste / cursor self-test passes (logical order, selectable words).
-- `resume-branded.pdf` remains for direct human sharing; both are generated in CI.
+- The branded PDF remains for direct human sharing; both are generated in CI.
+
+## Version history
+- **v1 (2026-07-30):** the ATS PDF is emitted as `resume.pdf` and the branded
+  PDF as `resume-branded.pdf`.
+- **v2 (2026-07-31):** filenames changed to the `Name_Surname_Role` pattern
+  per ADR-0030. The ATS PDF is now
+  `Aleksandr_Krasnobai_Staff_DevOps_Engineer.pdf` and the branded PDF is
+  `Aleksandr_Krasnobai_Staff_DevOps_Engineer_branded.pdf`; everything else in
+  this decision stays the same.

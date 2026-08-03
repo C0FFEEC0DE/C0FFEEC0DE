@@ -1,6 +1,6 @@
 <!--
   ИСХОДНЫЙ ФОРМАТ — редактируйте этот файл, затем `python build/build.py`
-  пересоберёт всё (resume.json, resume.txt, resume.pdf, index.html, llms.txt, AGENTS.md).
+  пересоберёт всё (resume.json, resume.txt, ATS PDF, branded PDF, index.html, llms.txt, AGENTS.md).
 
   Front-matter (YAML ниже) маппится в JSON Resume `basics`, `profiles`, `meta`.
   Тело использует фиксированные H2-секции; H3 — элементы внутри Experience/Projects/Education.

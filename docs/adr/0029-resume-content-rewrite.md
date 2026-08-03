@@ -28,9 +28,9 @@ truth for every output:
   - `resume.txt` header,
   - `resume.md` header,
   - `llms.txt` blockquote,
-  - branded PDF `resume-branded.pdf` as a "Summary" section.
-- The ATS PDF `resume.pdf` intentionally **does not** render a Summary section
-  (per ADR-0014) so it opens directly with Work Experience.
+  - the branded PDF as a "Summary" section.
+- The ATS PDF intentionally **does not** render a Summary section (per
+  ADR-0014) so it opens directly with Work Experience.
 - Experience is listed in reverse chronological order, 10 entries, with the
   current Grid Dynamics Staff DevOps Engineer role first and the Self-employed
   offensive-security research role second.

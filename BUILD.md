@@ -115,8 +115,8 @@ The build produces **three audiences** from one markdown source (see `docs/adr/0
 | File | Audience | Purpose |
 |---|---|---|
 | `index.html` | humans | bilingual landing page with the dragon |
-| `resume-branded.pdf` | humans | designed, scannable PDF |
-| `resume.pdf` | **ATS** | ATS-optimized: single column, standard font/headings, dates on the title line, real selectable text (the **default download**) |
+| `Aleksandr_Krasnobai_Staff_DevOps_Engineer_branded.pdf` | humans | designed, scannable PDF |
+| `Aleksandr_Krasnobai_Staff_DevOps_Engineer.pdf` | **ATS** | ATS-optimized: single column, standard font/headings, dates on the title line, real selectable text (the **default download**) |
 | `resume.json` / `resume.ru.json` | machines | JSON Resume v1.0.0 (EN/RU) + optional `availability` hiring signals |
 | `resume.min.json` | LLMs | token-cheap metadata tier (~100 tokens) for agent screening |
 | `.well-known/cv.json` | LLMs | discovery manifest ([cv.json](https://cvjson.com) convention) |
@@ -130,9 +130,9 @@ The build produces **three audiences** from one markdown source (see `docs/adr/0
 ## Curl one-liner
 
 ```bash
-curl -sL https://krasnobai.dev/resume.txt          # plain text to stdout
-curl -sL https://krasnobai.dev/resume.json          # JSON Resume
-curl -sL https://krasnobai.dev/resume.pdf -o r.pdf  # PDF
+curl -sL https://krasnobai.dev/resume.txt                             # plain text to stdout
+curl -sL https://krasnobai.dev/resume.json                             # JSON Resume
+curl -sL https://krasnobai.dev/Aleksandr_Krasnobai_Staff_DevOps_Engineer.pdf -o r.pdf  # ATS PDF
 ```
 
 Before the custom domain is bound, the same paths work on the default Pages URL, e.g. `https://<user>.github.io/C0FFEEC0DE/resume.txt`.

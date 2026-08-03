@@ -8,7 +8,7 @@ A résumé site authored from markdown, auto-built by a one-shot Python script,
 served for **three audiences** (ADR-0013): humans (bilingual landing page +
 branded PDF), machines (JSON Resume, llms.txt, AGENTS.md, cv.json, resume.txt),
 and ATS (a neutral single-column PDF). Deployed to GitHub Pages via Actions.
-Decisions are recorded as ADRs in `docs/adr/` (0001→0029) — read the relevant
+Decisions are recorded as ADRs in `docs/adr/` (0001→0030) — read the relevant
 one before changing a settled area.
 
 ## Commands
@@ -58,7 +58,7 @@ others causes divergence bugs):
   branded-PDF body only (via `render_html_fragment`); **not** the landing page
   (ADR-0025 supersedes the ADR-0013 lockstep on the page vs. PDF — they
   intentionally diverge now, except for Contact).
-- `render_ats_html` — the ATS `resume.pdf`. Uses **neutral** colors and a
+- `render_ats_html` — the ATS PDF (`Aleksandr_Krasnobai_Staff_DevOps_Engineer.pdf`). Uses **neutral** colors and a
   standard font on purpose (ADR-0014) — do NOT "align" it to the Forest theme.
 
 `src/index.html` is a template with `{{...}}` placeholders the build fills;
@@ -108,7 +108,7 @@ these are caught.
   no longer displayed on the page).
   One accent, one CTA cluster, generous space. Don't dump metrics/credentials
   into the summary — they belong in Experience/Certificates.
-- **ATS `resume.pdf` is intentionally NOT Forest** (ADR-0014); the branded PDF
+- **ATS PDF is intentionally NOT Forest** (ADR-0014); the branded PDF
   IS Forest. Don't "fix" the mismatch.
 - **The source `basics.profiles` must stay `[GitHub, LinkedIn, Telegram]`**
   in that order (ADR-0024 v3, which supersedes ADR-0016). The landing page's
@@ -127,8 +127,10 @@ these are caught.
 - **Keep `build/build.py`'s module docstring in sync with `check()`**: the
   docstring `Output:` list and the `DOMAIN` example must name every file
   `check()` asserts (incl. `resume.min.json`, `.well-known/cv.json`,
-  `resume-branded.pdf`) and use the real site domain (`krasnobai.dev`), or the
-  docstring silently rots against the build it documents.
+  `Aleksandr_Krasnobai_Staff_DevOps_Engineer.pdf`,
+  `Aleksandr_Krasnobai_Staff_DevOps_Engineer_branded.pdf`) and use the real site
+  domain (`krasnobai.dev`), or the docstring silently rots against the build it
+  documents.
 - The résumé content is canonical as of ADR-0029: `resume/resume.en.md` and
   `resume/resume.ru.md` hold the single source of truth for all outputs. The
   landing page uses a short one-line `basics.summary`; the full professional

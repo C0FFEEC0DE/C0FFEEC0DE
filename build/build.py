@@ -3,8 +3,9 @@
 
 Input:  resume/resume.<lang>.md  (YAML front-matter + structured H2/H3 body)
 Output: dist/  with index.html, resume.json, resume.<lang>.json, resume.min.json,
-        resume.txt, resume.md, resume.pdf, resume-branded.pdf, llms.txt, AGENTS.md,
-        robots.txt, sitemap.xml, .well-known/cv.json, assets/* and (if DOMAIN set) CNAME.
+        resume.txt, resume.md, <Name_Surname_Role>.pdf, <Name_Surname_Role>_branded.pdf,
+        llms.txt, AGENTS.md, robots.txt, sitemap.xml, .well-known/cv.json, assets/*
+        and (if DOMAIN set) CNAME.
 
 Usage:
     python build/build.py            # build into dist/
@@ -86,6 +87,18 @@ def _split_dates(value: str):
     if len(parts) > 1 and parts[1].strip().lower() not in ("present", "настоящее", "now", "сейчас", ""):
         end = parts[1].strip()
     return start, end
+
+
+def _download_slug(name: str, label: str) -> str:
+    """Human-friendly filename base from name + role: Aleksandr_Krasnobai_Staff_DevOps_Engineer.
+
+    Non-alphanumeric characters are stripped, spaces become underscores. This is
+    used for the downloadable PDFs only; machine-readable JSON endpoints keep
+    their canonical names (ADR-0030).
+    """
+    def clean(s: str) -> str:
+        return re.sub(r"[^\w\s-]", "", s).strip().replace(" ", "_")
+    return f"{clean(name)}_{clean(label)}"
 
 
 def parse_resume(path: Path) -> dict:
@@ -792,7 +805,7 @@ def build_min_json(r: dict, base: str) -> dict:
     return out
 
 
-def build_cv_json(r: dict, base: str) -> dict:
+def build_cv_json(r: dict, base: str, pdf_ats: str, pdf_branded: str) -> dict:
     """cv.json-style discovery manifest at /.well-known/cv.json (ADR-0015)."""
     return {
         "schema": "cv.json",
@@ -804,12 +817,12 @@ def build_cv_json(r: dict, base: str) -> dict:
         },
         "plain_text": _abs(base, "resume.txt"),
         "metadata_tier": _abs(base, "resume.min.json"),
-        "human_pdf": _abs(base, "resume.pdf"),
-        "ats_pdf": _abs(base, "resume.pdf"),
+        "human_pdf": _abs(base, pdf_branded),
+        "ats_pdf": _abs(base, pdf_ats),
     }
 
 
-def build_llms_txt(r: dict, base: str) -> str:
+def build_llms_txt(r: dict, base: str, pdf_ats: str, pdf_branded: str) -> str:
     b = r["basics"]
     name = b.get("name", "Résumé")
     summary = (r.get("meta") or {}).get("intro", b.get("summary", ""))
@@ -820,8 +833,8 @@ def build_llms_txt(r: dict, base: str) -> str:
         (".well-known/cv.json", "Discovery manifest (cv.json convention)"),
         ("resume.txt", "Plain-text résumé (curl-friendly)"),
         ("resume.md", "Clean markdown résumé"),
-        ("resume.pdf", "ATS-optimized PDF (plain, single-column, real text)"),
-        ("resume-branded.pdf", "Human-facing designed PDF"),
+        (pdf_ats, "ATS-optimized PDF (plain, single-column, real text)"),
+        (pdf_branded, "Human-facing designed PDF"),
         ("AGENTS.md", "Notes for AI agents reading this site"),
     ]
     link_lines = "\n".join(f"- [{p}]({_abs(base, p)}): {d}" for p, d in links)
@@ -838,7 +851,7 @@ def build_llms_txt(r: dict, base: str) -> str:
 """
 
 
-def build_agents_md(r: dict, base: str) -> str:
+def build_agents_md(r: dict, base: str, pdf_ats: str, pdf_branded: str) -> str:
     b = r["basics"]
     name = b.get("name", "")
     return f"""# AGENTS.md — notes for AI agents
@@ -856,8 +869,8 @@ machine-readable source of truth is JSON Resume:
 - `{_abs(base, 'resume.ru.json')}` — Russian mirror
 - `{_abs(base, '.well-known/cv.json')}` — discovery manifest (cv.json convention)
 - `{_abs(base, 'resume.txt')}` — flat plain-text version, easiest to ingest
-- `{_abs(base, 'resume.pdf')}` — ATS-optimized PDF (real, selectable text)
-- `{_abs(base, 'resume-branded.pdf')}` — human-facing designed PDF
+- `{_abs(base, pdf_ats)}` — ATS-optimized PDF (real, selectable text)
+- `{_abs(base, pdf_branded)}` — human-facing designed PDF
 
 The human-edited sources live in `resume/resume.en.md` and `resume/resume.ru.md`
 in the repository; `build/build.py` regenerates everything.
@@ -969,6 +982,12 @@ def build(clean: bool = False, do_pdf: bool = True):
 
     resumes = {lang: parse_resume(RESUME_DIR / f"resume.{lang}.md") for lang in LANGS}
 
+    # Downloadable résumé filenames: Name_Surname_Role (ADR-0030)
+    slug = _download_slug(resumes["en"]["basics"].get("name", ""),
+                          resumes["en"]["basics"].get("label", ""))
+    pdf_ats = f"{slug}.pdf"
+    pdf_branded = f"{slug}_branded.pdf"
+
     # JSON Resume outputs
     (DIST / "resume.json").write_text(json.dumps(resumes["en"], ensure_ascii=False, indent=2), encoding="utf-8")
     (DIST / "resume.ru.json").write_text(json.dumps(resumes["ru"], ensure_ascii=False, indent=2), encoding="utf-8")
@@ -979,7 +998,7 @@ def build(clean: bool = False, do_pdf: bool = True):
     well_known = DIST / ".well-known"
     well_known.mkdir(exist_ok=True)
     (well_known / "cv.json").write_text(
-        json.dumps(build_cv_json(resumes["en"], base), ensure_ascii=False, indent=2), encoding="utf-8")
+        json.dumps(build_cv_json(resumes["en"], base, pdf_ats, pdf_branded), ensure_ascii=False, indent=2), encoding="utf-8")
 
     # Plain text (both langs)
     txt = "\n\n========== ENGLISH ==========\n\n" + render_text(resumes["en"]) \
@@ -990,8 +1009,8 @@ def build(clean: bool = False, do_pdf: bool = True):
     (DIST / "resume.md").write_text(render_markdown(resumes["en"]), encoding="utf-8")
 
     # AI-agent files
-    (DIST / "llms.txt").write_text(build_llms_txt(resumes["en"], base), encoding="utf-8")
-    (DIST / "AGENTS.md").write_text(build_agents_md(resumes["en"], base), encoding="utf-8")
+    (DIST / "llms.txt").write_text(build_llms_txt(resumes["en"], base, pdf_ats, pdf_branded), encoding="utf-8")
+    (DIST / "AGENTS.md").write_text(build_agents_md(resumes["en"], base, pdf_ats, pdf_branded), encoding="utf-8")
 
     # robots.txt + sitemap. A sitemap requires absolute URLs, so only emit one
     # (and reference it from robots.txt) when we know the base URL.
@@ -1023,21 +1042,23 @@ def build(clean: bool = False, do_pdf: bool = True):
         "JSONLD": jsonld,
         "OG_TAGS": build_og_tags(resumes["en"], base),
         "BASE": base.rstrip("/"),
+        "PDF_ATS": pdf_ats,
+        "PDF_BRANDED": pdf_branded,
     })
     (DIST / "index.html").write_text(out, encoding="utf-8")
 
-    # PDFs. resume.pdf is the ATS-optimized render (default download); the
-    # branded version is a separate file for humans (ADR-0013/0014).
+    # PDFs. pdf_ats is the ATS-optimized render (default download); the
+    # branded version is a separate file for humans (ADR-0013/0014/0030).
     if do_pdf:
         try:
             import weasyprint  # noqa: WPS433
             weasyprint.HTML(string=render_ats_html(resumes["en"], "en"),
-                            base_url=str(ROOT)).write_pdf(str(DIST / "resume.pdf"))
+                            base_url=str(ROOT)).write_pdf(str(DIST / pdf_ats))
             weasyprint.HTML(string=render_print_html(resumes["en"], "en"),
-                            base_url=str(ROOT)).write_pdf(str(DIST / "resume-branded.pdf"))
+                            base_url=str(ROOT)).write_pdf(str(DIST / pdf_branded))
         except Exception as exc:  # pragma: no cover
             print(f"WARNING: PDF generation skipped: {exc}", file=sys.stderr)
-            for p in ("resume.pdf", "resume-branded.pdf"):
+            for p in (pdf_ats, pdf_branded):
                 (DIST / p).write_bytes(b"")  # placeholder so links/tests know it's absent
 
     # Copy frontend assets (CSS, JS, PNG). Self-hosted fonts were removed in
@@ -1068,21 +1089,26 @@ def check(resumes: dict) -> list[str]:
             errors.append(f"[{lang}] basics missing: {sorted(missing)}")
         if not r.get("work"):
             errors.append(f"[{lang}] no work experience parsed")
+    # Downloadable résumé filenames derived from name + role (ADR-0030)
+    slug = _download_slug(resumes["en"]["basics"].get("name", ""),
+                          resumes["en"]["basics"].get("label", ""))
+    pdf_ats = f"{slug}.pdf"
+    pdf_branded = f"{slug}_branded.pdf"
     # llms.txt shape
     llms = (DIST / "llms.txt").read_text(encoding="utf-8")
     if not llms.startswith("# ") or "\n> " not in llms:
         errors.append("llms.txt missing H1 or blockquote summary")
     # linked files exist
     for f in ("resume.json", "resume.ru.json", "resume.min.json", "resume.txt",
-              "resume.md", "resume.pdf", "resume-branded.pdf", "AGENTS.md"):
+              "resume.md", pdf_ats, pdf_branded, "AGENTS.md"):
         if not (DIST / f).exists():
             errors.append(f"missing dist/{f}")
     if not (DIST / ".well-known" / "cv.json").exists():
         errors.append("missing dist/.well-known/cv.json")
     # ATS pdf must have a real text layer (not an empty placeholder)
-    ats = DIST / "resume.pdf"
+    ats = DIST / pdf_ats
     if ats.exists() and ats.stat().st_size <= 100:
-        errors.append("resume.pdf is empty/placeholder (PDF generation failed)")
+        errors.append(f"{pdf_ats} is empty/placeholder (PDF generation failed)")
     if not (DIST / "index.html").exists():
         errors.append("missing dist/index.html")
     if not (DIST / "assets").is_dir():

@@ -44,7 +44,7 @@ locally, so if something is already serving `dist/` on `:8000` it is reused.
 | share / QR | share reveals the Show-QR button; opening it makes `#qr` visible |
 | curl one-liner | points at `resume.txt` and reflects the current origin |
 | theme toggle | flips `data-theme` between `light` and `dark` |
-| PDF links | `resume.pdf` and `resume-branded.pdf` resolve (200, `application/pdf`) |
+| PDF links | `Aleksandr_Krasnobai_Staff_DevOps_Engineer.pdf` and `Aleksandr_Krasnobai_Staff_DevOps_Engineer_branded.pdf` resolve (200, `application/pdf`) |
 | machine endpoints | `resume.json`, `resume.min.json`, `.well-known/cv.json` are served and valid |
 | accessibility | skip-link target, single `<main>`, labelled language group |
 

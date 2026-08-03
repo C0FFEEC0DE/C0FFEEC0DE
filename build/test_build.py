@@ -14,6 +14,11 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 import build  # noqa: E402
 
 
+# Expected downloadable résumé filenames from name + role (ADR-0030)
+PDF_ATS = "Aleksandr_Krasnobai_Staff_DevOps_Engineer.pdf"
+PDF_BRANDED = "Aleksandr_Krasnobai_Staff_DevOps_Engineer_branded.pdf"
+
+
 @pytest.fixture
 def dist(tmp_path, monkeypatch):
     """Point build.DIST at a temp dir so tests never pollute the real dist/.
@@ -57,7 +62,7 @@ def resume_md_attacked(tmp_path):
 def test_build_produces_core_files(dist):
     build.build(clean=True)
     for f in ("index.html", "resume.json", "resume.ru.json", "resume.min.json",
-              "resume.txt", "resume.md", "resume.pdf", "resume-branded.pdf",
+              "resume.txt", "resume.md", PDF_ATS, PDF_BRANDED,
               "llms.txt", "AGENTS.md", "robots.txt", "sitemap.xml"):
         assert (dist / f).is_file(), f"missing {f}"
     assert (dist / ".well-known" / "cv.json").is_file(), "missing .well-known/cv.json"
@@ -127,8 +132,8 @@ def test_two_pdfs(dist):
     except Exception:
         pytest.skip("weasyprint not installed")
     build.build(clean=True)
-    ats = dist / "resume.pdf"
-    branded = dist / "resume-branded.pdf"
+    ats = dist / PDF_ATS
+    branded = dist / PDF_BRANDED
     assert ats.read_bytes()[:4] == b"%PDF" and ats.stat().st_size > 1000
     assert branded.read_bytes()[:4] == b"%PDF" and branded.stat().st_size > 1000
 
@@ -187,7 +192,7 @@ def test_pdf_generated(dist):
     except Exception:
         pytest.skip("weasyprint not installed")
     build.build(clean=True)
-    pdf = dist / "resume.pdf"
+    pdf = dist / PDF_ATS
     assert pdf.is_file()
     assert pdf.stat().st_size > 100, "PDF should not be empty"
     assert pdf.read_bytes()[:4] == b"%PDF"
@@ -204,14 +209,14 @@ def _pdf_text(pdf_path):
 
 
 def test_pdf_ats_is_machine_readable(dist):
-    """The ATS PDF (resume.pdf) must contain selectable text for the key facts:
+    """The ATS PDF must contain selectable text for the key facts:
     name, role, company, skills, experience, and contact links."""
     try:
         import weasyprint  # noqa: F401
     except Exception:
         pytest.skip("weasyprint not installed")
     build.build(clean=True)
-    text = _pdf_text(dist / "resume.pdf")
+    text = _pdf_text(dist / PDF_ATS)
     assert "Aleksandr Krasnobai" in text, "PDF missing name"
     assert "Staff DevOps Engineer" in text, "PDF missing role"
     assert "Grid Dynamics" in text, "PDF missing company"
@@ -224,15 +229,15 @@ def test_pdf_ats_is_machine_readable(dist):
 
 
 def test_pdf_branded_is_machine_readable(dist):
-    """The branded PDF (resume-branded.pdf) must also contain selectable text
-    for the core résumé facts; it is a human-facing PDF but must still be
-    machine-readable (searchable / copy-pasteable)."""
+    """The branded PDF must also contain selectable text for the core résumé
+    facts; it is a human-facing PDF but must still be machine-readable
+    (searchable / copy-pasteable)."""
     try:
         import weasyprint  # noqa: F401
     except Exception:
         pytest.skip("weasyprint not installed")
     build.build(clean=True)
-    text = _pdf_text(dist / "resume-branded.pdf")
+    text = _pdf_text(dist / PDF_BRANDED)
     assert "Aleksandr Krasnobai" in text, "branded PDF missing name"
     assert "Staff DevOps Engineer" in text, "branded PDF missing role"
     assert "Grid Dynamics" in text, "branded PDF missing company"
@@ -251,12 +256,12 @@ def test_pdf_contacts_are_readable(dist):
         pytest.skip("weasyprint not installed")
     build.build(clean=True)
 
-    ats = _pdf_text(dist / "resume.pdf")
+    ats = _pdf_text(dist / PDF_ATS)
     assert "hi@krasnobai.dev" in ats, "ATS PDF missing email"
     assert "linkedin.com/in/" in ats and "aleksandrkrasnobai" in ats, "ATS PDF missing LinkedIn URL"
     assert "t.me/krasnobaicoach" in ats, "ATS PDF missing Telegram URL"
 
-    branded = _pdf_text(dist / "resume-branded.pdf")
+    branded = _pdf_text(dist / PDF_BRANDED)
     assert "hi@krasnobai.dev" in branded, "branded PDF missing email"
     assert "LinkedIn" in branded, "branded PDF missing LinkedIn label"
     assert "Telegram" in branded, "branded PDF missing Telegram label"
@@ -276,7 +281,7 @@ def test_pdf_formatting_is_intact(dist):
     except Exception:
         pytest.skip("weasyprint not installed")
     build.build(clean=True)
-    for pdf_name in ("resume.pdf", "resume-branded.pdf"):
+    for pdf_name in (PDF_ATS, PDF_BRANDED):
         reader = PdfReader(str(dist / pdf_name))
         assert len(reader.pages) >= 1, f"{pdf_name} has no pages"
         for i, page in enumerate(reader.pages):
@@ -292,9 +297,14 @@ def test_pdf_formatting_is_intact(dist):
 # --- check() ---------------------------------------------------------------- #
 def test_check_passes(dist):
     build.build(clean=True)
-    errs = build.check({"en": {"basics": {"name": "x", "email": "y"}, "work": [{}]},
-                        "ru": {"basics": {"name": "x", "email": "y"}, "work": [{}]}})
-    # those minimal dicts satisfy required fields; llms.txt etc. were built
+    # Validate the actual dist output, which is built from the real résumé
+    # sources. The downloadable PDF filenames depend on name + role, so check()
+    # must see the real resumes to know which files to expect.
+    real = {
+        "en": build.parse_resume(build.RESUME_DIR / "resume.en.md"),
+        "ru": build.parse_resume(build.RESUME_DIR / "resume.ru.md"),
+    }
+    errs = build.check(real)
     assert errs == []
 
 
@@ -586,15 +596,15 @@ def test_resume_md_is_clean_markdown(dist):
 
 # --- hero CTA: single primary PDF download button ----------------------------
 def test_hero_cta_is_pdf_download(dist):
-    """The minimal business card has one primary CTA: download the ATS PDF
-    (resume.pdf). The AI/LLM résumé and branded PDF live in the footer machine
-    links, not in the hero."""
+    """The minimal business card has one primary CTA: download the ATS PDF.
+    The AI/LLM résumé and branded PDF live in the footer machine links, not in
+    the hero."""
     import re
     build.build(clean=True)
     html = (dist / "index.html").read_text("utf-8")
     cta = re.search(r'<section class="cta-section"[^>]*>(.*?)</section>', html, re.S).group(1)
     links = re.findall(r'href="([^"]+)"', cta)
-    assert links == ["resume.pdf"], f"hero CTA should have exactly one PDF link, got {links}"
+    assert links == [PDF_ATS], f"hero CTA should have exactly one PDF link, got {links}"
     assert 'data-i18n="download"' in cta, "CTA uses the bilingual download label"
 
 

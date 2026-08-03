@@ -27,6 +27,15 @@ Generate **distinct outputs per audience**, all derived from the same markdown s
 
 ## Consequences
 - More outputs to build/test, but each is correct for its audience.
-- The download button serves the ATS-safe `resume.pdf` by default (safest to forward);
+- The download button serves the ATS-safe PDF by default (safest to forward);
   the branded PDF is a secondary link.
 - Adding a future format (e.g. `.docx`, VitaeFlow `.vf.pdf`) is a new renderer only.
+
+## Version history
+- **v1 (2026-07-30):** the human-facing PDF was `resume-branded.pdf` and the
+  ATS PDF was `resume.pdf`.
+- **v2 (2026-07-31):** the PDF filenames changed to the `Name_Surname_Role`
+  pattern per ADR-0030. The ATS PDF is now
+  `Aleksandr_Krasnobai_Staff_DevOps_Engineer.pdf` and the branded PDF is
+  `Aleksandr_Krasnobai_Staff_DevOps_Engineer_branded.pdf`; the audience split
+  remains unchanged.

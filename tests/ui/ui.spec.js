@@ -154,7 +154,10 @@ test("the page is fixed light Forest and has no theme toggle", async ({ page }) 
 
 test("the PDF download links resolve (default ATS + branded)", async ({ page }) => {
   await page.goto("/");
-  for (const href of ["resume.pdf", "resume-branded.pdf"]) {
+  for (const href of [
+    "Aleksandr_Krasnobai_Staff_DevOps_Engineer.pdf",
+    "Aleksandr_Krasnobai_Staff_DevOps_Engineer_branded.pdf",
+  ]) {
     const res = await page.request.get(href);
     expect(res.status(), `${href} should be reachable`).toBe(200);
     expect((await res.headers())["content-type"] || "").toContain("pdf");
@@ -222,7 +225,7 @@ test("footer machine formats are a semantic list with seven links and no extra t
     "resume.json",
     "resume.min.json",
     "resume.txt",
-    "resume-branded.pdf",
+    "Aleksandr_Krasnobai_Staff_DevOps_Engineer_branded.pdf",
     "llms.txt",
     "AGENTS.md",
     "https://github.com/krasnobai",
@@ -242,7 +245,10 @@ test("hero has one primary CTA: download PDF", async ({ page }) => {
   await page.goto("/");
   const cta = page.locator(".cta-section a");
   await expect(cta).toHaveCount(1);
-  await expect(page.locator(".cta-section a.btn-primary")).toHaveAttribute("href", "resume.pdf");
+  await expect(page.locator(".cta-section a.btn-primary")).toHaveAttribute(
+    "href",
+    "Aleksandr_Krasnobai_Staff_DevOps_Engineer.pdf",
+  );
   await expect(page.locator(".cta-section a")).toContainText("Download résumé (PDF)");
   await page.click(".lang-toggle button[data-lang='ru']");
   await expect(page.locator(".cta-section a")).toContainText("Скачать резюме (PDF)");
