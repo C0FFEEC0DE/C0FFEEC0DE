@@ -884,12 +884,14 @@ def build_llms_txt(r: dict, base: str, pdf_name: str) -> str:
     avail = r.get("availability")
     avail_block = ""
     if avail:
+        tz = avail.get("timezone")
+        tz_line = f"\n- Time zone: {tz}" if tz else ""
         avail_block = (
             "\n## Availability\n"
             f"- Status: {avail.get('status')}\n"
             f"- Roles: {', '.join(avail.get('roles', []))}\n"
             f"- Work model: {avail.get('work_model')}\n"
-            f"- Locations: {', '.join(avail.get('locations', []))}\n"
+            f"- Locations: {', '.join(avail.get('locations', []))}{tz_line}\n"
         )
     return f"""# {name}
 
@@ -964,13 +966,15 @@ def build_resume_for_agents(r: dict, base: str) -> str:
     # Availability front-loaded so agents see hiring signals immediately
     avail = r.get("availability")
     if avail:
+        tz = avail.get("timezone")
+        tz_line = f"\n- **Time zone:** {tz}" if tz else ""
         lines += [
             "## Availability",
             "",
             f"- **Status:** {avail.get('status')}",
             f"- **Open roles:** {', '.join(avail.get('roles', []))}",
             f"- **Work model:** {avail.get('work_model')}",
-            f"- **Locations:** {', '.join(avail.get('locations', []))}",
+            f"- **Locations:** {', '.join(avail.get('locations', []))}{tz_line}",
             "",
         ]
 

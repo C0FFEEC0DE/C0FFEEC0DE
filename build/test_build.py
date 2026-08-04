@@ -143,7 +143,8 @@ def test_single_pdf(dist):
 def test_availability_in_resume_json(dist):
     build.build(clean=True)
     r = json.loads((dist / "resume.json").read_text("utf-8"))
-    assert r["availability"]["work_model"] == "remote"
+    work_model = r["availability"]["work_model"]
+    assert "remote" in work_model, f"availability work_model missing remote: {work_model}"
 
 
 def test_llms_txt_shape(dist):
@@ -530,7 +531,8 @@ def test_min_json_shape(dist):
     for k in ("name", "label", "top_skills", "years_experience", "full", "availability"):
         assert k in m, f"metadata tier missing {k}"
     assert m["availability"]["status"] == "open"
-    assert m["availability"]["work_model"] == "remote"
+    work_model = m["availability"]["work_model"]
+    assert "remote" in work_model, f"metadata tier work_model missing remote: {work_model}"
     assert isinstance(m["availability"].get("roles"), list) and m["availability"]["roles"]
 
 

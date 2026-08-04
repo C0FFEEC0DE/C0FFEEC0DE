@@ -30,8 +30,9 @@ profiles:
 availability:
   status: "open"
   roles: ["Staff DevOps Engineer", "SRE", "Platform Engineer"]
-  work_model: "remote"
+  work_model: "full-remote EU, open to hybrid in Belgrade"
   locations: ["Remote (EU)", "Belgrade, Serbia"]
+  timezone: "CET (UTC+1)"
 meta:
   canonical: "https://krasnobai.dev/resume.json"
   version: "0.3.0"
@@ -65,12 +66,12 @@ dates: Jan 2019 — present · location: Serbia · url: https://www.gridynamics.
 - Own the DevOps direction for Grid Dynamics Serbia — professional development, community building, and team morale; developed internal training courses, an assessment system, and technical development roadmaps for engineers.
 - Leading professional-development track for 60 DevOps engineers through 10 specialization leads.
 
-### Offensive Security Researcher — Self-employed
+### Offensive Security Researcher — Independent
 dates: Feb 2026 — present · location: Serbia
-- Offensive security research focused on AI systems and infrastructure — breaking AI agents before attackers do. Connecting DevOps security with AI safety: agents with production access get the same scrutiny as any other infrastructure.
-- Testing agentic systems for exploitable paths (prompt injection, guardrails bypass, agent privilege escalation).
-- Red teaming CI/CD and cloud environments.
-- Infrastructure attack surface analysis.
+- Independent offensive-security research alongside a full-time Staff DevOps Engineer role — a self-directed practice exploring AI-agent and infrastructure attack surfaces before they reach production.
+- Breaks agentic systems for exploitable paths: prompt injection, guardrails bypass, agent privilege escalation, and unauthorized tool use.
+- Red-teams CI/CD pipelines and cloud environments, then feeds findings back into platform-hardening and secure-by-default infrastructure design.
+- Connects DevOps security with AI safety: agents with production access are treated with the same scrutiny as any other privileged infrastructure component.
 
 ### DevOps Engineer — Grid Dynamics
 dates: Feb 2018 — Jan 2019 · location: St. Petersburg, Russia

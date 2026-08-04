@@ -31,8 +31,9 @@ profiles:
 availability:
   status: "open"
   roles: ["Staff DevOps Engineer", "SRE", "Platform Engineer"]
-  work_model: "remote"
+  work_model: "полный удалённый формат в ЕС, гибрид в Белграде"
   locations: ["Remote (EU)", "Belgrade, Serbia"]
+  timezone: "CET (UTC+1)"
 meta:
   canonical: "https://krasnobai.dev/resume.json"
   version: "0.3.0"
@@ -66,12 +67,12 @@ dates: янв 2019 — настоящее · location: Сербия · url: http
 - Веду DevOps-направление Grid Dynamics Serbia — профессиональное развитие, community и морально-психологический климат; разработал внутренние курсы, систему оценки и технические роадмапы развития для инженеров.
 - Веду трек профессионального развития 60 DevOps-инженеров через 10 лидов специализаций.
 
-### Offensive Security Researcher — Самозанятый
+### Offensive Security Researcher — Независимый исследователь
 dates: фев 2026 — настоящее · location: Сербия
-- Offensive security research с фокусом на AI-системы и инфраструктуру — ломаю AI-агентов до того, как это сделают злоумышленники. Связываю DevOps-безопасность с AI safety: агенты с прод-доступом получают такой же скрютин, как и любая другая инфраструктура.
-- Тестирую агентные системы на эксплуатируемые векторы (prompt injection, обход guardrails, privilege escalation агента).
-- Red teaming CI/CD и cloud-окружений.
-- Анализ поверхности атаки инфраструктуры.
+- Независимое offensive-security-исследование параллельно основной роли Staff DevOps Engineer — самостоятельная практика по изучению векторов атак на AI-агенты и инфраструктуру до их попадания в продакшен.
+- Ищу эксплуатируемые пути в агентных системах: prompt injection, обход guardrails, privilege escalation агента, несанкционированный вызов инструментов.
+- Провожу red teaming CI/CD-пайплайнов и cloud-окружений, а результаты направляю в укрепление платформы и secure-by-default подход к инфраструктуре.
+- Связываю DevOps-безопасность с AI safety: агенты с продакшен-доступом получают тот же уровень скрютини, что и любая другая привилегированная инфраструктура.
 
 ### DevOps Engineer — Grid Dynamics
 dates: фев 2018 — янв 2019 · location: Санкт-Петербург, Россия
