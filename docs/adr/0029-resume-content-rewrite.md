@@ -28,9 +28,10 @@ truth for every output:
   - `resume.txt` header,
   - `resume.md` header,
   - `llms.txt` blockquote,
-  - the branded PDF as a "Summary" section.
-- The ATS PDF intentionally **does not** render a Summary section (per
-  ADR-0014) so it opens directly with Work Experience.
+  - `resume-for-agents.md` executive summary,
+  - the single PDF as a "Summary" section.
+- The single PDF opens with a brief Summary and then Work Experience (per
+  ADR-0031).
 - Experience is listed in reverse chronological order, 10 entries, with the
   current Grid Dynamics Staff DevOps Engineer role first and the Self-employed
   offensive-security research role second.
@@ -42,17 +43,17 @@ truth for every output:
 
 ## Consequences
 
-- All résumé outputs (landing page, JSON Resume, plain text, markdown, both
-  PDFs, llms.txt, AGENTS.md) now derive from the same canonical markdown
-  sources, so they cannot drift.
+- All résumé outputs (landing page, JSON Resume, plain text, markdown, the
+  single PDF, resume-for-agents.md, llms.txt, AGENTS.md) now derive from the
+  same canonical markdown sources, so they cannot drift.
 - The landing page keeps a short hero lead while longer-form context is
-  available to humans who download the branded PDF and to machines reading
-  `llms.txt` / `resume.json`.
+  available to humans who download the single PDF and to machines reading
+  `llms.txt` / `resume.json` / `resume-for-agents.md`.
 - Tests that pinned the old label, summary, and fluency levels were updated to
   match the new canonical data.
-- No ADR supersedes ADR-0001 (markdown source of truth), ADR-0014 (ATS PDF
-  structure), or ADR-0028 (Open Graph tags); this ADR only updates the
-  *content* flowing through those existing pipelines.
+- No ADR supersedes ADR-0001 (markdown source of truth) or ADR-0028 (Open Graph
+  tags); ADR-0014 was amended by ADR-0031 to combine the human and ATS PDFs.
+  This ADR only updates the *content* flowing through those existing pipelines.
 
 ## Revision history
 - **v1 (2026-07-31):** canonical résumé rewrite from the owner-provided

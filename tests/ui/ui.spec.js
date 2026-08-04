@@ -152,16 +152,12 @@ test("the page is fixed light Forest and has no theme toggle", async ({ page }) 
   expect(accent).toBe("#2f7d3a");
 });
 
-test("the PDF download links resolve (default ATS + branded)", async ({ page }) => {
+test("the single PDF download link resolves", async ({ page }) => {
   await page.goto("/");
-  for (const href of [
-    "Aleksandr_Krasnobai_Staff_DevOps_Engineer.pdf",
-    "Aleksandr_Krasnobai_Staff_DevOps_Engineer_branded.pdf",
-  ]) {
-    const res = await page.request.get(href);
-    expect(res.status(), `${href} should be reachable`).toBe(200);
-    expect((await res.headers())["content-type"] || "").toContain("pdf");
-  }
+  const href = "Aleksandr_Krasnobai_Staff_DevOps_Engineer.pdf";
+  const res = await page.request.get(href);
+  expect(res.status(), `${href} should be reachable`).toBe(200);
+  expect((await res.headers())["content-type"] || "").toContain("pdf");
 });
 
 test("machine-readable endpoints are served", async ({ page }) => {
@@ -174,6 +170,12 @@ test("machine-readable endpoints are served", async ({ page }) => {
   expect(min.availability.status).toBe("open");
   const cv = await (await page.request.get(".well-known/cv.json")).json();
   expect(cv.schema).toBe("cv.json");
+  expect(cv.human_pdf).toBe(cv.ats_pdf);
+  const agentsMd = await page.request.get("resume-for-agents.md");
+  expect(agentsMd.status()).toBe(200);
+  expect(await agentsMd.text()).toContain("Aleksandr Krasnobai");
+  const agentsJson = await (await page.request.get("agents.json")).json();
+  expect(agentsJson.schema).toBe("agents.json");
 });
 
 test("Open Graph meta tags use the résumé name, role, and summary", async ({ page }) => {
@@ -216,16 +218,17 @@ test("mobile: single-column business card layout", async ({ page }) => {
   expect(hero.width).toBeGreaterThan(300);
 });
 
-test("footer machine formats are a semantic list with seven links and no extra text", async ({ page }) => {
+test("footer machine formats are a semantic list with eight links and no extra text", async ({ page }) => {
   await page.goto("/");
   const items = page.locator(".machine-links li");
-  await expect(items).toHaveCount(7);
+  await expect(items).toHaveCount(8);
   const hrefs = await page.locator(".machine-links a").evaluateAll((els) => els.map((a) => a.getAttribute("href")));
   expect(hrefs).toEqual([
     "resume.json",
     "resume.min.json",
+    "resume-for-agents.md",
     "resume.txt",
-    "Aleksandr_Krasnobai_Staff_DevOps_Engineer_branded.pdf",
+    "Aleksandr_Krasnobai_Staff_DevOps_Engineer.pdf",
     "llms.txt",
     "AGENTS.md",
     "https://github.com/krasnobai",

@@ -11,10 +11,10 @@ A résumé repository that is:
 
 - **Authored in markdown** — edit `resume/resume.en.md` / `resume/resume.ru.md`, CI rebuilds everything.
 - **Bilingual (EN/RU)** with a one-click toggle.
-- **Machine-readable** for robots: JSON Resume `resume.json`, an `llms.txt` index, an `AGENTS.md`, and a flat `resume.txt`.
-- **Human-readable** for people: a warm, low-cognitive-load landing page on GitHub Pages with a single **Forest** theme (light/dark) and a handcrafted feel.
-- **Downloadable via a curl one-liner** and a printable PDF.
-- **Carries a tiny pixel-art dragon** generated per visitor and shareable by link + QR — a small "thank you for stopping by" with a viral loop.
+- **Machine-readable** for robots: JSON Resume `resume.json`, an `llms.txt` index, an `AGENTS.md`, `.well-known/cv.json`, `resume-for-agents.md`, `agents.json`, and a flat `resume.txt`.
+- **Human-readable** for people: a warm, low-cognitive-load landing page on GitHub Pages with a fixed **Forest** light theme and a handcrafted feel.
+- **Downloadable via a curl one-liner** and a single human-readable, ATS-safe PDF.
+- **Carries a tiny pixel-art dragon** generated per visitor and shareable by link — a small "thank you for stopping by".
 
 The repo holds **real owner data** (Aleksandr Krasnobai) sourced from LinkedIn plus the local project repos, with **`TODO` placeholders** for the fields LinkedIn hides from public view (phone, the Grid Dynamics start date and exact title, prior roles, education degree/dates). Fill the `TODO`s in `resume/resume.en.md` and `resume/resume.ru.md` before going live — the structure stays identical.
 
@@ -26,13 +26,12 @@ resume/
   resume.ru.md          # human source — Russian (same structure)
 src/
   index.html            # landing page template (Bootstrap 5.3 shell + placeholders)
-  site.css              # single Forest theme, light/dark (ADR-0017) + human feel (ADR-0018) on Bootstrap
-  jetbrains-mono-*.woff2# self-hosted JetBrains Mono (headings) — no CDN fetch
-  print.css             # self-contained Forest print styles for the branded PDF
-  i18n.js               # EN/RU toggle + light/dark + greeting + curl line
+  site.css              # fixed light Forest theme (ADR-0017 v4) + human feel (ADR-0018) on Bootstrap
+  i18n.js               # EN/RU toggle + greeting
   dragon-parts.js       # pixel-art palettes + option lists
   dragon.js             # seeded PRNG → composes a dragon → draws <canvas>
-  share.js              # seed/URL + share link + lazy-loaded QR
+  share.js              # seed/URL + share link + save-dragon token PNG
+  print.css             # legacy self-contained Forest print styles (kept for reference; the single PDF uses inline CSS)
 build/
   build.py              # one-shot builder; `--check` validates
   test_build.py         # pytest suite (incl. automated WCAG contrast guard — ADR-0019)
@@ -110,20 +109,21 @@ Environment variables (all optional):
 
 ## What gets generated
 
-The build produces **three audiences** from one markdown source (see `docs/adr/0013-three-audiences.md`):
+The build produces **two surfaces** from one markdown source (see `docs/adr/0031-llm-ai-agent-optimized-build.md`):
 
 | File | Audience | Purpose |
 |---|---|---|
 | `index.html` | humans | bilingual landing page with the dragon |
-| `Aleksandr_Krasnobai_Staff_DevOps_Engineer_branded.pdf` | humans | designed, scannable PDF |
-| `Aleksandr_Krasnobai_Staff_DevOps_Engineer.pdf` | **ATS** | ATS-optimized: single column, standard font/headings, dates on the title line, real selectable text (the **default download**) |
+| `Aleksandr_Krasnobai_Staff_DevOps_Engineer.pdf` | humans + **ATS** | one human-readable, ATS-safe PDF: single column, system font, dates on the title line, real selectable text (the **default download**) |
 | `resume.json` / `resume.ru.json` | machines | JSON Resume v1.0.0 (EN/RU) + optional `availability` hiring signals |
-| `resume.min.json` | LLMs | token-cheap metadata tier (~100 tokens) for agent screening |
-| `.well-known/cv.json` | LLMs | discovery manifest ([cv.json](https://cvjson.com) convention) |
+| `resume.min.json` | LLMs / agents | token-cheap metadata tier (~100 tokens) for screening |
+| `.well-known/cv.json` | LLMs / agents | discovery manifest ([cv.json](https://cvjson.com) convention) |
+| `resume-for-agents.md` | LLMs / agents | narrative, keyword-rich résumé optimized for summarisation |
+| `agents.json` | LLMs / agents | OpenAI-style structured-output function spec |
 | `resume.txt` | curl / machines | flat plain text, both languages |
 | `resume.md` | humans / machines | clean markdown mirror |
-| `llms.txt` | LLMs | curated index ([llmstxt.org](https://llmstxt.org)) |
-| `AGENTS.md` | AI agents | what this site is + where data lives |
+| `llms.txt` | LLMs / agents | curated index ([llmstxt.org](https://llmstxt.org)) |
+| `AGENTS.md` | AI agents | what this site is + source-of-truth hierarchy |
 | `robots.txt`, `sitemap.xml` | crawlers | standard (sitemap only when a base URL is known) |
 | `CNAME` | GitHub Pages | only when `DOMAIN` is set |
 
@@ -131,23 +131,24 @@ The build produces **three audiences** from one markdown source (see `docs/adr/0
 
 ```bash
 curl -sL https://krasnobai.dev/resume.txt                             # plain text to stdout
-curl -sL https://krasnobai.dev/resume.json                             # JSON Resume
-curl -sL https://krasnobai.dev/Aleksandr_Krasnobai_Staff_DevOps_Engineer.pdf -o r.pdf  # ATS PDF
+curl -sL https://krasnobai.dev/resume.json                            # JSON Resume
+curl -sL https://krasnobai.dev/resume-for-agents.md                  # LLM/AI-agent résumé
+curl -sL https://krasnobai.dev/Aleksandr_Krasnobai_Staff_DevOps_Engineer.pdf -o r.pdf  # single PDF
 ```
 
 Before the custom domain is bound, the same paths work on the default Pages URL, e.g. `https://<user>.github.io/C0FFEEC0DE/resume.txt`.
 
 ## The dragon
 
-Each visitor gets a deterministic pixel-art dragon seeded from the URL (`?d=…`). The same link always shows the same dragon, so sharing the link shares *your* dragon. A "Share" button copies the link; "Show QR" renders a scannable code (the QR lib loads lazily, SRI-locked, so the page stays light and the delight never breaks). The dragon is generated entirely client-side — no backend, no tracking.
+Each visitor gets a deterministic pixel-art dragon seeded from the URL (`?d=…`). The same link always shows the same dragon, so sharing the link shares *your* dragon. A "Share" button reveals the shareable link and a LinkedIn share button; "Save my dragon" downloads a token PNG. The dragon is generated entirely client-side — no backend, no tracking.
 
 ## Themes & feel
 
-The site uses a **single Forest theme** (ADR-0017) with a light and a dark variant — a calm green palette (paper-neutral greens, one green accent, soft 16px rounding, warm low shadow). The ◐ toggle in the top bar flips light/dark and persists in `localStorage`. The theme is pure CSS custom properties (`--c-*` mapped once to Bootstrap's component vars) — no JS color math — and its colors are chosen for WCAG AA in both modes (machine-enforced by the build — ADR-0019). To change the theme, edit the `:root` (light) and `:root[data-theme="dark"]` blocks in `src/site.css`.
+The site uses a **fixed light Forest theme** (ADR-0017 v4) — a calm green palette (paper-neutral greens, one green accent, soft 16px rounding, warm low shadow). The theme is pure CSS custom properties (`--c-*` mapped once to Bootstrap's component vars) — no JS color math — and its colors are chosen for WCAG AA (machine-enforced by the build — ADR-0019). To change the palette, edit the `:root` block in `src/site.css`.
 
-The whole site is tuned for a **human, handcrafted feel** (ADR-0018): self-hosted **JetBrains Mono** display headings (a coder's font for a coder's résumé — nothing fetched from a CDN, offline-safe), warm paper neutrals, soft 16px rounding, an italic "margin-note" greeting, and the dragon as the personality anchor. Structure stays low-cognitive-load (one accent, one CTA, generous space); the personality lives in typography and warmth, not extra components.
+The whole site is tuned for a **human, handcrafted feel** (ADR-0018): system sans-serif everywhere (nothing fetched from a CDN, offline-safe), warm paper neutrals, soft 16px rounding, an italic "margin-note" greeting, and the dragon as the personality anchor. Structure stays low-cognitive-load (one accent, one CTA, generous space); the personality lives in typography and warmth, not extra components.
 
-Theme contrast and the no-JS fallback are **regression-guarded** (ADR-0019): a pure-Python test computes the WCAG ratio for the theme in both modes (text, muted, accent, button-on-accent, against both the page bg and the block surface) and fails the build below 4.5:1, and Playwright tests block scripts to verify the Forest-light default and the no-JS dark path render correctly without JavaScript.
+Theme contrast is **regression-guarded** (ADR-0019): a pure-Python test computes the WCAG ratio for the light theme (text, muted, accent, button-on-accent, against both the page bg and the block surface) and fails the build below 4.5:1. Playwright tests also block scripts to verify the fixed Forest-light default renders correctly without JavaScript.
 
 ## Deploying (GitHub Pages)
 

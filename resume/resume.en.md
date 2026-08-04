@@ -1,6 +1,6 @@
 <!--
   SOURCE FORMAT — edit this file, then `python build/build.py` regenerates everything
-  (resume.json, resume.txt, the ATS PDF, the branded PDF, index.html, llms.txt, AGENTS.md).
+  (resume.json, resume.txt, the single PDF, resume-for-agents.md, agents.json, index.html, llms.txt, AGENTS.md).
 
   Front-matter (YAML below) maps to JSON Resume `basics`, `profiles`, `meta`.
   Body uses fixed H2 sections; H3s are items inside Experience/Projects/Education.

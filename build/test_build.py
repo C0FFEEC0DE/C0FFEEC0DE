@@ -14,9 +14,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 import build  # noqa: E402
 
 
-# Expected downloadable résumé filenames from name + role (ADR-0030)
-PDF_ATS = "Aleksandr_Krasnobai_Staff_DevOps_Engineer.pdf"
-PDF_BRANDED = "Aleksandr_Krasnobai_Staff_DevOps_Engineer_branded.pdf"
+# Expected downloadable résumé filename from name + role (ADR-0030/0031)
+PDF_NAME = "Aleksandr_Krasnobai_Staff_DevOps_Engineer.pdf"
 
 
 @pytest.fixture
@@ -62,8 +61,8 @@ def resume_md_attacked(tmp_path):
 def test_build_produces_core_files(dist):
     build.build(clean=True)
     for f in ("index.html", "resume.json", "resume.ru.json", "resume.min.json",
-              "resume.txt", "resume.md", PDF_ATS, PDF_BRANDED,
-              "llms.txt", "AGENTS.md", "robots.txt", "sitemap.xml"):
+              "resume.txt", "resume.md", "resume-for-agents.md", "agents.json",
+              PDF_NAME, "llms.txt", "AGENTS.md", "robots.txt", "sitemap.xml"):
         assert (dist / f).is_file(), f"missing {f}"
     assert (dist / ".well-known" / "cv.json").is_file(), "missing .well-known/cv.json"
     assert (dist / "assets" / "site.css").is_file()
@@ -124,18 +123,21 @@ def test_cv_json_discovery(dist):
     assert cv["primary"].endswith("resume.json")
     assert cv["languages"]["ru"].endswith("resume.ru.json")
     assert cv["metadata_tier"].endswith("resume.min.json")
+    assert cv["agent_readable"].endswith("resume-for-agents.md")
+    assert cv["agent_spec"].endswith("agents.json")
+    assert cv["human_pdf"] == cv["ats_pdf"]
+    assert PDF_NAME in cv["human_pdf"]
 
 
-def test_two_pdfs(dist):
+def test_single_pdf(dist):
     try:
         import weasyprint  # noqa: F401
     except Exception:
         pytest.skip("weasyprint not installed")
     build.build(clean=True)
-    ats = dist / PDF_ATS
-    branded = dist / PDF_BRANDED
-    assert ats.read_bytes()[:4] == b"%PDF" and ats.stat().st_size > 1000
-    assert branded.read_bytes()[:4] == b"%PDF" and branded.stat().st_size > 1000
+    pdf = dist / PDF_NAME
+    assert pdf.read_bytes()[:4] == b"%PDF" and pdf.stat().st_size > 1000
+    assert not (dist / PDF_NAME.replace(".pdf", "_branded.pdf")).exists()
 
 
 def test_availability_in_resume_json(dist):
@@ -192,7 +194,7 @@ def test_pdf_generated(dist):
     except Exception:
         pytest.skip("weasyprint not installed")
     build.build(clean=True)
-    pdf = dist / PDF_ATS
+    pdf = dist / PDF_NAME
     assert pdf.is_file()
     assert pdf.stat().st_size > 100, "PDF should not be empty"
     assert pdf.read_bytes()[:4] == b"%PDF"
@@ -208,15 +210,15 @@ def _pdf_text(pdf_path):
     return "\n".join(page.extract_text() or "" for page in reader.pages)
 
 
-def test_pdf_ats_is_machine_readable(dist):
-    """The ATS PDF must contain selectable text for the key facts:
-    name, role, company, skills, experience, and contact links."""
+def test_pdf_is_machine_readable(dist):
+    """The single human-readable/ATS-safe PDF must contain selectable text for
+    the key facts: name, role, company, skills, experience, and contact links."""
     try:
         import weasyprint  # noqa: F401
     except Exception:
         pytest.skip("weasyprint not installed")
     build.build(clean=True)
-    text = _pdf_text(dist / PDF_ATS)
+    text = _pdf_text(dist / PDF_NAME)
     assert "Aleksandr Krasnobai" in text, "PDF missing name"
     assert "Staff DevOps Engineer" in text, "PDF missing role"
     assert "Grid Dynamics" in text, "PDF missing company"
@@ -228,50 +230,27 @@ def test_pdf_ats_is_machine_readable(dist):
     assert "Experience" in text, "PDF missing Experience section"
 
 
-def test_pdf_branded_is_machine_readable(dist):
-    """The branded PDF must also contain selectable text for the core résumé
-    facts; it is a human-facing PDF but must still be machine-readable
-    (searchable / copy-pasteable)."""
-    try:
-        import weasyprint  # noqa: F401
-    except Exception:
-        pytest.skip("weasyprint not installed")
-    build.build(clean=True)
-    text = _pdf_text(dist / PDF_BRANDED)
-    assert "Aleksandr Krasnobai" in text, "branded PDF missing name"
-    assert "Staff DevOps Engineer" in text, "branded PDF missing role"
-    assert "Grid Dynamics" in text, "branded PDF missing company"
-    assert "hi@krasnobai.dev" in text, "branded PDF missing email"
-    assert "Experience" in text, "branded PDF missing Experience section"
-
-
 def test_pdf_contacts_are_readable(dist):
-    """Both PDFs must expose contact details as real text: email + LinkedIn +
-    Telegram are present and not visually truncated. The ATS PDF shows the full
-    URLs; the branded PDF shows the network labels (GitHub, LinkedIn, Telegram)
-    with the links preserved in markup, so we check by label."""
+    """The single PDF exposes contact details as real text: email + LinkedIn +
+    Telegram labels and full URLs."""
     try:
         import weasyprint  # noqa: F401
     except Exception:
         pytest.skip("weasyprint not installed")
     build.build(clean=True)
 
-    ats = _pdf_text(dist / PDF_ATS)
-    assert "hi@krasnobai.dev" in ats, "ATS PDF missing email"
-    assert "linkedin.com/in/" in ats and "aleksandrkrasnobai" in ats, "ATS PDF missing LinkedIn URL"
-    assert "t.me/krasnobaicoach" in ats, "ATS PDF missing Telegram URL"
-
-    branded = _pdf_text(dist / PDF_BRANDED)
-    assert "hi@krasnobai.dev" in branded, "branded PDF missing email"
-    assert "LinkedIn" in branded, "branded PDF missing LinkedIn label"
-    assert "Telegram" in branded, "branded PDF missing Telegram label"
-    assert "GitHub" in branded, "branded PDF missing GitHub label"
+    text = _pdf_text(dist / PDF_NAME)
+    assert "hi@krasnobai.dev" in text, "PDF missing email"
+    assert "linkedin.com/in/" in text and "aleksandrkrasnobai" in text, "PDF missing LinkedIn URL"
+    assert "t.me/krasnobaicoach" in text, "PDF missing Telegram URL"
+    assert "LinkedIn" in text, "PDF missing LinkedIn label"
+    assert "Telegram" in text, "PDF missing Telegram label"
+    assert "GitHub" in text, "PDF missing GitHub label"
 
 
 def test_pdf_formatting_is_intact(dist):
-    """The generated PDFs must not have obvious layout corruption: every page
-    is within standard US-letter dimensions, no zero-size text objects, and no
-    characters are rendered outside the page media box beyond a small margin."""
+    """The generated PDF must not have obvious layout corruption: every page is
+    within standard US-letter dimensions and has real text."""
     try:
         from pypdf import PdfReader
     except Exception:
@@ -281,17 +260,16 @@ def test_pdf_formatting_is_intact(dist):
     except Exception:
         pytest.skip("weasyprint not installed")
     build.build(clean=True)
-    for pdf_name in (PDF_ATS, PDF_BRANDED):
-        reader = PdfReader(str(dist / pdf_name))
-        assert len(reader.pages) >= 1, f"{pdf_name} has no pages"
-        for i, page in enumerate(reader.pages):
-            box = page.mediabox
-            w, h = float(box.width), float(box.height)
-            # standard page sizes with tolerance (letter / A4 in points)
-            assert 400 <= w <= 650, f"{pdf_name} page {i} width {w} looks corrupt"
-            assert 500 <= h <= 850, f"{pdf_name} page {i} height {h} looks corrupt"
-            text = page.extract_text() or ""
-            assert len(text.strip()) > 20, f"{pdf_name} page {i} has almost no text"
+    reader = PdfReader(str(dist / PDF_NAME))
+    assert len(reader.pages) >= 1, f"{PDF_NAME} has no pages"
+    for i, page in enumerate(reader.pages):
+        box = page.mediabox
+        w, h = float(box.width), float(box.height)
+        # standard page sizes with tolerance (letter / A4 in points)
+        assert 400 <= w <= 650, f"{PDF_NAME} page {i} width {w} looks corrupt"
+        assert 500 <= h <= 850, f"{PDF_NAME} page {i} height {h} looks corrupt"
+        text = page.extract_text() or ""
+        assert len(text.strip()) > 20, f"{PDF_NAME} page {i} has almost no text"
 
 
 # --- check() ---------------------------------------------------------------- #
@@ -471,24 +449,11 @@ def test_open_graph_tags_present_and_escaped(dist):
     assert 'property="profile:last_name"' in html
 
 
-def test_render_body_fragment_has_no_header(dist):
-    """render_body_fragment (used for the résumé block) must not emit a header
-    or h1; render_html_fragment (used for the branded PDF) must."""
-    build.build(clean=True)
-    en = build.parse_resume(build.RESUME_DIR / "resume.en.md")
-    body = build.render_body_fragment(en, "en")
-    full = build.render_html_fragment(en, "en")
-    assert "<header class=\"hero\">" not in body
-    assert "<h1>" not in body
-    assert "<header class=\"hero\">" in full
-    assert "<h1>" in full
-
-
 def test_landing_page_shows_contact_only(dist):
     """ADR-0025: the landing #resume block shows the compact business-card
     contacts only — email + LinkedIn + Telegram. The full résumé body
-    (Experience, Skills, Projects, Education, Certificates, Languages) lives in
-    the branded PDF, not on the page."""
+    (Experience, Skills, Projects, Education, Certificates, Languages) lives
+    in the PDF and markdown outputs, not on the page."""
     build.build(clean=True)
     html = (dist / "index.html").read_text("utf-8")
     resume = html[html.find('id="resume"'):html.find("<footer")]
@@ -504,47 +469,45 @@ def test_landing_page_shows_contact_only(dist):
                    "Certificates", "Languages", "Опыт работы", "Навыки",
                    "Проекты", "Образование", "Сертификаты", "Языки"):
         assert absent not in resume, f"landing page leaked section: {absent}"
-    # the branded PDF body still carries the full résumé (including GitHub)
+    # the dedicated LLM/AI-agent and markdown outputs carry the full résumé
     en = build.parse_resume(build.RESUME_DIR / "resume.en.md")
-    body = build.render_body_fragment(en, "en")
-    assert "Work Experience" in body
-    assert "Skills" in body
-    assert "GitHub" in body
+    md = build.render_markdown(en)
+    assert "## Experience" in md
+    assert "## Skills" in md
+    assert "GitHub" in md
 
 
-# --- ATS format: single column, standard font, real text, no graphics ------- #
-def test_ats_is_single_column_standard_font(dist):
+# --- single PDF format: single column, standard font, real text, no graphics - #
+def test_resume_html_is_single_column_standard_font(dist):
     build.build(clean=True)
     en = build.parse_resume(build.RESUME_DIR / "resume.en.md")
-    ats = build.render_ats_html(en, "en")
-    assert "Arial, Helvetica" in ats            # standard ATS font
-    assert "column-count" not in ats            # no multi-column
-    assert "float:" not in ats                  # no floats
-    assert "<canvas" not in ats and "<img" not in ats  # no graphics
+    html = build.render_resume_html(en, "en")
+    assert "sans-serif" in html                 # standard system font
+    assert "column-count" not in html         # no multi-column
+    assert "float:" not in html               # no floats
+    assert "<canvas" not in html and "<img" not in html  # no graphics
 
 
-def test_ats_dates_formatted_on_role(dist):
-    """ATS date ranges render as 'Mon YYYY – Present', not raw YYYY-MM. The
-    formatter is unit-checked directly (the real résumé's first role date is a
-    TODO placeholder until the owner fills it, so the format check is decoupled
-    from the live data); the integration check only verifies raw ISO never
-    leaks into the ATS render."""
+def test_resume_pdf_dates_formatted_on_role(dist):
+    """PDF date ranges render as 'Mon YYYY – Present', not raw YYYY-MM. The
+    formatter is unit-checked directly; the integration check only verifies raw
+    ISO never leaks into the single PDF render."""
     assert build._fmt_ats("2022-03", None, "en") == "Mar 2022 – Present"
     assert build._fmt_ats("2022-03", "2024-05", "en") == "Mar 2022 – May 2024"
     build.build(clean=True)
     en = build.parse_resume(build.RESUME_DIR / "resume.en.md")
-    ats = build.render_ats_html(en, "en")
-    assert "2022-03" not in ats                  # raw ISO date must not leak
+    html = build.render_resume_html(en, "en")
+    assert "2022-03" not in html                # raw ISO date must not leak
 
 
-def test_ats_has_real_selectable_text(dist):
-    """ATS body uses real text in headings/bullets, not images or tables."""
+def test_resume_pdf_has_real_selectable_text(dist):
+    """Single PDF body uses real text in headings/bullets, not images/tables."""
     build.build(clean=True)
     en = build.parse_resume(build.RESUME_DIR / "resume.en.md")
-    ats = build.render_ats_html(en, "en")
-    assert "<table" not in ats
-    assert "<h3>" in ats and "Staff DevOps Engineer" in ats
-    assert "<ul>" in ats and "<li>" in ats
+    html = build.render_resume_html(en, "en")
+    assert "<table" not in html
+    assert "<h3>" in html and "Staff DevOps Engineer" in html
+    assert "<ul>" in html and "<li>" in html
 
 
 # --- metadata tier + JSON-LD + sitemap -------------------------------------- #
@@ -596,15 +559,15 @@ def test_resume_md_is_clean_markdown(dist):
 
 # --- hero CTA: single primary PDF download button ----------------------------
 def test_hero_cta_is_pdf_download(dist):
-    """The minimal business card has one primary CTA: download the ATS PDF.
-    The AI/LLM résumé and branded PDF live in the footer machine links, not in
-    the hero."""
+    """The minimal business card has one primary CTA: download the single
+    human-readable/ATS-safe PDF. AI/LLM résumé links live in the footer machine
+    links, not in the hero."""
     import re
     build.build(clean=True)
     html = (dist / "index.html").read_text("utf-8")
     cta = re.search(r'<section class="cta-section"[^>]*>(.*?)</section>', html, re.S).group(1)
     links = re.findall(r'href="([^"]+)"', cta)
-    assert links == [PDF_ATS], f"hero CTA should have exactly one PDF link, got {links}"
+    assert links == [PDF_NAME], f"hero CTA should have exactly one PDF link, got {links}"
     assert 'data-i18n="download"' in cta, "CTA uses the bilingual download label"
 
 
@@ -649,17 +612,17 @@ def test_forest_has_single_light_block(dist):
     assert "--c-bg: #f4f6f2" in light.group(1), "forest light background wrong"
 
 
-def test_branded_pdf_palette_matches_forest(dist):
-    """The branded PDF (src/print.css, rendered via WeasyPrint) must use the
-    Forest palette, not the old calm blue/brown — so the downloadable PDF
-    matches the on-screen Forest theme. It also uses system sans-serif."""
+def test_pdf_html_uses_forest_palette(dist):
+    """The single human-readable/ATS-safe PDF (render_resume_html inline CSS)
+    must use the Forest palette, not the old calm blue/brown, and use a system
+    sans-serif."""
     build.build(clean=True)
-    css = (build.SRC_DIR / "print.css").read_text("utf-8")
-    assert "#2f7d3a" in css, "branded PDF must use the Forest green accent"
-    assert "#3a5ae0" not in css, "old calm blue accent must not survive in print.css"
-    assert "#2a2620" not in css, "old calm brown text must not survive in print.css"
-    assert "JetBrains Mono" not in css, "JetBrains Mono should be removed from print.css"
-    assert "@font-face" not in css, "no @font-face should remain in print.css"
+    en = build.parse_resume(build.RESUME_DIR / "resume.en.md")
+    html = build.render_resume_html(en, "en")
+    assert "#2f7d3a" in html, "PDF HTML must use the Forest green accent"
+    assert "#3a5ae0" not in html, "old calm blue accent must not leak into PDF HTML"
+    assert "#2a2620" not in html, "old calm brown text must not leak into PDF HTML"
+    assert "sans-serif" in html, "PDF HTML must use a system sans-serif"
 
 
 # --- ADR-0019: automated WCAG contrast guard for the fixed light theme -------- #
@@ -781,8 +744,7 @@ def test_contact_profiles_required_set(dist):
     # ADR-0024 v2: Telegram is back and must reach EVERY audience surface,
     # not just JSON. The same handle is used everywhere.
     en_resume = build.parse_resume(build.RESUME_DIR / "resume.en.md")
-    assert "t.me/krasnobaicoach" in build.render_ats_html(en_resume, "en")      # ATS PDF
-    assert "t.me/krasnobaicoach" in build.render_body_fragment(en_resume, "en")  # branded PDF body
+    assert "t.me/krasnobaicoach" in build.render_resume_html(en_resume, "en")  # single PDF
     html = (dist / "index.html").read_text("utf-8")
     assert "t.me/krasnobaicoach" in html
     assert "Telegram" in (dist / "resume.txt").read_text("utf-8")
@@ -791,3 +753,5 @@ def test_contact_profiles_required_set(dist):
     assert "t.me/krasnobaicoach" in (dist / "llms.txt").read_text("utf-8")
     assert "Telegram" in (dist / "resume.md").read_text("utf-8")                # markdown mirror
     assert "t.me/krasnobaicoach" in (dist / "resume.md").read_text("utf-8")
+    assert "Telegram" in (dist / "resume-for-agents.md").read_text("utf-8")     # LLM/AI-agent build
+    assert "t.me/krasnobaicoach" in (dist / "resume-for-agents.md").read_text("utf-8")

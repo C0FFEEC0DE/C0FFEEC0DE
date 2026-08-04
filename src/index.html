@@ -15,8 +15,9 @@
   <!-- Fixed light Forest theme, low-cognitive-load business card. -->
   <link rel="stylesheet" href="assets/site.css">
   <link rel="alternate" type="application/json" href="resume.json" title="JSON Resume">
+  <link rel="alternate" type="text/markdown" href="resume-for-agents.md" title="AI-agent résumé">
   <link rel="alternate" type="text/plain" href="resume.txt" title="Plain text">
-  <link rel="alternate" type="application/pdf" href="{{PDF_ATS}}" title="PDF">
+  <link rel="alternate" type="application/pdf" href="{{PDF_NAME}}" title="PDF">
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
@@ -41,9 +42,9 @@
     <div class="lang-block" data-lang="ru" hidden>{{RESUME_RU_HTML}}</div>
   </section>
 
-  <!-- Primary CTA -->
+  <!-- Primary CTA: one human-readable, ATS-safe PDF (ADR-0031) -->
   <section class="cta-section" aria-label="Download résumé">
-    <a class="btn btn-primary btn-lg" href="{{PDF_ATS}}" download>
+    <a class="btn btn-primary btn-lg" href="{{PDF_NAME}}" download>
       <span aria-hidden="true">📄</span>
       <span data-i18n="download">Download résumé (PDF)</span>
     </a>
@@ -70,8 +71,9 @@
   <ul class="machine-links">
     <li><a href="resume.json">resume.json</a></li>
     <li><a href="resume.min.json">resume.min.json</a></li>
+    <li><a href="resume-for-agents.md">resume-for-agents.md</a></li>
     <li><a href="resume.txt">resume.txt</a></li>
-    <li><a href="{{PDF_BRANDED}}" data-i18n="branded">designed PDF</a></li>
+    <li><a href="{{PDF_NAME}}">PDF</a></li>
     <li><a href="llms.txt">llms.txt</a></li>
     <li><a href="AGENTS.md">AGENTS.md</a></li>
     <li><a href="https://github.com/krasnobai">GitHub</a></li>

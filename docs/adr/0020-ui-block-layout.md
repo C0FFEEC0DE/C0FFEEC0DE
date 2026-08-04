@@ -24,9 +24,10 @@ The landing page has four visible regions:
    machine-readable format links. The verbose machine zone (visually-hidden
    heading + curl one-liner + copy button) was removed in v3.
 
-`render_body_fragment` is used only by the branded-PDF body now (ADR-0025);
-the landing page shares only `_contact_section` with it, so contact stays in
-lockstep while the page stays short.
+The full résumé body is rendered only for the single PDF and the markdown/
+plain-text outputs (ADR-0025/0031). The landing page shares only
+`_contact_section` with the PDF, so contact stays in lockstep while the page
+stays short.
 
 ### What the v2 review found
 
@@ -112,8 +113,8 @@ served and the command from ADR-0006 still works for anyone who knows the URL.
 - The curl one-liner from ADR-0006 is no longer advertised in the UI. The file
   `resume.txt` is still served and the command still works; only the on-page
   copy button and label were removed.
-- `render_contact_fragment` and `_contact_section` are untouched, so the branded
-  PDF and the landing Contact block stay in lockstep (ADR-0025), and the
+- `render_contact_fragment` and `_contact_section` are untouched, so the single
+  PDF and the landing Contact block stay in lockstep (ADR-0025/0031), and the
   contact-URL regression guard still passes.
 - No JS change is required for the v3 footer; the existing `i18n.js`
   `data-i18n` machinery is unaffected.
