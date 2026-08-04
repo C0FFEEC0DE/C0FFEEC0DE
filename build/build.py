@@ -877,9 +877,10 @@ def build_llms_txt(r: dict, base: str, pdf_name: str) -> str:
     ]
     link_lines = "\n".join(f"- [{p}]({_abs(base, p)}): {d}" for p, d in links)
     # Contact surface (ADR-0024): GitHub, LinkedIn, Telegram for LLM agents.
-    contact_lines = "\n".join(f"- {p.get('network')}: {p.get('url')}"
-                             for p in (b.get("profiles", []) or []))
-    contact_block = f"\n## Contact\n{contact_lines}\n" if contact_lines else ""
+    contact_lines = [f"- **Email:** {b.get('email', '')}"]
+    for p in (b.get("profiles", []) or []):
+        contact_lines.append(f"- {p.get('network')}: {p.get('url')}")
+    contact_block = f"\n## Contact\n" + "\n".join(contact_lines) + "\n"
     avail = r.get("availability")
     avail_block = ""
     if avail:

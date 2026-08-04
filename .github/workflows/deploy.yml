@@ -38,6 +38,9 @@ jobs:
           PAGES_URL: ${{ vars.PAGES_URL }}
         run: python build/build.py --check
 
+      - name: Validate output consistency
+        run: python scripts/validate_consistency.py
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5
         with:
