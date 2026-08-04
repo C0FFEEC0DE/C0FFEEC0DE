@@ -176,7 +176,7 @@ def test_agents_md_links(dist):
     md = (dist / "AGENTS.md").read_text("utf-8")
     assert "resume.json" in md
     assert "JSON Resume" in md
-    assert "Résumé version: `0.4.0`" in md
+    assert "Résumé version: `0.4.1`" in md
     assert "Last modified: `2026-08-04`" in md
     assert "do not fill them with placeholders" in md
 
