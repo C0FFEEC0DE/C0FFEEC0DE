@@ -77,11 +77,15 @@ def main() -> int:
 
     # .well-known/cv.json
     cv = json.loads((DIST / ".well-known" / "cv.json").read_text(encoding="utf-8"))
-    if cv.get("primary") != "resume.json":
-        errors.append("cv.json primary mismatch")
-    if cv.get("human_pdf") != pdf_name:
+    # cv.json values may be absolute URLs when DOMAIN/PAGES_URL is set; compare
+    # the path/filename component in addition to bare filenames.
+    def _filename_or_bare(value: str) -> str:
+        return value.rsplit("/", 1)[-1] if isinstance(value, str) else value
+    if _filename_or_bare(cv.get("primary", "")) != "resume.json":
+        errors.append(f"cv.json primary mismatch: {cv.get('primary')}")
+    if _filename_or_bare(cv.get("human_pdf", "")) != pdf_name:
         errors.append(f"cv.json human_pdf mismatch: {cv.get('human_pdf')}")
-    if cv.get("ats_pdf") != pdf_name:
+    if _filename_or_bare(cv.get("ats_pdf", "")) != pdf_name:
         errors.append(f"cv.json ats_pdf mismatch: {cv.get('ats_pdf')}")
 
     # agents.json
