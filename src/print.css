@@ -1,8 +1,8 @@
-/* Self-contained Forest print styles for the branded PDF (resume-branded.pdf).
-   Bootstrap is not available to WeasyPrint, so this file styles the same
+/* Legacy self-contained Forest print reference. The generated PDF now uses
+   build/build.py's inline compact styles, so this file only documents the same
    semantic classes the fragments emit, without any framework dependency.
    The palette mirrors the fixed light Forest theme (ADR-0017 v4) so the
-   branded PDF matches the live page. System sans-serif everywhere
+   PDF palette as the live page. System sans-serif everywhere
    (ADR-0018 v2). */
 
 @page { margin: 0.8in 0.9in; }

@@ -1,6 +1,6 @@
 # ADR-0017 — Single fixed Forest theme
 
-Date: 2026-07-30 · Status: Accepted
+Date: 2026-07-30 · Status: Accepted (v5: 2026-08-04)
 
 ## Context
 ADR-0008 locks low cognitive load as a first-class constraint. This ADR first
@@ -26,9 +26,9 @@ visitor-facing theme switch:
   `--c-accent-soft #dcebd9`, `--c-line #e0e6dd`, soft rounding, warm low shadow.
 
 Mechanics:
-- `:root` carries the Forest light tokens plus the Bootstrap component-var
-  mappings (`--bs-body-bg`, `--bs-body-color`, `--bs-link-color`, the `--bs-*-rgb`
-  triplets, `--bs-font-sans-serif`). There is no `:root[data-theme="dark"]` block.
+- `:root` carries the Forest light tokens consumed by the self-hosted layout and
+  button system. There are no framework compatibility variables and no
+  `:root[data-theme="dark"]` block (ADR-0037).
 - The `data-theme` attribute is **not set anywhere** — not by `i18n.js`, not by
   the page. The bare `:root` is the only source of color.
 - The no-JS `@media (prefers-color-scheme: dark)` fallback is removed: with a
@@ -56,7 +56,10 @@ Mechanics:
   no `data-theme` attribute is injected.
 
 ## Revision history
-- **v4 (current):** fixed light Forest theme only; dark variant, toggle, and
+- **v5 (2026-08-04):** remove obsolete framework-variable mappings after the
+  frontend became fully self-hosted (ADR-0037); theme colors and behavior stay
+  unchanged.
+- **v4:** fixed light Forest theme only; dark variant, toggle, and
   no-JS dark query removed per owner preference for the minimal business card.
 - **v3:** reduced to the single Forest theme; picker and `data-palette` axis
   removed per owner preference.

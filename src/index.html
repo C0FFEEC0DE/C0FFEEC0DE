@@ -3,16 +3,16 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="same-origin">
   <title>Aleksandr Krasnobai — Staff DevOps Engineer</title>
-  <meta name="description" content="Staff DevOps Engineer — 18 years keeping high-throughput platforms running. Bilingual, machine-readable, with a tiny dragon hidden inside.">
+  <meta name="description" content="Staff DevOps/SRE Engineer with 18 years operating high-throughput platforms at 500M+ requests/day and fleets of up to 10,000 instances.">
   {{OG_TAGS}}
-  <!-- Bootstrap 5.3 reboot + grid + utilities (CSS only; the page's small
-       vanilla JS handles language and the hidden dragon easter egg).
-       SRI-pinned to the exact 5.3.3 build. -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
-        crossorigin="anonymous">
-  <!-- Fixed light Forest theme, low-cognitive-load business card. -->
+  <link rel="canonical" href="{{CANONICAL_URL}}">
+  <link rel="alternate" hreflang="en" href="{{CANONICAL_URL}}">
+  <link rel="alternate" hreflang="ru" href="{{RU_URL}}">
+  <link rel="alternate" hreflang="x-default" href="{{CANONICAL_URL}}">
+  <!-- Fixed light Forest theme, self-hosted and dependency-light. -->
   <link rel="stylesheet" href="assets/site.css">
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
   <link rel="alternate" type="application/json" href="resume.json" title="JSON Resume">
@@ -43,12 +43,21 @@
     <div class="lang-block" data-lang="ru" hidden>{{RESUME_RU_HTML}}</div>
   </section>
 
-  <!-- Primary CTA: one human-readable, ATS-safe PDF (ADR-0031) -->
-  <section class="cta-section" aria-label="Download résumé">
+  <!-- Selected evidence visible without requiring a PDF download (ADR-0034). -->
+  <section class="impact" aria-label="Selected impact">
+    <div class="lang-block" data-lang="en">{{IMPACT_EN}}</div>
+    <div class="lang-block" data-lang="ru" hidden>{{IMPACT_RU}}</div>
+  </section>
+
+  <!-- Primary PDF CTA plus a secondary link to source work (ADR-0034). -->
+  <section class="cta-section" aria-label="Résumé actions">
+    <div class="cta-actions">
     <a class="btn btn-primary btn-lg" href="{{PDF_NAME}}" download>
-      <span aria-hidden="true">📄</span>
+      <svg class="btn-icon" aria-hidden="true" viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M6 2h8l4 4v16H6V2Zm8 1.8V7h3.2L14 3.8ZM8 10v1.5h8V10H8Zm0 4v1.5h8V14H8Zm0 4v1.5h6V18H8Z"/></svg>
       <span data-i18n="download">Download résumé (PDF)</span>
     </a>
+    <a class="btn btn-outline-secondary btn-lg" href="{{GITHUB_URL}}" data-i18n="github">View GitHub</a>
+    </div>
   </section>
 
   <!-- Hidden dragon easter egg (ADR-0026). Revealed by clicking the footer "made" note. -->
@@ -68,17 +77,20 @@
 </main>
 
 <footer class="footer">
-  <p class="made" data-i18n="made">Made by hand from markdown — not a template. The little dragon is yours.</p>
-  <ul class="machine-links">
-    <li><a href="resume.json">resume.json</a></li>
-    <li><a href="resume.min.json">resume.min.json</a></li>
-    <li><a href="resume-for-agents.md">resume-for-agents.md</a></li>
-    <li><a href="resume.txt">resume.txt</a></li>
-    <li><a href="{{PDF_NAME}}">PDF</a></li>
-    <li><a href="llms.txt">llms.txt</a></li>
-    <li><a href="AGENTS.md">AGENTS.md</a></li>
-    <li><a href="{{GITHUB_URL}}">GitHub</a></li>
-  </ul>
+  <p class="made" data-i18n="made">Built from Markdown. A little dragon is hiding nearby.</p>
+  <details class="machine-zone">
+    <summary data-i18n="machine">Machine-readable résumé</summary>
+    <ul class="machine-links">
+      <li><a href="resume.json">resume.json</a></li>
+      <li><a href="resume.min.json">resume.min.json</a></li>
+      <li><a href="resume-for-agents.md">resume-for-agents.md</a></li>
+      <li><a href="resume.txt">resume.txt</a></li>
+      <li><a href="{{PDF_NAME}}">PDF</a></li>
+      <li><a href="llms.txt">llms.txt</a></li>
+      <li><a href="AGENTS.md">AGENTS.md</a></li>
+      <li><a href="{{GITHUB_URL}}">GitHub</a></li>
+    </ul>
+  </details>
 </footer>
 
 <script type="application/ld+json">

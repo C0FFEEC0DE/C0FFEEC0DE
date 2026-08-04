@@ -11,6 +11,8 @@
       greeting_afternoon: "Good afternoon —",
       greeting_evening: "Good evening —",
       download: "Download résumé (PDF)",
+      github: "View GitHub",
+      machine: "Machine-readable résumé",
       copy: "Copy",
       share: "Share my dragon",
       share_li: "Share on LinkedIn ↗",
@@ -19,13 +21,15 @@
       share_link_label: "Your dragon share link",
       dragon_line: "This is your little dragon — it's yours. Share the link so each colleague gets their own.",
       branded: "designed PDF",
-      made: "Made by hand from markdown — not a template. The little dragon is yours.",
+      made: "Built from Markdown. A little dragon is hiding nearby.",
     },
     ru: {
       greeting_morning: "Доброе утро —",
       greeting_afternoon: "Добрый день —",
       greeting_evening: "Добрый вечер —",
       download: "Скачать резюме (PDF)",
+      github: "Открыть GitHub",
+      machine: "Машиночитаемое резюме",
       copy: "Копировать",
       share: "Поделиться дракончиком",
       share_li: "Поделиться в LinkedIn ↗",
@@ -34,11 +38,13 @@
       share_link_label: "Ссылка на вашего дракона",
       dragon_line: "Это твой дракончик — он твой. Поделись ссылкой, и у каждого коллеги появится свой.",
       branded: "дизайн-PDF",
-      made: "Сделано вручную из markdown — не шаблон. Дракончик — ваш.",
+      made: "Собрано из Markdown. Где-то рядом спрятался дракончик.",
     },
   };
 
   function pickInitialLang() {
+    const requested = new URLSearchParams(location.search).get("lang");
+    if (requested && STRINGS[requested]) return requested;
     const saved = localStorage.getItem("lang");
     if (saved && STRINGS[saved]) return saved;
     return (navigator.language || "en").toLowerCase().startsWith("ru") ? "ru" : "en";
@@ -73,6 +79,11 @@
     document.querySelectorAll(".lang-toggle button").forEach((b) => {
       b.setAttribute("aria-pressed", String(b.getAttribute("data-lang") === lang));
     });
+
+    const url = new URL(location.href);
+    if (lang === "ru") url.searchParams.set("lang", "ru");
+    else url.searchParams.delete("lang");
+    history.replaceState(null, "", url.pathname + url.search + url.hash);
 
     const base = location.origin + location.pathname.replace(/[^/]*$/, "");
     const curl = document.getElementById("curl-line");

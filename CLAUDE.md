@@ -9,7 +9,7 @@ served for **two surfaces** (ADR-0031): humans get a bilingual landing page plus
 a single human-readable/ATS-safe PDF; LLM/AI agents get structured and narrative
 artifacts (JSON Resume, llms.txt, AGENTS.md, cv.json, resume-for-agents.md,
 agents.json, resume.txt). Deployed to GitHub Pages via Actions. Decisions are
-recorded as ADRs in `docs/adr/` (0001→0031) — read the relevant one before
+recorded as ADRs in `docs/adr/` (0001→0037) — read the relevant one before
 changing a settled area.
 
 ## Commands
@@ -23,11 +23,13 @@ python3 build/build.py            # build into dist/
 python3 build/build.py --check    # build + validate, non-zero exit on failure (CI uses this)
 python3 -m pytest build/test_build.py -q                       # build/pytest tests (the `dist` fixture sets PDF=1)
 python3 -m pytest build/test_build.py::test_resume_json_valid -q   # single test
+python3 scripts/validate_consistency.py                            # cross-output content check
 cd tests/ui && npx playwright test          # UI tests — MUST run from tests/ui (see gotcha)
 cd tests/ui && npx playwright test -g "footer machine formats"   # single UI test by name
 cd tests/ui && npm run test:full             # build + UI tests in one
-python3 -m compileall -q build src           # lint (syntax check all Python)
+python3 -m compileall -q build scripts       # lint (syntax check all Python)
 python3 -m http.server -d dist                # local preview at http://localhost:8000
+python3 scripts/verify_deployed.py https://krasnobai.dev  # post-deploy smoke + freshness check
 ```
 
 Environment variables (all optional): `DOMAIN=krasnobai.dev` (emits
@@ -49,10 +51,9 @@ files exist in `dist/`.
 others causes divergence bugs):
 - `render_header_fragment` — name/label/summary; injected into the landing hero
   (`{{HEADER_EN}}` / `{{HEADER_RU}}` in `src/index.html`).
-- `render_contact_fragment` — the Contact block only; injected into the landing
-  `#resume` block (`{{RESUME_EN_HTML}}` / `{{RESUME_RU_HTML}}`). The landing
-  page shows identity (hero) + contact and funnels to the PDF for the detail
-  (ADR-0025).
+- `render_contact_fragment` — the compact Contact block injected into `#resume`.
+- `render_impact_fragment` — three canonical, bilingual impact signals injected
+  before the CTA (ADR-0034).
 - `render_resume_html(r, lang)` — the single human-readable/ATS-safe PDF body
   (Contact → Summary → Experience → Skills → Projects → Education → Certificates
   → Languages). It combines Forest palette/visual hierarchy with ATS-safe
@@ -67,9 +68,9 @@ others causes divergence bugs):
 `build.py` resolves paths from its own `__file__`, so it always writes
 `<repo>/dist/` regardless of cwd.
 
-**Theming (ADR-0017 v4):** a fixed **Forest** light theme. `src/site.css`
-declares `--c-*` tokens and maps them once to Bootstrap 5.3 component vars at
-`:root`. There is no theme toggle, no `data-theme` attribute, and no dark
+**Theming (ADR-0017 v5):** a fixed **Forest** light theme. `src/site.css`
+declares `--c-*` tokens and a small local button/layout system. There is no
+Bootstrap/CDN dependency, theme toggle, `data-theme` attribute, or dark
 variant. `src/print.css` is a legacy reference stylesheet; the single PDF uses
 inline CSS so it is self-contained.
 
@@ -80,8 +81,8 @@ click easter egg, so the default landing page is a pure business card.
 `src/share.js` adds a shareable link (ADR-0021), a LinkedIn share button
 (ADR-0022), and a "Save my dragon" button that downloads a token PNG with the
 dragon + an English "have a nice day" caption (ADR-0027). Open Graph tags
-(ADR-0028) give LinkedIn the owner's name, role, summary, and a static dragon
-image for the share preview. No backend, no tracking. The delight path must keep
+(ADR-0028/0034) give LinkedIn the owner's name, role, impact figures, and a
+1200×630 static card for the share preview. No backend, no tracking. The delight path must keep
 working with JS off (it degrades to an empty canvas, not an error).
 
 **Regression guards (ADR-0019):** a pure-Python build test computes the WCAG AA
@@ -99,8 +100,9 @@ renders without JavaScript. Theme/font changes that drift these are caught.
 - **`## Summary` body section overwrites the front-matter `basics.summary`**
   (build.py `parse_resume` line ~103). The body one is what renders in the hero
   `.lead`. Keep them in sync, and keep the summary short — ADR-0008 (low
-  cognitive load) is first-class: the hero holds identity + the two audience
-  CTAs only. The dragon is a hidden footer easter egg (ADR-0026), and the
+  cognitive load) is first-class: the page front-loads identity, three selected
+  impact signals, and the two audience CTAs. The dragon is a hidden footer
+  easter egg (ADR-0026), and the
   verbose curl one-liner was removed from the footer in ADR-0020 v3 (the file
   `resume.txt` is still served, so the ADR-0006 command still works, but it is
   no longer displayed on the page).
@@ -131,12 +133,21 @@ renders without JavaScript. Theme/font changes that drift these are caught.
   `Aleksandr_Krasnobai_Staff_DevOps_Engineer.pdf`) and use the real site
   domain (`krasnobai.dev`), or the docstring silently rots against the build it
   documents.
-- The résumé content is canonical as of ADR-0029: `resume/resume.en.md` and
+- The résumé content is canonical as of ADR-0029 and evidence-governed by
+  ADR-0033: `resume/resume.en.md` and
   `resume/resume.ru.md` hold the single source of truth for all outputs. The
   landing page uses a short one-line `basics.summary`; the full professional
   intro lives in `meta.intro` and renders into `resume.txt`, `resume.md`,
   `llms.txt`, `resume-for-agents.md`, and the single PDF. The single PDF opens
   with Work Experience after a brief Summary section (ADR-0031).
+- **Machine outputs are normalized and schema-checked** (ADR-0035). Dates use
+  ISO `YYYY-MM`, markdown decoration must not leak into structured fields,
+  unknown certificate metadata is omitted, and JSON-LD must describe a Person/
+  ProfilePage without inventing a vacancy.
+- **Agent-facing files inherit the same evidence policy.** `resume.json` is the
+  canonical factual source; `resume-for-agents.md`, `llms.txt`, `AGENTS.md`,
+  `agents.json`, and `.well-known/cv.json` are generated mirrors. Never hand-edit
+  `dist/` or add inferred facts to make an agent payload look more complete.
 
 ## Workflow note
 

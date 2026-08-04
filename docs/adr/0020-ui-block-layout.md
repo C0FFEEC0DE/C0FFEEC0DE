@@ -1,6 +1,6 @@
 # ADR-0020 — UI block layout (best-practices pass)
 
-Date: 2026-07-30 · Status: Accepted (v3: 2026-07-31)
+Date: 2026-07-30 · Status: Accepted (v4: 2026-08-04)
 
 ## Context
 
@@ -16,16 +16,15 @@ The landing page has four visible regions:
 
 1. **Hero** — greeting and identity (name / label / summary). The dragon no
    longer lives here by default; it is revealed from the footer (ADR-0026).
-2. **Contact section** — the only résumé content rendered on the landing page
-   (ADR-0025), injected as `render_contact_fragment`. It shows email +
-   LinkedIn + Telegram.
-3. **CTA section** — a single primary action: "Download résumé (PDF)".
+2. **Contact section** — a compact email + LinkedIn + Telegram block injected
+   as `render_contact_fragment`.
+3. **Evidence and CTA section** — three selected impact signals, a primary PDF
+   action, and a secondary GitHub evidence link (ADR-0034).
 4. **Footer** — the "made by hand" note + a compact, inline list of
-   machine-readable format links. The verbose machine zone (visually-hidden
-   heading + curl one-liner + copy button) was removed in v3.
+   machine-readable format links collapsed under a native disclosure control.
 
 The full résumé body is rendered only for the single PDF and the markdown/
-plain-text outputs (ADR-0025/0031). The landing page shares only
+plain-text outputs (ADR-0031/0034). The landing page shares
 `_contact_section` with the PDF, so contact stays in lockstep while the page
 stays short.
 
@@ -86,8 +85,9 @@ served and the command from ADR-0006 still works for anyone who knows the URL.
    clicking the footer "made" note. This keeps the first fold minimal and avoids
    any side-by-side crowding on narrow viewports.
 
-4. **Footer is minimal.** The footer contains only the `.made` handcrafted note
-   and the `.machine-links` inline `<ul>`. There is no `<section
+4. **Footer is minimal.** The footer contains the `.made` handcrafted note and
+   a native `<details>` disclosure containing the `.machine-links` inline
+   `<ul>`. There is no `<section
    class="machine-zone">`, no visually-hidden "Machine-readable versions"
    heading, no curl one-liner, and no copy button. The list remains semantic
    and visually compact (CSS removes bullets and renders `·`-separators), so
@@ -125,6 +125,9 @@ served and the command from ADR-0006 still works for anyone who knows the URL.
 
 ## Revision history
 
+- **v4 (2026-08-04):** amended by ADR-0034/0037: add selected impact evidence,
+  keep PDF primary with GitHub secondary, collapse machine formats under
+  `<details>`, and replace framework layout classes with self-hosted CSS.
 - **v1 (2026-07-30):** best-practices review of block arrangement; curl moved
   hero → footer; section order and uniform cards documented as deliberate;
   responsive hero stacking described but left partly implicit.

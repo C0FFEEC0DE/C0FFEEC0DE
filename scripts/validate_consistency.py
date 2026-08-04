@@ -23,7 +23,13 @@ ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / "dist"
 
 REQUIRED_PROFILES = ["GitHub", "LinkedIn", "Telegram"]
-STALE_TERMS = ["backend engineer", "devops/sre engineer"]
+STALE_TERMS = [
+    "senior devops / sre engineer",
+    "permanent residence",
+    "improved delivery predictability by 100%",
+    "puppet did not break production",
+    "none (none)",
+]
 
 
 def main() -> int:
@@ -95,6 +101,11 @@ def main() -> int:
         errors.append("agents.json description missing name")
     if label not in desc:
         errors.append("agents.json description missing label")
+    facts_policy = agents.get("facts_policy", {})
+    if _filename_or_bare(facts_policy.get("canonical", "")) != "resume.json":
+        errors.append("agents.json facts_policy missing canonical resume.json")
+    if "Omitted" not in facts_policy.get("unknowns", ""):
+        errors.append("agents.json facts_policy missing unknown-facts rule")
 
     # Text/markdown outputs
     for fname in ["resume.txt", "resume.md", "resume-for-agents.md", "llms.txt"]:
@@ -115,6 +126,10 @@ def main() -> int:
     for value, label_name in [(name, "name"), (label, "role"), (email, "email")]:
         if value not in agents_md:
             errors.append(f"AGENTS.md missing {label_name}")
+    for key in ("version", "lastModified"):
+        value = data.get("meta", {}).get(key, "")
+        if value not in agents_md:
+            errors.append(f"AGENTS.md missing meta.{key}")
 
     # index.html
     idx = (DIST / "index.html").read_text(encoding="utf-8")

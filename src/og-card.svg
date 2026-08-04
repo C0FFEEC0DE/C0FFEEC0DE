@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Aleksandr Krasnobai — Staff DevOps Engineer</title>
+  <desc id="desc">Résumé card highlighting 80% infrastructure cost reduction, 500 million daily requests, and 10,000 instances.</desc>
+  <rect width="1200" height="630" fill="#f4f6f2"/>
+  <rect x="58" y="58" width="1084" height="514" rx="34" fill="#ffffff" stroke="#e0e6dd" stroke-width="3"/>
+  <rect x="92" y="96" width="246" height="42" rx="21" fill="#dcebd9"/>
+  <text x="215" y="124" text-anchor="middle" fill="#2f7d3a" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="700" letter-spacing="1">STAFF DEVOPS / SRE</text>
+  <text x="92" y="214" fill="#1f2a1f" font-family="Arial, Helvetica, sans-serif" font-size="64" font-weight="700">Aleksandr Krasnobai</text>
+  <text x="92" y="264" fill="#5b6b5b" font-family="Arial, Helvetica, sans-serif" font-size="28">18 years operating high-throughput cloud platforms</text>
+
+  <g font-family="Arial, Helvetica, sans-serif">
+    <g transform="translate(92 326)">
+      <rect width="258" height="126" rx="20" fill="#f4f6f2" stroke="#e0e6dd" stroke-width="2"/>
+      <text x="24" y="52" fill="#2f7d3a" font-size="38" font-weight="700">80%</text>
+      <text x="24" y="85" fill="#5b6b5b" font-size="19">infrastructure cost</text>
+      <text x="24" y="108" fill="#5b6b5b" font-size="19">reduction</text>
+    </g>
+    <g transform="translate(370 326)">
+      <rect width="258" height="126" rx="20" fill="#f4f6f2" stroke="#e0e6dd" stroke-width="2"/>
+      <text x="24" y="52" fill="#2f7d3a" font-size="38" font-weight="700">500M+</text>
+      <text x="24" y="85" fill="#5b6b5b" font-size="19">requests processed</text>
+      <text x="24" y="108" fill="#5b6b5b" font-size="19">per day</text>
+    </g>
+    <g transform="translate(648 326)">
+      <rect width="258" height="126" rx="20" fill="#f4f6f2" stroke="#e0e6dd" stroke-width="2"/>
+      <text x="24" y="52" fill="#2f7d3a" font-size="38" font-weight="700">10,000</text>
+      <text x="24" y="85" fill="#5b6b5b" font-size="19">instances at peak</text>
+      <text x="24" y="108" fill="#5b6b5b" font-size="19">fleet scale</text>
+    </g>
+  </g>
+
+  <text x="92" y="524" fill="#2f7d3a" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700">krasnobai.dev</text>
+
+  <!-- Restrained pixel-dragon mark. -->
+  <g transform="translate(982 350) scale(8)" fill="#d95f36">
+    <rect x="4" y="0" width="3" height="2"/><rect x="2" y="2" width="7" height="2"/>
+    <rect x="0" y="4" width="11" height="3"/><rect x="1" y="7" width="9" height="3"/>
+    <rect x="3" y="10" width="5" height="3"/><rect x="2" y="13" width="2" height="2"/>
+    <rect x="7" y="13" width="2" height="2"/>
+  </g>
+</svg>

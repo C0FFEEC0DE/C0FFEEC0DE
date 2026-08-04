@@ -1,5 +1,7 @@
 # ADR-0025 — Landing page shows Contact only; full résumé lives in the PDF
 
+**Superseded by ADR-0034.**
+
 Date: 2026-07-30 · Status: Accepted · Supersedes part of ADR-0013
 
 ## Context

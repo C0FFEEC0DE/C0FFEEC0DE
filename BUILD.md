@@ -16,7 +16,9 @@ A résumé repository that is:
 - **Downloadable via a curl one-liner** and a single human-readable, ATS-safe PDF.
 - **Carries a tiny pixel-art dragon** generated per visitor and shareable by link — a small "thank you for stopping by".
 
-The repo holds **real owner data** (Aleksandr Krasnobai) sourced from LinkedIn plus the local project repos, with **`TODO` placeholders** for the fields LinkedIn hides from public view (phone, the Grid Dynamics start date and exact title, prior roles, education degree/dates). Fill the `TODO`s in `resume/resume.en.md` and `resume/resume.ru.md` before going live — the structure stays identical.
+The repo holds the owner's canonical résumé data. Unknown facts are omitted
+rather than represented by placeholders; do not infer dates, credential IDs,
+legal status, or measurement definitions.
 
 ## Repository layout
 
@@ -25,8 +27,9 @@ resume/
   resume.en.md          # human source — English (structured markdown format)
   resume.ru.md          # human source — Russian (same structure)
 src/
-  index.html            # landing page template (Bootstrap 5.3 shell + placeholders)
-  site.css              # fixed light Forest theme (ADR-0017 v4) + human feel (ADR-0018) on Bootstrap
+  index.html            # dependency-light landing page template + placeholders
+  site.css              # self-hosted Forest theme + local button/layout styles
+  og-card.svg/.png      # exact 1200×630 social-share source and raster card
   i18n.js               # EN/RU toggle + greeting
   dragon-parts.js       # pixel-art palettes + option lists
   dragon.js             # seeded PRNG → composes a dragon → draws <canvas>
@@ -34,7 +37,11 @@ src/
   print.css             # legacy self-contained Forest print styles (kept for reference; the single PDF uses inline CSS)
 build/
   build.py              # one-shot builder; `--check` validates
+  jsonresume-schema-v1.0.0.json # vendored official JSON Resume schema
   test_build.py         # pytest suite (incl. automated WCAG contrast guard — ADR-0019)
+scripts/
+  validate_consistency.py # canonical content ↔ generated-output guard
+  verify_deployed.py      # public endpoint, asset, PDF, and freshness smoke test
 tests/ui/               # Playwright UI tests (served from dist/, incl. no-JS path tests — ADR-0019)
 .github/workflows/deploy.yml     # build → deploy to GitHub Pages
 .github/workflows/playwright.yml # build → run UI tests on push/PR
@@ -80,7 +87,7 @@ dates: 2024-01 — present · url: https://example
 
 ## Education
 ### B.Sc. — University
-dates: 2012 — 2016 · location: Munich
+dates: 2012-09 — 2016-06 · location: Munich
 - course
 
 ## Certificates
@@ -90,15 +97,17 @@ dates: 2012 — 2016 · location: Munich
 - **English** (C1)
 ```
 
-Section titles are recognized: `Summary`, `Experience`, `Projects`, `Education`, `Skills`, `Certificates`, `Languages`, `Contact`. Unknown sections are ignored. Dates use ` — ` (em dash) between start and end; `present` ends an open-ended role.
+Section titles are recognized: `Summary`, `Experience`, `Projects`, `Education`, `Skills`, `Certificates`, `Languages`, `Contact`. Unknown sections are ignored. Dates use ISO `YYYY-MM`, separated by ` — ` (em dash); `present` ends an open-ended role. Optional facts such as certificate dates, issuers, URLs, and credential IDs are omitted when unknown.
 
 ## Build
 
 ```bash
-pip install pyyaml markdown weasyprint   # weasyprint only needed for the PDF
+pip install pyyaml weasyprint pypdf jsonschema pytest
 python build/build.py            # builds into dist/
 python build/build.py --check    # build + validate, non-zero exit on failure
 python -m pytest build/test_build.py -q
+python scripts/validate_consistency.py
+npm test --prefix tests/ui
 python -m http.server -d dist     # local preview at http://localhost:8000
 ```
 
@@ -144,9 +153,9 @@ Each visitor gets a deterministic pixel-art dragon seeded from the URL (`?d=…`
 
 ## Themes & feel
 
-The site uses a **fixed light Forest theme** (ADR-0017 v4) — a calm green palette (paper-neutral greens, one green accent, soft 16px rounding, warm low shadow). The theme is pure CSS custom properties (`--c-*` mapped once to Bootstrap's component vars) — no JS color math — and its colors are chosen for WCAG AA (machine-enforced by the build — ADR-0019). To change the palette, edit the `:root` block in `src/site.css`.
+The site uses a **fixed light Forest theme** (ADR-0017 v5) — a calm green palette (paper-neutral greens, one green accent, soft 16px rounding, warm low shadow). The theme and small button system are entirely self-hosted CSS, with no framework or runtime CDN. Colors are chosen for WCAG AA and machine-enforced by the build (ADR-0019). To change the palette, edit the `:root` block in `src/site.css`.
 
-The whole site is tuned for a **human, handcrafted feel** (ADR-0018): system sans-serif everywhere (nothing fetched from a CDN, offline-safe), warm paper neutrals, soft 16px rounding, an italic "margin-note" greeting, and the dragon as the personality anchor. Structure stays low-cognitive-load (one accent, one CTA, generous space); the personality lives in typography and warmth, not extra components.
+The whole site is tuned for a **human, handcrafted feel** (ADR-0018): system sans-serif everywhere, warm paper neutrals, soft rounding, three concise impact signals, and the dragon as a hidden personality anchor. The PDF remains the primary CTA; GitHub is a secondary evidence link.
 
 Theme contrast is **regression-guarded** (ADR-0019): a pure-Python test computes the WCAG ratio for the light theme (text, muted, accent, button-on-accent, against both the page bg and the block surface) and fails the build below 4.5:1. Playwright tests also block scripts to verify the fixed Forest-light default renders correctly without JavaScript.
 
@@ -155,6 +164,13 @@ Theme contrast is **regression-guarded** (ADR-0019): a pure-Python test computes
 The workflow (`.github/workflows/deploy.yml`) builds and deploys on every push to `main`. Once:
 1. In the repo, **Settings → Pages → Build and deployment → Source = GitHub Actions**.
 2. Push to `main`; the first run publishes at `https://<user>.github.io/C0FFEEC0DE/`.
+
+After GitHub Pages reports a successful deployment, the workflow runs
+`scripts/verify_deployed.py` against the deployed URL. The smoke test retries
+during CDN propagation, verifies the landing page and public machine endpoints,
+checks the PDF/PNG signatures, and compares the live résumé version and
+`lastModified` value with the committed markdown source. Run the same check
+manually with `python scripts/verify_deployed.py https://krasnobai.dev`.
 
 ### Custom domain
 
@@ -172,4 +188,4 @@ Repo-level guidance for AI agents working here is in [`AGENTS.md`](AGENTS.md) an
 
 ## License
 
-MIT — the demo content and code are yours to adapt. The QR dependency is loaded from CDN under its own license.
+MIT — the code is yours to adapt. Personal résumé content remains the owner's data.

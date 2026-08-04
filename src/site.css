@@ -1,6 +1,5 @@
-/* C0FFEEC0DE — fixed light Forest theme, minimal business card (ADR-0017 v4,
-   ADR-0018 v2, ADR-0025, ADR-0026). System sans-serif everywhere. Bootstrap 5.3
-   component vars are mapped once from the light --c-* tokens at :root. */
+/* C0FFEEC0DE — fixed light Forest theme, recruiter-first business card
+   (ADR-0017 v4, ADR-0034, ADR-0037). System sans-serif, no frontend CDN. */
 
 :root {
   --c-bg: #f4f6f2; --c-surface: #fff; --c-text: #1f2a1f; --c-muted: #5b6b5b;
@@ -9,14 +8,12 @@
   --max: 640px; --radius: 16px;
   --gutter: clamp(1rem, 5vw, 2rem);
   --block-gap: clamp(1.25rem, 4vw, 2rem);
-  --bs-body-bg: var(--c-bg); --bs-body-color: var(--c-text); --bs-emphasis-color: var(--c-text);
-  --bs-secondary-color: var(--c-muted); --bs-secondary-rgb: 91, 107, 91;
-  --bs-border-color: var(--c-line); --bs-link-color: var(--c-accent);
-  --bs-link-color-rgb: 47, 125, 58; --bs-primary: var(--c-accent); --bs-primary-rgb: 47, 125, 58;
   --bs-font-sans-serif: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
-/* The `hidden` attribute must win over Bootstrap/component `display` rules. */
+*, *::before, *::after { box-sizing: border-box; }
+
+/* The `hidden` attribute wins over component display rules. */
 [hidden] { display: none !important; }
 
 /* Visually-hidden utility — accessible to screen readers, invisible on screen. */
@@ -31,10 +28,18 @@ body {
   font-family: var(--bs-font-sans-serif);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  margin: 0;
 }
 
 a { color: var(--c-accent); text-decoration: none; }
 a:hover { color: var(--c-accent); text-decoration: underline; }
+a:focus-visible,
+button:focus-visible,
+summary:focus-visible {
+  outline: 3px solid rgba(47, 125, 58, .35);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
 
 h1, h2, h3 {
   font-family: var(--bs-font-sans-serif);
@@ -61,6 +66,29 @@ p { margin: .35rem 0; }
   box-shadow: var(--shadow);
 }
 
+/* Small self-hosted button system; replaces the Bootstrap subset once used. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .45rem;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--c-text);
+  font: inherit;
+  font-weight: 600;
+  line-height: 1.25;
+  padding: .45rem .8rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color .15s ease, background-color .15s ease, border-color .15s ease;
+}
+.btn:hover { text-decoration: none; }
+.btn-sm { padding: .25rem .55rem; font-size: .875rem; }
+.btn-lg { padding: .72rem 1.2rem; font-size: 1.05rem; }
+.btn-group { display: inline-flex; }
+.btn-group .btn + .btn { margin-left: -1px; }
+
 /* Top bar — language toggle only */
 .topbar {
   max-width: var(--max);
@@ -79,20 +107,16 @@ p { margin: .35rem 0; }
 }
 
 .btn-primary {
-  --bs-btn-bg: var(--c-accent);
-  --bs-btn-border-color: var(--c-accent);
-  --bs-btn-hover-bg: #276830;
-  --bs-btn-hover-border-color: #276830;
-  --bs-btn-active-bg: #276830;
-  --bs-btn-color: #fff;
+  background: var(--c-accent);
+  border-color: var(--c-accent);
+  color: #fff;
 }
+.btn-primary:hover { background: #276830; border-color: #276830; color: #fff; }
 .btn-outline-secondary {
-  --bs-btn-color: var(--c-muted);
-  --bs-btn-border-color: var(--c-line);
-  --bs-btn-hover-bg: var(--c-accent-soft);
-  --bs-btn-hover-color: var(--c-text);
-  --bs-btn-hover-border-color: var(--c-line);
+  color: var(--c-muted);
+  border-color: var(--c-line);
 }
+.btn-outline-secondary:hover { background: var(--c-accent-soft); color: var(--c-text); border-color: var(--c-line); }
 
 /* Shared narrow content column */
 .page {
@@ -161,15 +185,35 @@ p { margin: .35rem 0; }
   user-select: none;
 }
 
+/* Selected evidence, visible before the download decision. */
+.impact { padding: 0 0 var(--block-gap); }
+.impact-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .6rem;
+}
+.impact-item {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: .7rem;
+  background: var(--c-surface);
+  border: 1px solid var(--c-line);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+.impact-item strong { color: var(--c-accent); font-size: 1.15rem; line-height: 1.15; }
+.impact-item span { color: var(--c-muted); font-size: .76rem; line-height: 1.3; margin-top: .2rem; }
+
 /* Primary CTA */
 .cta-section {
   padding-bottom: var(--block-gap);
 }
+.cta-actions { display: flex; flex-wrap: wrap; gap: .65rem; }
 .cta-section .btn-lg {
   border-radius: 999px;
-  padding: .75rem 1.4rem;
-  font-weight: 600;
 }
+.btn-icon { flex: 0 0 auto; }
 
 /* Dragon easter egg — hidden by default, revealed by JS */
 .dragon-box {
@@ -288,6 +332,12 @@ p { margin: .35rem 0; }
 
 /* Machine-readable formats in the footer — semantic list, inline visual style. */
 .machine-zone { margin-top: .6rem; }
+.machine-zone summary {
+  width: fit-content;
+  color: var(--c-muted);
+  cursor: pointer;
+  font-weight: 600;
+}
 .machine-links {
   display: flex;
   flex-wrap: wrap;
@@ -305,6 +355,13 @@ p { margin: .35rem 0; }
   content: "·";
   color: var(--c-muted);
   margin-left: .6rem;
+}
+
+@media (max-width: 430px) {
+  .impact-grid { grid-template-columns: 1fr; }
+  .impact-item { flex-direction: row; align-items: baseline; gap: .55rem; }
+  .impact-item strong { min-width: 4.7rem; }
+  .cta-actions .btn { width: 100%; }
 }
 
 /* Print: drop chrome, keep one column. The page is already light, so this is
@@ -328,6 +385,7 @@ p { margin: .35rem 0; }
   }
   body { background: #fff; }
   .hero,
-  .contact { padding: .5rem 0; }
+  .contact,
+  .impact { padding: .5rem 0; }
   .contact-row a { color: var(--c-text); }
 }

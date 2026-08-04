@@ -1,5 +1,7 @@
 # ADR-0032 — Favicon: red pixel anarchy symbol
 
+**Superseded by ADR-0034.**
+
 Date: 2026-08-04 · Status: Accepted
 
 ## Context

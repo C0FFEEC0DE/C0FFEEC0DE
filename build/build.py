@@ -38,8 +38,24 @@ RESUME_DIR = ROOT / "resume"
 SRC_DIR = ROOT / "src"
 DIST = ROOT / "dist"
 LANGS = ["en", "ru"]
+JSON_RESUME_SCHEMA_URL = "https://raw.githubusercontent.com/jsonresume/resume-schema/v1.0.0/schema.json"
+JSON_RESUME_SCHEMA_FILE = Path(__file__).with_name("jsonresume-schema-v1.0.0.json")
 
 MD_DASH = re.compile(r"\s[—–-]\s")  # date/role separators (em, en, hyphen)
+
+
+def _strip_inline_md(value: str) -> str:
+    """Remove the small inline-Markdown subset allowed by the source format.
+
+    Structured outputs must carry semantic values, never presentation markers.
+    The source intentionally supports emphasis around labels, certificates, and
+    languages, so normalize those markers before splitting fields.
+    """
+    value = (value or "").strip()
+    value = re.sub(r"\*\*(.+?)\*\*", r"\1", value)
+    value = re.sub(r"__(.+?)__", r"\1", value)
+    value = re.sub(r"`(.+?)`", r"\1", value)
+    return value.strip()
 
 
 # --------------------------------------------------------------------------- #
@@ -106,7 +122,7 @@ def parse_resume(path: Path) -> dict:
     basics = dict(fm.get("basics") or {})
     if fm.get("profiles"):
         basics["profiles"] = fm["profiles"]
-    resume: dict = {"basics": basics, "meta": fm.get("meta") or {}}
+    resume: dict = {"$schema": JSON_RESUME_SCHEMA_URL, "basics": basics, "meta": fm.get("meta") or {}}
     if fm.get("availability"):  # optional hiring signals (cv.json / Open Talent Protocol)
         resume["availability"] = fm["availability"]
 
@@ -220,10 +236,15 @@ def _parse_skills(lines):
         if not ln.startswith("- "):
             continue
         body = ln[2:]
-        name, sep, kws = body.partition(":")
-        name = name.strip().strip("*")
+        emphasized = re.match(r"\*\*(.+?):\*\*\s*(.*)$", body)
+        if emphasized:
+            name, kws = emphasized.groups()
+            sep = ":"
+        else:
+            name, sep, kws = body.partition(":")
+        name = _strip_inline_md(name)
         if sep:
-            kws = [k.strip() for k in kws.split(",") if k.strip()]
+            kws = [_strip_inline_md(k) for k in kws.split(",") if _strip_inline_md(k)]
         else:
             kws = []
         out.append({"name": name, "keywords": kws})
@@ -235,13 +256,24 @@ def _parse_certificates(lines):
     for ln in lines:
         if not ln.startswith("- "):
             continue
-        body = ln[2:]
-        # **Name** — issuer (date)
-        m = re.match(r"\*\*(.+?)\*\*\s*[—–-]\s*(.+?)\s*\(([^)]+)\)\s*$", body)
-        if m:
-            out.append({"name": m[1].strip(), "issuer": m[2].strip(), "date": m[3].strip()})
-        else:
-            out.append({"name": body.strip()})
+        body = _strip_inline_md(ln[2:])
+        # Name — issuer [(date)] [· url: https://...]
+        main, _, url = body.partition(" · url:")
+        # The issuer separator is an em dash. Do not split on an en dash: it is
+        # part of official names such as “Solutions Architect – Associate”.
+        parts = main.split(" — ", 1)
+        item = {"name": _strip_inline_md(parts[0])}
+        if len(parts) == 2:
+            issuer_date = parts[1].strip()
+            m = re.match(r"(.+?)\s*\(([^)]+)\)\s*$", issuer_date)
+            if m:
+                item["issuer"] = _strip_inline_md(m.group(1))
+                item["date"] = _strip_inline_md(m.group(2))
+            elif issuer_date:
+                item["issuer"] = _strip_inline_md(issuer_date)
+        if url.strip():
+            item["url"] = url.strip()
+        out.append(item)
     return out
 
 
@@ -279,13 +311,15 @@ def render_header_fragment(r: dict, lang: str) -> str:
         tags.append(_tag_pill(b["label"]))
     loc = b.get("location")
     if isinstance(loc, dict) and loc.get("city"):
-        region = loc.get("region") or loc.get("countryCode")
-        city = loc["city"]
-        tag_text = city
-        if region:
-            tag_text += f", {region}"
-        if loc.get("note"):
-            tag_text += f" — {loc['note']}"
+        tag_text = loc.get("tag")
+        if not tag_text:
+            region = loc.get("region") or loc.get("countryCode")
+            city = loc["city"]
+            tag_text = city
+            if region:
+                tag_text += f", {region}"
+            if loc.get("note"):
+                tag_text += f" — {loc['note']}"
         tags.append(_tag_pill(tag_text))
     elif isinstance(loc, str) and loc:
         tags.append(_tag_pill(loc))
@@ -339,17 +373,35 @@ def _business_card_contacts(b: dict, lang: str) -> str:
 
 
 def render_contact_fragment(r: dict, lang: str) -> str:
-    """Business-card contact row — injected into the landing #resume block
-    (ADR-0025). The full résumé body lives in the branded PDF and the
-    machine-readable outputs; the landing page shows identity (hero) + three
-    top contacts only and funnels to the PDF for the detail."""
+    """Business-card contact row injected into the landing #resume block.
+
+    The full history lives in the PDF and machine outputs; the landing combines
+    identity, contacts, and selected impact before the download decision.
+    """
     return _business_card_contacts(r["basics"], lang)
 
 
+def render_impact_fragment(r: dict, lang: str) -> str:
+    """Three recruiter-facing impact signals kept in canonical front matter."""
+    impact = (r.get("meta") or {}).get("impact", [])
+    items = []
+    for item in impact[:3]:
+        if not isinstance(item, dict) or not item.get("value") or not item.get("label"):
+            continue
+        items.append(
+            '<div class="impact-item">'
+            f'<strong>{esc(item["value"])}</strong>'
+            f'<span>{esc(item["label"])}</span>'
+            '</div>'
+        )
+    return '<div class="impact-grid">' + "".join(items) + "</div>" if items else ""
+
+
 def render_body_fragment(r: dict, lang: str) -> str:
-    """Résumé sections WITHOUT the header — used by the branded PDF (via
-    render_html_fragment). The landing page uses render_contact_fragment instead
-    (ADR-0025), so the full body renders only in the PDF, not on the page."""
+    """Résumé sections without the header, retained for semantic renderers.
+
+    The landing page uses only the contact and selected-impact fragments.
+    """
     b = r["basics"]
     parts: list[str] = []
 
@@ -434,7 +486,7 @@ def render_body_fragment(r: dict, lang: str) -> str:
 
 
 def _hl(items):
-    return "<ul>" + "".join(f"<li>{esc(i)}</li>" for i in items) + "</ul>"
+    return '<ul class="highlights">' + "".join(f"<li>{esc(i)}</li>" for i in items) + "</ul>"
 
 
 def _fmt_range(start, end, lang):
@@ -468,7 +520,7 @@ def _t(lang, key):
     return _T[lang][key]
 
 
-def render_text(r: dict) -> str:
+def render_text(r: dict, lang: str = "en") -> str:
     b = r["basics"]
     intro = (r.get("meta") or {}).get("intro", "")
     out = [b.get("name", ""), b.get("label", ""), ""]
@@ -491,20 +543,27 @@ def render_text(r: dict) -> str:
     def block(title, lines):
         return [title, "-" * len(title)] + lines + [""]
 
+    titles = {
+        "en": {"experience": "EXPERIENCE", "skills": "SKILLS", "projects": "PROJECTS",
+               "education": "EDUCATION", "certificates": "CERTIFICATES", "languages": "LANGUAGES"},
+        "ru": {"experience": "ОПЫТ РАБОТЫ", "skills": "НАВЫКИ", "projects": "ПРОЕКТЫ",
+               "education": "ОБРАЗОВАНИЕ", "certificates": "СЕРТИФИКАТЫ", "languages": "ЯЗЫКИ"},
+    }[lang]
+
     if r.get("work"):
         lines = []
         for w in r["work"]:
             lines.append(f"{w.get('position')} — {w.get('name')}")
-            d = _fmt_range(w.get("startDate"), w.get("endDate"), "en")
+            d = _fmt_ats(w.get("startDate"), w.get("endDate"), lang)
             if d:
                 lines.append(f"  {d}" + (f" · {w['location']}" if w.get("location") else ""))
             for h in w.get("highlights", []):
                 lines.append(f"  - {h}")
             lines.append("")
-        out += block("EXPERIENCE", lines)
+        out += block(titles["experience"], lines)
     if r.get("skills"):
         lines = [f"- {s['name']}: " + ", ".join(s.get("keywords", [])) for s in r["skills"]]
-        out += block("SKILLS", lines)
+        out += block(titles["skills"], lines)
     if r.get("projects"):
         lines = []
         for p in r["projects"]:
@@ -514,24 +573,34 @@ def render_text(r: dict) -> str:
             for h in p.get("highlights", []):
                 lines.append(f"  - {h}")
             lines.append("")
-        out += block("PROJECTS", lines)
+        out += block(titles["projects"], lines)
     if r.get("education"):
         lines = []
         for e in r["education"]:
             lines.append(f"{e.get('studyType')} — {e.get('institution')}")
-            d = _fmt_range(e.get("startDate"), e.get("endDate"), "en")
+            d = _fmt_ats(e.get("startDate"), e.get("endDate"), lang)
             if d:
                 lines.append(f"  {d}")
             lines.append("")
-        out += block("EDUCATION", lines)
+        out += block(titles["education"], lines)
     if r.get("certificates"):
-        out += block("CERTIFICATES", [f"- {c.get('name')} — {c.get('issuer')} ({c.get('date')})" for c in r["certificates"]])
+        cert_lines = []
+        for c in r["certificates"]:
+            line = f"- {c.get('name')}"
+            if c.get("issuer"):
+                line += f" — {c['issuer']}"
+            if c.get("date"):
+                line += f" ({c['date']})"
+            if c.get("url"):
+                line += f" · {c['url']}"
+            cert_lines.append(line)
+        out += block(titles["certificates"], cert_lines)
     if r.get("languages"):
-        out += block("LANGUAGES", [f"- {l.get('language')} ({l.get('fluency')})" for l in r["languages"]])
+        out += block(titles["languages"], [f"- {l.get('language')} ({l.get('fluency')})" for l in r["languages"]])
     return "\n".join(out).rstrip() + "\n"
 
 
-def render_markdown(r: dict) -> str:
+def render_markdown(r: dict, lang: str = "en") -> str:
     """Clean markdown mirror (no front-matter/comments)."""
     b = r["basics"]
     intro = (r.get("meta") or {}).get("intro", "")
@@ -561,7 +630,7 @@ def render_markdown(r: dict) -> str:
         out += ["## Experience", ""]
         for w in r["work"]:
             out.append(f"### {w.get('position')} — {w.get('name')}")
-            d = _fmt_range(w.get("startDate"), w.get("endDate"), "en")
+            d = _fmt_range(w.get("startDate"), w.get("endDate"), lang)
             if d:
                 out.append(f"*{d}" + (f" · {w['location']}" if w.get("location") else "") + "*")
             for h in w.get("highlights", []):
@@ -585,14 +654,21 @@ def render_markdown(r: dict) -> str:
         out += ["## Education", ""]
         for e in r["education"]:
             out.append(f"### {e.get('studyType')} — {e.get('institution')}")
-            d = _fmt_range(e.get("startDate"), e.get("endDate"), "en")
+            d = _fmt_range(e.get("startDate"), e.get("endDate"), lang)
             if d:
                 out.append(f"*{d}*")
             out.append("")
     if r.get("certificates"):
         out += ["## Certificates", ""]
         for c in r["certificates"]:
-            out.append(f"- **{c.get('name')}** — {c.get('issuer')} ({c.get('date')})")
+            line = f"- **{c.get('name')}**"
+            if c.get("issuer"):
+                line += f" — {c['issuer']}"
+            if c.get("date"):
+                line += f" ({c['date']})"
+            if c.get("url"):
+                line += f" · [{c['url']}]({c['url']})"
+            out.append(line)
         out.append("")
     if r.get("languages"):
         out += ["## Languages", ""]
@@ -603,15 +679,14 @@ def render_markdown(r: dict) -> str:
 
 
 def render_pdf_html(r: dict, lang: str) -> str:
-    """Wrapper for the single human/ATS PDF (ADR-0031)."""
-    body = render_resume_html(r, lang)
-    return f"""<!doctype html><html lang="{lang}"><head><meta charset="utf-8">
-<title>{esc(r['basics'].get('name'))} — résumé</title>
-</head><body>{body}</body></html>"""
+    """Return the single complete human/ATS HTML document."""
+    return render_resume_html(r, lang)
 
 
-_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
-           "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+_MONTHS = {
+    "en": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+    "ru": ["янв", "фев", "мар", "апр", "май", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"],
+}
 
 
 def _fmt_ats(start, end, lang):
@@ -625,7 +700,7 @@ def _fmt_ats(start, end, lang):
         m = re.fullmatch(r"(\d{4})-(\d{1,2})", v)
         if m:
             y, mo = m.groups()
-            return f"{_MONTHS[int(mo) - 1]} {y}"
+            return f"{_MONTHS[lang][int(mo) - 1]} {y}"
         return v
     s, e = fmt(start), fmt(end)
     if s and e:
@@ -639,15 +714,15 @@ def _fmt_ats(start, end, lang):
 # Combines Forest palette/visual hierarchy with ATS-safe structure:
 # single column, real text, standard fonts, dates on role line, no tables/floats.
 _RESUME_CSS = """
-@page { margin: 0.75in 0.85in; }
+@page { margin: 0.58in 0.68in; }
 * { box-sizing: border-box; }
 body {
-  font: 10.8pt/1.45 -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font: 9.6pt/1.34 -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   color: #1f2a1f; background: #fff; margin: 0;
 }
-h1 { font-size: 21pt; margin: 0 0 3px; letter-spacing: -0.01em; }
-h2 { font-size: 12pt; margin: 16px 0 5px; border-bottom: 1.5px solid #2f7d3a; padding-bottom: 2px; color: #1f2a1f; }
-h3 { font-size: 10.8pt; margin: 8px 0 2px; }
+h1 { font-size: 19pt; margin: 0 0 2px; letter-spacing: -0.01em; }
+h2 { font-size: 11pt; margin: 11px 0 4px; border-bottom: 1.5px solid #2f7d3a; padding-bottom: 2px; color: #1f2a1f; page-break-after: avoid; }
+h3 { font-size: 9.8pt; margin: 6px 0 1px; page-break-after: avoid; }
 a { color: #2f7d3a; text-decoration: none; }
 .hero { margin-bottom: 6px; }
 .hero .tags { margin: 0 0 4px; }
@@ -657,20 +732,22 @@ a { color: #2f7d3a; text-decoration: none; }
   border: 1px solid #e0e6dd; border-radius: 999px; padding: 1px 6px; margin-right: 4px;
 }
 .hero .lead { color: #5b6b5b; max-width: 62ch; margin: 4px 0 0; }
-.block { margin: 10px 0; page-break-inside: avoid; }
-.block + .block { border-top: 1px solid #e0e6dd; padding-top: 8px; }
-.contact { color: #5b6b5b; font-size: 10pt; margin: 0 0 6px; }
-.contact a { color: #1f2a1f; }
-.meta { color: #5b6b5b; font-size: 9.8pt; margin-bottom: 3px; }
-.job, .project, .edu { margin-bottom: 8px; }
+.block { margin: 7px 0; }
+.block + .block { border-top: 1px solid #e0e6dd; padding-top: 5px; }
+.contact { color: #5b6b5b; font-size: 8.8pt; margin: 0 0 4px; }
+.contact a { color: #1f2a1f; white-space: nowrap; }
+.meta { color: #5b6b5b; font-size: 8.7pt; margin-bottom: 2px; }
+.job, .project, .edu { margin-bottom: 6px; page-break-inside: avoid; }
 .job:last-child, .project:last-child, .edu:last-child { margin-bottom: 0; }
 .role { font-weight: 700; }
 .at { color: #5b6b5b; }
 .org { color: #2f7d3a; font-weight: 700; }
-.skills { display: flex; flex-direction: column; gap: 3px; }
+.skills { display: flex; flex-direction: column; gap: 2px; }
 .skill-name { color: #2f7d3a; font-weight: 600; }
-ul { margin: 3px 0 0; padding-left: 16px; }
-li { margin: 2px 0; }
+ul { margin: 2px 0 0; padding-left: 15px; }
+li { margin: 1px 0; }
+.highlights { list-style: none; padding-left: 0; }
+.highlights li { padding-left: 6px; border-left: 2px solid #dcebd9; margin: 2px 0; }
 """
 
 
@@ -686,11 +763,13 @@ def render_resume_html(r: dict, lang: str) -> str:
         tags.append(f'<span class="tag">{esc(b["label"])}</span>')
     loc = b.get("location")
     if isinstance(loc, dict) and loc.get("city"):
-        tag_text = loc["city"]
-        if loc.get("region"):
-            tag_text += f', {loc["region"]}'
-        if loc.get("note"):
-            tag_text += f' — {loc["note"]}'
+        tag_text = loc.get("tag")
+        if not tag_text:
+            tag_text = loc["city"]
+            if loc.get("region"):
+                tag_text += f', {loc["region"]}'
+            if loc.get("note"):
+                tag_text += f' — {loc["note"]}'
         tags.append(f'<span class="tag">{esc(tag_text)}</span>')
     if tags:
         header_parts.append(f'<p class="tags">{"".join(tags)}</p>')
@@ -795,8 +874,13 @@ def render_resume_html(r: dict, lang: str) -> str:
                                  for l in r["languages"]) + "</p>"
         parts.append(sec(_t(lang, "Languages"), body))
 
+    keywords = ", ".join(k for s in r.get("skills", []) for k in s.get("keywords", []))
     return f"""<!doctype html><html lang="{lang}"><head><meta charset="utf-8">
-<title>{esc(b.get('name'))} — résumé</title></head><body>{''.join(parts)}</body></html>"""
+<title>{esc(b.get('name'))} — {esc(b.get('label'))}</title>
+<meta name="author" content="{esc(b.get('name'))}">
+<meta name="description" content="Staff DevOps/SRE résumé">
+<meta name="keywords" content="{esc(keywords)}">
+</head><body>{''.join(parts)}</body></html>"""
 
 
 # --------------------------------------------------------------------------- #
@@ -908,7 +992,8 @@ def build_llms_txt(r: dict, base: str, pdf_name: str) -> str:
    `resume-for-agents.md`.
 4. Use `agents.json` for OpenAI-style structured-output function calls.
 5. Do not infer facts not present in these files. Contact and availability are
-   explicitly listed above.
+   explicitly listed above. Unknown dates, credentials, legal details, and
+   measurement definitions are intentionally omitted rather than placeholders.
 """
 
 
@@ -919,6 +1004,9 @@ def build_agents_md(r: dict, base: str, pdf_name: str) -> str:
     return f"""# AGENTS.md — instructions for AI agents
 
 This is the personal résumé site of {name} ({b.get('label', '')}).
+
+- Résumé version: `{(r.get('meta') or {}).get('version', '')}`
+- Last modified: `{(r.get('meta') or {}).get('lastModified', '')}`
 
 ## Source-of-truth hierarchy
 
@@ -942,6 +1030,9 @@ This is the personal résumé site of {name} ({b.get('label', '')}).
 - Prefer `resume.json` for factual claims.
 - Use `resume-for-agents.md` for natural-language summaries.
 - Do not infer facts not present in the files above.
+- Treat absent dates, credential IDs, legal details, and measurement definitions
+  as unknown; do not fill them with placeholders.
+- Preserve the distinction between owner-provided facts and your own inference.
 - Contact: `basics.email` = {b.get('email', '')} and `basics.profiles`.
 """
 
@@ -1003,7 +1094,7 @@ def build_resume_for_agents(r: dict, base: str) -> str:
     if r.get("work"):
         lines += ["## Experience", ""]
         for w in r["work"]:
-            d = _fmt_range(w.get("startDate"), w.get("endDate"), "en")
+            d = _fmt_ats(w.get("startDate"), w.get("endDate"), "en")
             loc = f" · {w['location']}" if w.get("location") else ""
             lines.append(f"### {w.get('position')} — {w.get('name')}")
             lines.append(f"*{d}{loc}*")
@@ -1024,7 +1115,7 @@ def build_resume_for_agents(r: dict, base: str) -> str:
         lines += ["## Projects", ""]
         for p in r["projects"]:
             lines.append(f"### {p.get('name')}")
-            d = _fmt_range(p.get("startDate"), p.get("endDate"), "en")
+            d = _fmt_ats(p.get("startDate"), p.get("endDate"), "en")
             if d:
                 lines.append(f"*{d}*")
             if p.get("url"):
@@ -1038,7 +1129,7 @@ def build_resume_for_agents(r: dict, base: str) -> str:
         lines += ["## Education", ""]
         for e in r["education"]:
             lines.append(f"- **{e.get('studyType')}** — {e.get('institution')}")
-            d = _fmt_range(e.get("startDate"), e.get("endDate"), "en")
+            d = _fmt_ats(e.get("startDate"), e.get("endDate"), "en")
             if d:
                 lines.append(f"  - {d}")
         lines.append("")
@@ -1047,7 +1138,14 @@ def build_resume_for_agents(r: dict, base: str) -> str:
     if r.get("certificates"):
         lines += ["## Certifications", ""]
         for c in r["certificates"]:
-            lines.append(f"- **{c.get('name')}** — {c.get('issuer')} ({c.get('date')})")
+            line = f"- **{c.get('name')}**"
+            if c.get("issuer"):
+                line += f" — {c['issuer']}"
+            if c.get("date"):
+                line += f" ({c['date']})"
+            if c.get("url"):
+                line += f" · {c['url']}"
+            lines.append(line)
         lines.append("")
 
     # Languages
@@ -1063,6 +1161,8 @@ def build_resume_for_agents(r: dict, base: str) -> str:
         "",
         "- This file is a narrative mirror of `resume.json`.",
         "- Do not hallucinate facts; verify against `resume.json` when in doubt.",
+        "- Missing dates, credentials, legal details, and measurement definitions are intentionally unknown.",
+        "- Clearly label any inference; do not present it as an owner-provided fact.",
         f"- Canonical URL: {_abs(base, 'resume.json')}",
         "",
     ]
@@ -1110,6 +1210,7 @@ def build_agents_json(r: dict, base: str) -> dict:
                             "roles": {"type": "array", "items": {"type": "string"}},
                             "work_model": {"type": "string"},
                             "locations": {"type": "array", "items": {"type": "string"}},
+                            "timezone": {"type": "string"},
                         },
                     },
                 },
@@ -1130,6 +1231,11 @@ def build_agents_json(r: dict, base: str) -> dict:
         "sources": {
             "json_resume": _abs(base, "resume.json"),
             "agent_readable": _abs(base, "resume-for-agents.md"),
+        },
+        "facts_policy": {
+            "canonical": _abs(base, "resume.json"),
+            "unknowns": "Omitted, never represented by inferred values or placeholders",
+            "inference": "Must be explicitly labeled and kept separate from owner-provided facts",
         },
     }
 
@@ -1213,8 +1319,10 @@ def build_jsonld(r: dict, base: str) -> str:
                 "jobTitle": b.get("label"),
                 "email": b.get("email"),
                 "url": b.get("url"),
+                "description": (r.get("meta") or {}).get("intro", b.get("summary")),
                 "sameAs": sameas,
                 "knowsAbout": list(dict.fromkeys(k for k in knows_about if k)),
+                "knowsLanguage": [item.get("language") for item in r.get("languages", []) if item.get("language")],
                 "address": {
                     "@type": "PostalAddress",
                     "addressLocality": city,
@@ -1226,6 +1334,7 @@ def build_jsonld(r: dict, base: str) -> str:
                 "@type": "ProfilePage",
                 "@id": _abs(base, "/"),
                 "mainEntity": {"@id": _abs(base, "#person")},
+                "dateModified": (r.get("meta") or {}).get("lastModified"),
                 "significantLink": [
                     _abs(base, "resume.json"),
                     _abs(base, "resume-for-agents.md"),
@@ -1236,14 +1345,12 @@ def build_jsonld(r: dict, base: str) -> str:
     }
     avail = r.get("availability")
     if avail:
+        roles = avail.get("roles", []) or [b.get("label")]
         obj["@graph"][0]["seeks"] = {
-            "@type": "JobPosting",
-            "title": avail.get("roles", [b.get("label")])[0],
-            "employmentType": avail.get("work_model", ""),
-            "jobLocation": {
-                "@type": "Place",
-                "name": ", ".join(avail.get("locations", [])) or city or "",
-            },
+            "@type": "Demand",
+            "name": "Open to " + ", ".join(roles),
+            "description": avail.get("work_model", ""),
+            "areaServed": avail.get("locations", []),
         }
     # Escape characters that could break out of the <script type="application/ld+json">
     # context if an attacker edits the markdown front-matter.
@@ -1254,8 +1361,8 @@ def build_jsonld(r: dict, base: str) -> str:
 def build_og_tags(r: dict, base: str) -> str:
     """Open Graph meta tags for social-share previews (LinkedIn, etc.).
 
-    The dragon is canvas-rendered, so the og:image is a static PNG committed in
-    src/dragon-og.png and copied to dist/assets/ during the build.
+    Social crawlers need a raster image with exact text, so og:image is the
+    committed 1200×630 card at src/og-card.png.
     """
     b = r["basics"]
     name = b.get("name", "")
@@ -1263,7 +1370,7 @@ def build_og_tags(r: dict, base: str) -> str:
     title = f"{name} — {label}" if name and label else (name or label)
     desc = b.get("summary", "")
     url = base.rstrip("/")
-    img = f"{url}/assets/dragon-og.png" if url else "/assets/dragon-og.png"
+    img = f"{url}/assets/og-card.png" if url else "/assets/og-card.png"
     first, last = _split_name(name)
     parts = [
         f'<meta property="og:title" content="{esc(title)}">',
@@ -1271,8 +1378,9 @@ def build_og_tags(r: dict, base: str) -> str:
         f'<meta property="og:url" content="{esc(url or "/")}">',
         '<meta property="og:type" content="profile">',
         f'<meta property="og:image" content="{esc(img)}">',
-        '<meta property="og:image:width" content="512">',
-        '<meta property="og:image:height" content="513">',
+        '<meta property="og:image:width" content="1200">',
+        '<meta property="og:image:height" content="630">',
+        '<meta property="og:image:alt" content="Aleksandr Krasnobai — Staff DevOps Engineer">',
         '<meta property="og:locale" content="en_US">',
     ]
     if first:
@@ -1332,8 +1440,8 @@ def build(clean: bool = False, do_pdf: bool = True):
         json.dumps(build_cv_json(resumes["en"], base, pdf_name), ensure_ascii=False, indent=2), encoding="utf-8")
 
     # Plain text (both langs)
-    txt = "\n\n========== ENGLISH ==========\n\n" + render_text(resumes["en"]) \
-        + "\n\n========== РУССКИЙ ==========\n\n" + render_text(resumes["ru"])
+    txt = "\n\n========== ENGLISH ==========\n\n" + render_text(resumes["en"], "en") \
+        + "\n\n========== РУССКИЙ ==========\n\n" + render_text(resumes["ru"], "ru")
     (DIST / "resume.txt").write_text(txt.strip() + "\n", encoding="utf-8")
 
     # Clean markdown (English canonical)
@@ -1371,6 +1479,8 @@ def build(clean: bool = False, do_pdf: bool = True):
     out = inject_template(tpl, {
         "RESUME_EN_HTML": render_contact_fragment(resumes["en"], "en"),
         "RESUME_RU_HTML": render_contact_fragment(resumes["ru"], "ru"),
+        "IMPACT_EN": render_impact_fragment(resumes["en"], "en"),
+        "IMPACT_RU": render_impact_fragment(resumes["ru"], "ru"),
         "HEADER_EN": render_header_fragment(resumes["en"], "en"),
         "HEADER_RU": render_header_fragment(resumes["ru"], "ru"),
         "JSONLD": jsonld,
@@ -1378,6 +1488,8 @@ def build(clean: bool = False, do_pdf: bool = True):
         "BASE": base.rstrip("/"),
         "PDF_NAME": pdf_name,
         "GITHUB_URL": github_url,
+        "CANONICAL_URL": f"{base.rstrip('/')}/" if base else "/",
+        "RU_URL": f"{base.rstrip('/')}/?lang=ru" if base else "/?lang=ru",
     })
     (DIST / "index.html").write_text(out, encoding="utf-8")
 
@@ -1394,9 +1506,6 @@ def build(clean: bool = False, do_pdf: bool = True):
     # Copy frontend assets (CSS, JS, PNG, SVG). Self-hosted fonts were removed
     # in the minimal business-card redesign (ADR-0018 v2); the page uses system
     # sans-serif.
-    og_src = SRC_DIR / "dragon-og.png"
-    if og_src.exists():
-        shutil.copy2(og_src, assets / "dragon-og.png")
     for f in SRC_DIR.iterdir():
         if (f.suffix in (".css", ".js", ".svg") or f.name.endswith(".png")):
             shutil.copy2(f, assets / f.name)
@@ -1412,6 +1521,13 @@ REQUIRED_BASICS = {"name", "email"}
 
 def check(resumes: dict) -> list[str]:
     errors: list[str] = []
+    try:
+        import jsonschema
+        resume_schema = json.loads(JSON_RESUME_SCHEMA_FILE.read_text(encoding="utf-8"))
+        schema_validator = jsonschema.Draft4Validator(resume_schema)
+    except (ImportError, OSError, json.JSONDecodeError) as exc:
+        errors.append(f"JSON Resume schema validation unavailable: {exc}")
+        schema_validator = None
     for lang in LANGS:
         r = resumes[lang]
         missing = REQUIRED_BASICS - set(r["basics"])
@@ -1419,6 +1535,27 @@ def check(resumes: dict) -> list[str]:
             errors.append(f"[{lang}] basics missing: {sorted(missing)}")
         if not r.get("work"):
             errors.append(f"[{lang}] no work experience parsed")
+        serialized = json.dumps(r, ensure_ascii=False)
+        for forbidden in ("**", "None (None)"):
+            if forbidden in serialized:
+                errors.append(f"[{lang}] structured data contains forbidden marker: {forbidden}")
+        for cert in r.get("certificates", []):
+            if not cert.get("name"):
+                errors.append(f"[{lang}] certificate without a name")
+        if "100%" in serialized:
+            errors.append(f"[{lang}] undefined 100% outcome must not ship")
+        if schema_validator is not None:
+            # `availability` is an intentional extension; validate the complete
+            # official JSON Resume subset against the vendored v1.0.0 schema.
+            standard = {key: value for key, value in r.items()
+                        if key in resume_schema.get("properties", {})}
+            for err in sorted(schema_validator.iter_errors(standard), key=lambda item: list(item.path)):
+                path = ".".join(str(part) for part in err.path) or "root"
+                errors.append(f"[{lang}] JSON Resume schema: {path}: {err.message}")
+    if len(resumes["en"].get("work", [])) != len(resumes["ru"].get("work", [])):
+        errors.append("EN/RU work history count differs")
+    if len(resumes["en"].get("skills", [])) != len(resumes["ru"].get("skills", [])):
+        errors.append("EN/RU skills group count differs")
     # Downloadable résumé filename derived from name + role (ADR-0030/0031)
     slug = _download_slug(resumes["en"]["basics"].get("name", ""),
                           resumes["en"]["basics"].get("label", ""))
@@ -1438,12 +1575,33 @@ def check(resumes: dict) -> list[str]:
     pdf_path = DIST / pdf_name
     if pdf_path.exists() and pdf_path.stat().st_size <= 100:
         errors.append(f"{pdf_name} is empty/placeholder (PDF generation failed)")
+    if pdf_path.exists() and pdf_path.stat().st_size > 100:
+        try:
+            from pypdf import PdfReader
+            reader = PdfReader(str(pdf_path))
+            if len(reader.pages) > 4:
+                errors.append(f"{pdf_name} has {len(reader.pages)} pages; maximum is 4")
+            pdf_text = "\n".join(page.extract_text() or "" for page in reader.pages)
+            for forbidden in ("**", "None (None)"):
+                if forbidden in pdf_text:
+                    errors.append(f"{pdf_name} contains forbidden marker: {forbidden}")
+        except ImportError as exc:
+            errors.append(f"PDF quality validation unavailable: {exc}")
     if not (DIST / "index.html").exists():
         errors.append("missing dist/index.html")
     if not (DIST / "assets").is_dir():
         errors.append("missing dist/assets/")
-    if not (DIST / "assets" / "dragon-og.png").exists():
-        errors.append("missing dist/assets/dragon-og.png (Open Graph image)")
+    if not (DIST / "assets" / "og-card.png").exists():
+        errors.append("missing dist/assets/og-card.png (Open Graph image)")
+    txt_path = DIST / "resume.txt"
+    if txt_path.exists():
+        txt = txt_path.read_text(encoding="utf-8")
+        for forbidden in ("**", "None (None)"):
+            if forbidden in txt:
+                errors.append(f"resume.txt contains forbidden marker: {forbidden}")
+        ru_text = txt.partition("========== РУССКИЙ ==========")[2]
+        if "Present" in ru_text:
+            errors.append("Russian plain text contains English Present")
     if not (DIST / "index.html").exists():
         errors.append("missing dist/index.html")
     domain = os.environ.get("DOMAIN", "").strip()

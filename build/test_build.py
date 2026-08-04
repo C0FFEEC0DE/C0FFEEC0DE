@@ -68,12 +68,14 @@ def test_build_produces_core_files(dist):
     assert (dist / "assets" / "site.css").is_file()
     assert (dist / "assets" / "print.css").is_file()
     assert (dist / "assets" / "dragon.js").is_file()
-    assert (dist / "assets" / "dragon-og.png").is_file(), "missing Open Graph image"
+    assert (dist / "assets" / "og-card.png").is_file(), "missing Open Graph image"
+    assert not (dist / "assets" / "dragon-og.png").exists(), "superseded OG image must not ship"
 
 
 def test_resume_json_valid(dist):
     build.build(clean=True)
     r = json.loads((dist / "resume.json").read_text("utf-8"))
+    assert r["$schema"].endswith("jsonresume/resume-schema/v1.0.0/schema.json")
     assert r["basics"]["name"] == "Aleksandr Krasnobai"
     assert r["basics"]["email"]
     assert r["basics"]["profiles"], "profiles should parse from front-matter"
@@ -85,6 +87,15 @@ def test_resume_json_valid(dist):
     assert r["projects"], "projects should parse"
     assert r["certificates"], "certificates should parse"
     assert r["languages"], "languages should parse"
+    serialized = json.dumps(r, ensure_ascii=False)
+    assert "**" not in serialized
+    assert "None (None)" not in serialized
+    assert r["skills"][0]["name"] == "Cloud"
+    assert r["certificates"][0] == {
+        "name": "ICF Associate Certified Coach (ACC)",
+        "issuer": "ICF",
+    }
+    assert r["certificates"][3]["name"] == "AWS Certified Solutions Architect – Associate"
 
 
 def test_russian_resume_json(dist):
@@ -100,6 +111,9 @@ def test_resume_txt_has_both_langs(dist):
     txt = (dist / "resume.txt").read_text("utf-8")
     assert "ENGLISH" in txt
     assert "РУССКИЙ" in txt
+    assert "**" not in txt
+    assert "None (None)" not in txt
+    assert "Present" not in txt.partition("========== РУССКИЙ ==========")[2]
 
 
 # --- agent-facing ------------------------------------------------------------ #
@@ -162,6 +176,20 @@ def test_agents_md_links(dist):
     md = (dist / "AGENTS.md").read_text("utf-8")
     assert "resume.json" in md
     assert "JSON Resume" in md
+    assert "Résumé version: `0.4.0`" in md
+    assert "Last modified: `2026-08-04`" in md
+    assert "do not fill them with placeholders" in md
+
+
+def test_agent_outputs_publish_evidence_policy(dist):
+    build.build(clean=True)
+    agents = json.loads((dist / "agents.json").read_text("utf-8"))
+    assert agents["facts_policy"]["canonical"].endswith("resume.json")
+    assert agents["facts_policy"]["unknowns"].startswith("Omitted")
+    availability = agents["function"]["parameters"]["properties"]["availability"]
+    assert "timezone" in availability["properties"]
+    narrative = (dist / "resume-for-agents.md").read_text("utf-8")
+    assert "intentionally unknown" in narrative
 
 
 def test_index_html_injected(dist):
@@ -262,7 +290,10 @@ def test_pdf_formatting_is_intact(dist):
         pytest.skip("weasyprint not installed")
     build.build(clean=True)
     reader = PdfReader(str(dist / PDF_NAME))
-    assert len(reader.pages) >= 1, f"{PDF_NAME} has no pages"
+    assert 1 <= len(reader.pages) <= 4, f"{PDF_NAME} must be compact (1–4 pages)"
+    assert reader.metadata.title == "Aleksandr Krasnobai — Staff DevOps Engineer"
+    assert reader.metadata.author == "Aleksandr Krasnobai"
+    assert "DevOps/SRE" in (reader.metadata.subject or "")
     for i, page in enumerate(reader.pages):
         box = page.mediabox
         w, h = float(box.width), float(box.height)
@@ -410,10 +441,10 @@ def test_hero_header_is_bilingual(dist):
     assert "Ведущий DevOps-инженер" in hero
     assert "Aleksandr Krasnobai" in hero
     # location tags in both languages
-    assert "Belgrade, Serbia — work authorized" in hero
-    assert "Белград, Сербия — право на работу" in hero
+    assert "Belgrade · Serbia work authorization" in hero
+    assert "Белград · право на работу в Сербии" in hero
     # one-line summary/lead (apostrophe is HTML-escaped in the rendered HTML)
-    assert "high-throughput platforms" in hero or "высоконагруженных платформ" in hero
+    assert "high-throughput cloud platforms" in hero or "высоконагруженных облачных платформ" in hero
     # no leftover template placeholders
     assert "{{HEADER_EN}}" not in html and "{{HEADER_RU}}" not in html
 
@@ -444,14 +475,29 @@ def test_open_graph_tags_present_and_escaped(dist):
     assert 'property="og:description"' in html
     assert "high-throughput platforms" in html or "500M+" in html
     assert 'property="og:image"' in html
-    assert "dragon-og.png" in html
+    assert "og-card.png" in html
+    assert 'content="1200"' in html and 'content="630"' in html
     assert 'property="og:type"' in html
     assert 'property="profile:first_name"' in html
     assert 'property="profile:last_name"' in html
+    png = (dist / "assets" / "og-card.png").read_bytes()
+    assert png[:8] == b"\x89PNG\r\n\x1a\n"
+    assert int.from_bytes(png[16:20], "big") == 1200
+    assert int.from_bytes(png[20:24], "big") == 630
+
+
+def test_frontend_is_self_hosted_and_hardened(dist):
+    build.build(clean=True)
+    html = (dist / "index.html").read_text("utf-8")
+    assert "cdn.jsdelivr.net" not in html
+    assert "bootstrap" not in html.lower()
+    assert 'http-equiv="Content-Security-Policy"' in html
+    assert 'rel="canonical"' in html
+    assert 'hreflang="ru"' in html
 
 
 def test_favicon_resolves(dist):
-    """ADR-0032: the red Space Invader favicon is linked and copied to assets."""
+    """ADR-0034: the neutral AK favicon is linked and copied to assets."""
     build.build(clean=True)
     html = (dist / "index.html").read_text("utf-8")
     assert 'rel="icon"' in html
@@ -459,15 +505,14 @@ def test_favicon_resolves(dist):
     favicon = dist / "assets" / "favicon.svg"
     assert favicon.is_file(), "favicon.svg must be copied to dist/assets/"
     svg = favicon.read_text("utf-8")
-    assert "#c62828" in svg, "favicon must use the red Space Invader color"
+    assert "#2f7d3a" in svg, "favicon must use the Forest green accent"
+    assert "AK monogram" in svg
     assert "<rect" in svg, "favicon must be pixel-art rectangles"
 
 
-def test_landing_page_shows_contact_only(dist):
-    """ADR-0025: the landing #resume block shows the compact business-card
-    contacts only — email + LinkedIn + Telegram. The full résumé body
-    (Experience, Skills, Projects, Education, Certificates, Languages) lives
-    in the PDF and markdown outputs, not on the page."""
+def test_landing_page_shows_contact_and_selected_impact(dist):
+    """ADR-0034: the compact landing shows contacts and three evidence cards,
+    while the full history remains in the PDF and structured outputs."""
     build.build(clean=True)
     html = (dist / "index.html").read_text("utf-8")
     resume = html[html.find('id="resume"'):html.find("<footer")]
@@ -475,9 +520,8 @@ def test_landing_page_shows_contact_only(dist):
     assert 'class="contact-row"' in resume
     assert "LinkedIn" in resume and "Telegram" in resume
     assert "mailto:" in resume
-    # GitHub is intentionally moved to the footer machine links, not the top contacts
-    github_in_resume = re.search(r'id="resume".*GitHub', resume, re.S)
-    assert not github_in_resume, "GitHub must not appear in the #resume contact row"
+    assert 'class="impact-grid"' in resume
+    assert "80%" in resume and "500M+" in resume and "10,000" in resume
     # none of the other résumé sections leak onto the landing page
     for absent in ("Work Experience", "Skills", "Projects", "Education",
                    "Certificates", "Languages", "Опыт работы", "Навыки",
@@ -542,6 +586,9 @@ def test_jsonld_is_person_with_name(dist):
     assert '"@type": "Person"' in html or '"@type":"Person"' in html
     assert "Aleksandr Krasnobai" in html
     assert "@context" in html and "schema.org" in html
+    assert '"@type": "Demand"' in html
+    assert '"@type": "JobPosting"' not in html
+    assert "**" not in html[html.find('type="application/ld+json"'):]
 
 
 def test_sitemap_has_urls(dist):
@@ -573,17 +620,17 @@ def test_resume_md_is_clean_markdown(dist):
 
 
 # --- hero CTA: single primary PDF download button ----------------------------
-def test_hero_cta_is_pdf_download(dist):
-    """The minimal business card has one primary CTA: download the single
-    human-readable/ATS-safe PDF. AI/LLM résumé links live in the footer machine
-    links, not in the hero."""
+def test_hero_ctas_are_pdf_and_github(dist):
+    """ADR-0034: PDF remains primary and GitHub is the secondary action."""
     import re
     build.build(clean=True)
     html = (dist / "index.html").read_text("utf-8")
     cta = re.search(r'<section class="cta-section"[^>]*>(.*?)</section>', html, re.S).group(1)
     links = re.findall(r'href="([^"]+)"', cta)
-    assert links == [PDF_NAME], f"hero CTA should have exactly one PDF link, got {links}"
+    assert links == [PDF_NAME, "https://github.com/C0FFEEC0DE"], links
     assert 'data-i18n="download"' in cta, "CTA uses the bilingual download label"
+    assert 'data-i18n="github"' in cta
+    assert "📄" not in cta
 
 
 # --- ADR-0017: fixed light Forest theme + system sans-serif ------------------ #
@@ -741,7 +788,7 @@ def test_button_text_color_is_white_on_accent(dist):
     import re
     build.build(clean=True)
     css = (dist / "assets" / "site.css").read_text("utf-8")
-    assert re.search(r"\.btn-primary\s*\{[^}]*--bs-btn-color:\s*#fff", css), (
+    assert re.search(r"\.btn-primary\s*\{[^}]*color:\s*#fff", css), (
         "light .btn-primary must use white text")
 
 

@@ -30,7 +30,7 @@ jobs:
 
       - name: Install build deps and build dist/
         run: |
-          pip install --no-input pyyaml weasyprint pytest
+          pip install --no-input pyyaml weasyprint pypdf jsonschema pytest
           python -m pytest build/test_build.py -q
           python build/build.py --check
 

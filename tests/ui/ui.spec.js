@@ -21,23 +21,24 @@ test("default language is English with role and location tags", async ({ page })
   await page.goto("/");
   const enTags = page.locator(".hero [data-lang='en'] .tags");
   await expect(enTags).toContainText("Staff DevOps Engineer");
-  await expect(enTags).toContainText("Belgrade, Serbia — work authorized");
+  await expect(enTags).toContainText("Belgrade · Serbia work authorization");
   await expect(page.locator(".hero [data-lang='ru'] .tags")).toBeHidden();
 });
 
 test("EN/RU toggle swaps the hero header and contact row, one language at a time", async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator(".hero [data-lang='en'] .lead")).toContainText("high-throughput platforms");
+  await expect(page.locator(".hero [data-lang='en'] .lead")).toContainText("high-throughput cloud platforms");
   // switch to RU
   await page.click(".lang-toggle button[data-lang='ru']");
   await expect(page.locator(".hero [data-lang='ru'] .tags")).toContainText("DevOps");
-  await expect(page.locator(".hero [data-lang='ru'] .tags")).toContainText("Белград, Сербия — право на работу");
+  await expect(page.locator(".hero [data-lang='ru'] .tags")).toContainText("Белград · право на работу в Сербии");
   await expect(page.locator(".hero [data-lang='en'] .tags")).toBeHidden();
   // contact row follows the same toggle
   await expect(page.locator("#resume [data-lang='ru']")).toBeVisible();
   await expect(page.locator("#resume [data-lang='en']")).toBeHidden();
   await expect(page.locator("#resume [data-lang='ru']")).toContainText("LinkedIn");
   await expect(page.locator("#resume [data-lang='ru']")).toContainText("Telegram");
+  expect(new URL(page.url()).searchParams.get("lang")).toBe("ru");
   // switch back to EN
   await page.click(".lang-toggle button[data-lang='en']");
   await expect(page.locator(".hero [data-lang='en'] .tags")).toContainText("Staff DevOps Engineer");
@@ -184,15 +185,15 @@ test("Open Graph meta tags use the résumé name, role, and summary", async ({ p
   expect(title).toContain("Aleksandr Krasnobai");
   expect(title).toContain("Staff DevOps Engineer");
   const desc = await page.locator("meta[property='og:description']").getAttribute("content");
-  expect(desc).toContain("high-throughput platforms");
+  expect(desc).toContain("high-throughput cloud platforms");
   const img = await page.locator("meta[property='og:image']").getAttribute("content");
-  expect(img).toMatch(/dragon-og\.png$/);
+  expect(img).toMatch(/og-card\.png$/);
   const res = await page.request.get(img);
   expect(res.status()).toBe(200);
   expect((await res.headers())["content-type"] || "").toContain("png");
 });
 
-test("red anarchy symbol favicon is linked and served", async ({ page }) => {
+test("neutral AK favicon is linked and served", async ({ page }) => {
   await page.goto("/");
   const link = page.locator("link[rel='icon']");
   await expect(link).toHaveAttribute("type", "image/svg+xml");
@@ -201,7 +202,8 @@ test("red anarchy symbol favicon is linked and served", async ({ page }) => {
   expect(res.status()).toBe(200);
   expect((await res.headers())["content-type"] || "").toContain("svg");
   const svg = await res.text();
-  expect(svg).toContain("#c62828");
+  expect(svg).toContain("#2f7d3a");
+  expect(svg).toContain("AK monogram");
   expect(svg).toContain("<rect");
 });
 
@@ -220,13 +222,16 @@ test("mobile: single-column business card layout", async ({ page }) => {
   await page.goto("/");
   const hero = await page.locator(".hero").boundingBox();
   const contact = await page.locator("#resume").boundingBox();
+  const impact = await page.locator(".impact").boundingBox();
   const cta = await page.locator(".cta-section").boundingBox();
   expect(hero).not.toBeNull();
   expect(contact).not.toBeNull();
+  expect(impact).not.toBeNull();
   expect(cta).not.toBeNull();
-  // vertical reading order: hero → contact → CTA
+  // vertical reading order: hero → contact → evidence → CTA
   expect(contact.y).toBeGreaterThanOrEqual(hero.y + hero.height - 2);
-  expect(cta.y).toBeGreaterThanOrEqual(contact.y + contact.height - 2);
+  expect(impact.y).toBeGreaterThanOrEqual(contact.y + contact.height - 2);
+  expect(cta.y).toBeGreaterThanOrEqual(impact.y + impact.height - 2);
   // identity uses most of the viewport width
   expect(hero.width).toBeGreaterThan(300);
 });
@@ -257,17 +262,59 @@ test("footer machine formats are a semantic list with eight links and no extra t
   await expect(page.locator("footer .curl")).toHaveCount(0);
 });
 
-test("hero has one primary CTA: download PDF", async ({ page }) => {
+test("hero actions keep PDF primary and add GitHub secondary", async ({ page }) => {
   await page.goto("/");
   const cta = page.locator(".cta-section a");
-  await expect(cta).toHaveCount(1);
+  await expect(cta).toHaveCount(2);
   await expect(page.locator(".cta-section a.btn-primary")).toHaveAttribute(
     "href",
     "Aleksandr_Krasnobai_Staff_DevOps_Engineer.pdf",
   );
-  await expect(page.locator(".cta-section a")).toContainText("Download résumé (PDF)");
+  await expect(page.locator(".cta-section a").first()).toContainText("Download résumé (PDF)");
+  await expect(page.locator(".cta-section a").nth(1)).toContainText("View GitHub");
   await page.click(".lang-toggle button[data-lang='ru']");
-  await expect(page.locator(".cta-section a")).toContainText("Скачать резюме (PDF)");
+  await expect(page.locator(".cta-section a").first()).toContainText("Скачать резюме (PDF)");
+  await expect(page.locator(".cta-section a").nth(1)).toContainText("Открыть GitHub");
+});
+
+test("selected impact is visible and machine links are collapsed", async ({ page }) => {
+  await page.goto("/");
+  const impact = page.locator(".impact [data-lang='en']");
+  await expect(impact).toContainText("80%");
+  await expect(impact).toContainText("500M+");
+  await expect(impact).toContainText("10,000");
+  await expect(page.locator(".machine-links")).toBeHidden();
+  await page.locator(".machine-zone summary").click();
+  await expect(page.locator(".machine-links")).toBeVisible();
+});
+
+test("frontend does not require a third-party stylesheet", async ({ page }) => {
+  await page.goto("/");
+  const thirdPartyStyles = await page.evaluate(() => Array.from(
+    document.querySelectorAll('link[rel="stylesheet"]'),
+    (link) => link.href,
+  ).filter((href) => new URL(href).origin !== location.origin));
+  expect(thirdPartyStyles).toEqual([]);
+});
+
+test("layout has no horizontal overflow at supported widths", async ({ page }) => {
+  for (const width of [320, 375, 768, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/");
+    const dimensions = await page.evaluate(() => ({
+      viewport: document.documentElement.clientWidth,
+      content: document.documentElement.scrollWidth,
+    }));
+    expect(dimensions.content, `overflow at ${width}px`).toBeLessThanOrEqual(dimensions.viewport);
+    await expect(page.locator(".cta-section .btn-primary")).toBeVisible();
+  }
+});
+
+test("Russian entry URL selects Russian content", async ({ page }) => {
+  await page.goto("/?lang=ru");
+  await expect(page.locator(".hero [data-lang='ru']")).toBeVisible();
+  await expect(page.locator(".hero [data-lang='en']")).toBeHidden();
+  await expect(page.locator("html")).toHaveAttribute("lang", "ru");
 });
 
 test("there is no palette picker — Forest is the single fixed theme", async ({ page }) => {
