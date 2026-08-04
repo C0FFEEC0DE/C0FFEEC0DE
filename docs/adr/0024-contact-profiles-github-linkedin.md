@@ -14,8 +14,9 @@ collaborators prefer Telegram, and the handle is stable (`@krasnobaicoach`).
 
 The contact profiles are a fixed, ordered set of three:
 
-1. **GitHub** — code, contributions, proof of work.
-2. **LinkedIn** — professional history, the channel most recruiters use.
+1. **GitHub** — code, contributions, proof of work: `https://github.com/C0FFEEC0DE`.
+2. **LinkedIn** — professional history, the channel most recruiters use:
+   `https://www.linkedin.com/in/aleksandrkrasnobai`.
 3. **Telegram** — `@krasnobaicoach` at `https://t.me/krasnobaicoach`.
 
 These three are emitted in `basics.profiles` of both `resume/resume.en.md` and
@@ -33,11 +34,11 @@ machine-readable and printable output continues to carry all three profiles.
 
 - The three profiles render consistently across every machine-readable and
   printable audience surface: `resume.json` / `resume.ru.json` (`profiles`),
-  `resume.txt`, `resume.md` (Contact section), the ATS PDF (`resume.pdf`) and
-  branded PDF (`resume-branded.pdf`) contact lines, `llms.txt` (Contact
-  section, for LLM agents), and JSON-LD `sameAs`. The landing-page Contact
-  section (HTML) shows LinkedIn + Telegram + email; GitHub appears in the footer
-  machine-links list, not in the Contact row.
+  `resume.txt`, `resume.md` (Contact section), `resume-for-agents.md`, the
+  single PDF (`Aleksandr_Krasnobai_Staff_DevOps_Engineer.pdf`) contact line,
+  `llms.txt` (Contact section, for LLM agents), and JSON-LD `sameAs`. The
+  landing-page Contact section (HTML) shows LinkedIn + Telegram + email;
+  GitHub appears in the footer machine-links list, not in the Contact row.
 - `cv.json` and `AGENTS.md` are discovery/index pointers to `resume.json`
   rather than duplicate contact surfaces; an agent follows them to the
   canonical `profiles`.
