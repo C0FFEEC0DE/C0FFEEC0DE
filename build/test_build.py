@@ -176,7 +176,7 @@ def test_agents_md_links(dist):
     md = (dist / "AGENTS.md").read_text("utf-8")
     assert "resume.json" in md
     assert "JSON Resume" in md
-    assert "Résumé version: `0.4.2`" in md
+    assert "Résumé version: `0.5.0`" in md
     assert "Last modified: `2026-08-04`" in md
     assert "do not fill them with placeholders" in md
 
@@ -186,10 +186,14 @@ def test_agent_outputs_publish_evidence_policy(dist):
     agents = json.loads((dist / "agents.json").read_text("utf-8"))
     assert agents["facts_policy"]["canonical"].endswith("resume.json")
     assert agents["facts_policy"]["unknowns"].startswith("Omitted")
+    assert agents["facts_policy"]["sre_platform_vocabulary"].startswith("Owner-confirmed")
+    assert agents["facts_policy"]["credential_dates"].startswith("Attainment only")
     availability = agents["function"]["parameters"]["properties"]["availability"]
     assert "timezone" in availability["properties"]
     narrative = (dist / "resume-for-agents.md").read_text("utf-8")
     assert "intentionally unknown" in narrative
+    assert "owner-confirmed facts" in narrative
+    assert "not proof of current" in narrative
 
 
 def test_index_html_injected(dist):
@@ -257,6 +261,42 @@ def test_pdf_is_machine_readable(dist):
     # skills rendered as real text
     assert any(k in text for k in ("Kubernetes", "Terraform", "AWS", "Python")), "PDF missing skills"
     assert "Experience" in text, "PDF missing Experience section"
+    normalized = re.sub(r"\s+", " ", text)
+    for term in ("Site Reliability Engineer", "SLOs", "SLIs", "error budgets", "on-call", "MTTR", "RTO/RPO",
+                 "platform engineering", "developer experience", "golden path",
+                 "toil reduction"):
+        assert term.lower() in normalized.lower(), f"PDF missing ATS/SRE term: {term}"
+
+
+def test_pdf_text_layer_has_semantic_boundaries(dist):
+    """ADR-0041: adjacent header blocks and certification markers must not
+    collapse or detach in the text an ATS receives."""
+    try:
+        import weasyprint  # noqa: F401
+    except Exception:
+        pytest.skip("weasyprint not installed")
+    build.build(clean=True)
+    text = _pdf_text(dist / PDF_NAME)
+    normalized = re.sub(r"\s+", " ", text)
+    assert "ENGINEERBELGRADE" not in normalized
+    assert "KrasnobaiStaff" not in normalized
+    assert not any(line.strip() == "•" for line in text.splitlines())
+    assert "earned 2016" in normalized
+
+
+def test_credential_dates_are_attainment_not_status(dist):
+    """ADR-0040: dates remain raw in JSON but narrative outputs label them as
+    attainment and never invent current validity."""
+    build.build(clean=True)
+    resume_json = json.loads((dist / "resume.json").read_text("utf-8"))
+    assert resume_json["certificates"][1]["date"] == "2016"
+    txt = (dist / "resume.txt").read_text("utf-8")
+    md = (dist / "resume.md").read_text("utf-8")
+    agents = (dist / "resume-for-agents.md").read_text("utf-8")
+    assert "earned 2016" in txt and "получен в 2016" in txt
+    assert "earned 2016" in md and "earned 2016" in agents
+    for output in (txt, md, agents):
+        assert "active certification" not in output.lower()
 
 
 def test_pdf_contacts_are_readable(dist):
@@ -566,7 +606,8 @@ def test_resume_pdf_has_real_selectable_text(dist):
     html = build.render_resume_html(en, "en")
     assert "<table" not in html
     assert "<h3>" in html and "Staff DevOps Engineer" in html
-    assert "<ul>" in html and "<li>" in html
+    assert '<ul class="highlights">' in html and "<li>" in html
+    assert '<div class="certs">' in html
 
 
 # --- metadata tier + JSON-LD + sitemap -------------------------------------- #

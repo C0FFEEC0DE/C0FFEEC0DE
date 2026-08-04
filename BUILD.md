@@ -97,7 +97,26 @@ dates: 2012-09 — 2016-06 · location: Munich
 - **English** (C1)
 ```
 
-Section titles are recognized: `Summary`, `Experience`, `Projects`, `Education`, `Skills`, `Certificates`, `Languages`, `Contact`. Unknown sections are ignored. Dates use ISO `YYYY-MM`, separated by ` — ` (em dash); `present` ends an open-ended role. Optional facts such as certificate dates, issuers, URLs, and credential IDs are omitted when unknown.
+Section titles are recognized: `Summary`, `Experience`, `Projects`, `Education`, `Skills`, `Certificates`, `Languages`, `Contact`. Unknown sections are ignored. Dates use ISO `YYYY-MM`, separated by ` — ` (em dash); `present` ends an open-ended role. Optional facts such as certificate dates, issuers, URLs, and credential IDs are omitted when unknown. A certificate year is stored as the supplied attainment date and rendered as `earned YYYY` / `получен в YYYY`; it does not assert that the credential is currently active (ADR-0040).
+
+## ATS contract
+
+ADR-0038 defines the supported parsing baseline. The canonical PDF uses real
+selectable text, one column, system fonts, conventional headings, and explicit
+title/employer/date/contact fields in the body. Résumé facts must not depend on
+tables, columns, sidebars, page headers or footers, text boxes, icons, images, or
+charts. Keywords belong in truthful experience evidence and skills, never in
+hidden text or mechanically repeated lists.
+
+The owner-confirmed SRE and platform-engineering vocabulary is recorded in
+ADR-0039. Historical titles stay unchanged. A role-specific variant requires an
+actual job description so the wording can be aligned without inventing facts.
+
+PDF extraction is tested as a public interface (ADR-0041): identity and header
+tokens must remain separated, certifications must not emit detached list
+markers, SRE terms must survive extraction, and credential years must retain
+their attainment label. `python build/build.py --check` and pytest enforce the
+contract together with the four-page maximum.
 
 ## Build
 

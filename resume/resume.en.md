@@ -19,7 +19,7 @@ basics:
   label: "Staff DevOps Engineer"
   email: "hi@krasnobai.dev"
   url: "https://krasnobai.dev"
-  summary: "Staff DevOps/SRE Engineer with 18 years operating high-throughput cloud platforms at 500M+ requests/day."
+  summary: "Staff DevOps Engineer and Site Reliability Engineer (SRE) with 18 years operating high-throughput cloud platforms at 500M+ requests/day."
   location:
     city: "Belgrade"
     region: "Serbia"
@@ -32,15 +32,15 @@ profiles:
   - {network: "Telegram", username: "krasnobaicoach", url: "https://t.me/krasnobaicoach"}
 availability:
   status: "open"
-  roles: ["Staff DevOps Engineer", "SRE", "Platform Engineer"]
+  roles: ["Staff DevOps Engineer", "Staff Site Reliability Engineer", "Staff Platform Engineer"]
   work_model: "remote across European time zones; open to hybrid roles in Belgrade"
   locations: ["European time zones (remote)", "Belgrade, Serbia"]
   timezone: "Europe/Belgrade — CET/CEST (UTC+1/+2)"
 meta:
   canonical: "https://krasnobai.dev/resume.json"
-  version: "0.4.2"
+  version: "0.5.0"
   lastModified: "2026-08-04"
-  intro: "Staff DevOps/SRE Engineer with 18 years of experience operating high-throughput cloud platforms. Reduced infrastructure costs by 80%, redesigned alerting for a fleet of up to 10,000 instances, and built delivery and reliability platforms used by dozens of engineering teams. Leads a professional-development program for 60 DevOps engineers through 10 specialization leads and applies LLM orchestration to operational workflows."
+  intro: "Staff DevOps Engineer and Site Reliability Engineer (SRE) with 18 years of experience operating high-throughput cloud platforms. Reduced infrastructure costs by 80%, redesigned alerting for a fleet of up to 10,000 instances, and built delivery and reliability platforms used by dozens of engineering teams. Leads a professional-development program for 60 DevOps engineers through 10 specialization leads and applies LLM orchestration to operational workflows."
   impact:
     - {value: "80%", label: "infrastructure cost reduction"}
     - {value: "500M+", label: "requests processed per day"}
@@ -51,7 +51,7 @@ languages_hint:
 
 ## Summary
 
-Staff DevOps/SRE Engineer with 18 years operating high-throughput cloud platforms at 500M+ requests/day.
+Staff DevOps Engineer and Site Reliability Engineer (SRE) with 18 years operating high-throughput cloud platforms at 500M+ requests/day.
 
 ## Experience
 
@@ -61,6 +61,7 @@ dates: 2019-01 — present · location: Serbia · url: https://www.gridynamics.c
 - Own the Brand Safety inference pipeline end-to-end (FastAPI and CTranslate2), including architecture, deployment, scaling, and production operations.
 - Cut infrastructure costs by 80% through inference model swap, code and runtime optimization for ECS, and autoscaling fine-tuning.
 - Built a production-representative load-testing framework to select instance types and tune autoscaling thresholds from measured behavior.
+- Define and use SLOs, SLIs, and error budgets for production services; participate in on-call, incident response, and recovery planning against RTO/RPO targets, with MTTR reduction as an operational priority.
 - Reduced alert volume from approximately 10,000 events/day to 1–10/day by redesigning alert routing and eliminating cascades.
 - Built an LLM-assisted alert-triage agent with team-specific plugins and integrated it into incident-response workflows.
 - Operate multi-tenant EKS clusters and infrastructure automation using AWS CDK, CloudFormation, Puppet, and Ansible; maintain observability with Prometheus, Grafana, and ELK.
@@ -68,8 +69,8 @@ dates: 2019-01 — present · location: Serbia · url: https://www.gridynamics.c
 
 ### DevOps Engineer — Grid Dynamics
 dates: 2016-08 — 2019-01 · location: St. Petersburg, Russia
-- Built a shared Jenkins pipeline library used by 27 R&D teams, enabling a new service to reach development and production environments in approximately five minutes.
-- Built a self-service web platform that provisioned version-pinned test environments across AWS, GCP, and Azure and reduced manual deployment steps by 30%.
+- Built a shared Jenkins pipeline library used by 27 R&D teams as a platform-engineering golden path, enabling a new service to reach development and production environments in approximately five minutes.
+- Built a self-service web platform that provisioned version-pinned test environments across AWS, GCP, and Azure, improved developer experience, and reduced manual deployment toil by 30%.
 - Built and operated AWS IoT infrastructure for physical security scanners deployed around ATMs.
 - Implemented infrastructure controls and audit recommendations supporting ISO 27001 certification readiness.
 
@@ -78,19 +79,19 @@ dates: 2015-03 — 2016-07 · location: St. Petersburg, Russia
 - Rewrote ~80% of the Puppet codebase managing deployments for production and development environments.
 - Migrated services from a 3,000-server on-premises estate to AWS.
 - Introduced unit, functional, and integration testing for Puppet modules, achieving 12 months without Puppet-caused production incidents.
-- Replaced the monitoring platform with Sensu, enabling automatic instance registration and simpler service onboarding.
-- Reduced alert noise to 1-2 relevant alerts per week.
+- Replaced the monitoring platform with Sensu, enabling automatic instance registration, simpler service onboarding, and SLO/SLI-based reliability signals tied to error-budget decisions.
+- Participated in production on-call and incident response; reduced alert noise to 1–2 relevant alerts per week and focused operational work on lowering MTTR.
 
 ### System Administrator — Zodiac Interactive
 dates: 2014 — 2015 · location: St. Petersburg, Russia
 - Co-managed a corporate network with its own autonomous system and a VPN mesh connecting offices, clients, and internal networks.
 - Administered corporate resources — email, Jenkins, VPN, and other internal services.
-- Introduced Infrastructure as Code with Ansible, moving infrastructure management from manual changes to code.
+- Introduced Infrastructure as Code with Ansible, moving infrastructure management from manual changes to code and reducing operational toil.
 - Automated internal processes — user onboarding and offboarding via OpenLDAP with centralized authentication for internal services.
 
 ### Cloud Engineer — Echo
 dates: 2013-02 — 2014-03 · location: Russia
-- Operated the AWS platform for real-time comment streaming, including ELB, EC2, S3, backups, deployments, and incident response.
+- Operated the AWS platform for real-time comment streaming, including ELB, EC2, S3, production on-call, incident response, backups, and recovery procedures aligned with RTO/RPO targets.
 - Automated configuration and infrastructure operations with Puppet.
 - Built monitoring and preventive maintenance workflows for production services.
 
@@ -103,7 +104,8 @@ dates: 2008 — 2013 · location: Russia
 ## Skills
 
 - **Cloud:** AWS, GCP, Microsoft Azure
-- **Platform:** Kubernetes, EKS, Docker, Helm, Linux
+- **Platform Engineering:** Kubernetes, EKS, Docker, Helm, Linux, self-service platforms, golden paths, developer experience
+- **Site Reliability Engineering (SRE):** SLOs, SLIs, error budgets, on-call, incident response, MTTR reduction, RTO/RPO, toil reduction
 - **Infrastructure as Code:** Terraform, AWS CDK, CloudFormation, Ansible, Puppet
 - **Delivery:** Jenkins, GitHub Actions, GitLab CI, Argo CD
 - **Observability:** Prometheus, Grafana, Elasticsearch, Logstash, Kibana, PagerDuty

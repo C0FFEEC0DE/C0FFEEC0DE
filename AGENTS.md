@@ -30,9 +30,11 @@ python -m http.server -d dist           # local preview
 
 ## Conventions to keep
 - Markdown format contract is in `resume/resume.en.md` (front-matter + fixed `##` sections).
-- Unknown facts are omitted, never guessed or represented by placeholders. Preserve evidence-first wording (ADR-0033).
+- Unknown facts are omitted, never guessed or represented by placeholders. Preserve evidence-first wording (ADR-0033). Confirmed SRE/platform vocabulary is governed by ADR-0039; never rename historical roles or invent target values to improve matching.
 - The browser path is self-hosted: no required runtime CDN, remote font, backend, or tracker (ADR-0037).
-- JSON Resume EN/RU must pass the vendored v1.0.0 schema; the PDF must stay selectable, ATS-safe, and at most four pages.
+- JSON Resume EN/RU must pass the vendored v1.0.0 schema. The PDF must follow the ATS baseline in ADR-0038, stay selectable and single-column, and remain at most four pages.
+- PDF extraction is a release interface, not an implementation detail: preserve semantic whitespace and the no-detached-marker checks in ADR-0041.
+- A certificate year is an attainment date, not proof of active status. Render it according to ADR-0040 and never infer validity, expiry, IDs, or verification URLs.
 - All generated/injected content is escaped — see `docs/adr/0012-security-escaping.md`.
 - The fixed light Forest palette must meet WCAG AA (4.5:1); the build checks this automatically.
 

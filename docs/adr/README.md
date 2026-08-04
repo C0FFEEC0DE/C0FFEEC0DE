@@ -3,7 +3,7 @@
 Decisions shaping the C0FFEEC0DE résumé site, in Michael Nygard's ADR format
 (Context · Decision · Consequences). New decisions append a number; a
 superseded record is marked **Superseded by ADR-00xx** and a new one is added.
-Records are numbered 0001→0037.
+Records are numbered 0001→0041.
 
 | # | Title | Status |
 |---|---|---|
@@ -44,3 +44,7 @@ Records are numbered 0001→0037.
 | 0035 | Normalized machine-readable outputs and semantic validation | Accepted |
 | 0036 | Compact ATS PDF and release quality gates | Accepted (v2) |
 | 0037 | Self-hosted, dependency-light frontend | Accepted |
+| 0038 | ATS parsing baseline | Accepted |
+| 0039 | Explicit SRE and platform-engineering vocabulary | Accepted |
+| 0040 | Credential dates mean attainment, not active status | Accepted |
+| 0041 | PDF text-layer integrity | Accepted |

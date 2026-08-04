@@ -9,7 +9,7 @@ served for **two surfaces** (ADR-0031): humans get a bilingual landing page plus
 a single human-readable/ATS-safe PDF; LLM/AI agents get structured and narrative
 artifacts (JSON Resume, llms.txt, AGENTS.md, cv.json, resume-for-agents.md,
 agents.json, resume.txt). Deployed to GitHub Pages via Actions. Decisions are
-recorded as ADRs in `docs/adr/` (0001→0037) — read the relevant one before
+recorded as ADRs in `docs/adr/` (0001→0041) — read the relevant one before
 changing a settled area.
 
 ## Commands
@@ -107,9 +107,11 @@ renders without JavaScript. Theme/font changes that drift these are caught.
   no longer displayed on the page).
   One accent, one CTA cluster, generous space. Don't dump metrics/credentials
   into the summary — they belong in Experience/Certificates.
-- **The single PDF is both human-readable and ATS-safe** (ADR-0031). It uses the
-  Forest palette *and* ATS-safe structure; don't strip the styling or add
-  multi-column/float/table layouts.
+- **The single PDF is both human-readable and ATS-safe** (ADR-0031/0038). It uses
+  the Forest palette *and* ATS-safe structure; don't strip the styling or add
+  multi-column, float, table, sidebar, header/footer, text-box, icon, or image
+  layouts for résumé facts. Treat extracted text as a release interface:
+  semantic boundaries and marker integrity are guarded by ADR-0041.
 - **The source `basics.profiles` must stay `[GitHub, LinkedIn, Telegram]`**
   in that order (ADR-0024 v3, which supersedes ADR-0016). The landing page's
   visible Contact row is narrower: it shows LinkedIn + Telegram + email, while
@@ -143,6 +145,13 @@ renders without JavaScript. Theme/font changes that drift these are caught.
   ISO `YYYY-MM`, markdown decoration must not leak into structured fields,
   unknown certificate metadata is omitted, and JSON-LD must describe a Person/
   ProfilePage without inventing a vacancy.
+- **SRE/platform terms are owner-confirmed facts** (ADR-0039). Keep them in
+  evidence-bearing experience and dedicated skill groups, retain real historical
+  job titles, and never add invented SLO values, error-budget figures, MTTR,
+  RTO/RPO targets, or generic job-specific variants without an actual JD.
+- **Certificate dates mean attainment only** (ADR-0040). JSON keeps the supplied
+  year; narrative/PDF outputs label it `earned YYYY` / `получен в YYYY`. Never
+  infer that a credential is active, valid, expired, or verified.
 - **Agent-facing files inherit the same evidence policy.** `resume.json` is the
   canonical factual source; `resume-for-agents.md`, `llms.txt`, `AGENTS.md`,
   `agents.json`, and `.well-known/cv.json` are generated mirrors. Never hand-edit
