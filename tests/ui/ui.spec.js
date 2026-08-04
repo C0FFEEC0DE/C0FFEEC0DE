@@ -244,7 +244,7 @@ test("footer machine formats are a semantic list with eight links and no extra t
     "Aleksandr_Krasnobai_Staff_DevOps_Engineer.pdf",
     "llms.txt",
     "AGENTS.md",
-    "https://github.com/krasnobai",
+    "https://github.com/C0FFEEC0DE",
   ]);
   for (const href of hrefs) {
     const res = await page.request.get(href);

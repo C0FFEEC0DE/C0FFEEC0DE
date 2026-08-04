@@ -1164,6 +1164,14 @@ def _abs(base: str, path: str) -> str:
     return f"{base.rstrip('/')}/{path.lstrip('/')}"
 
 
+def _github_url(r: dict) -> str:
+    """Return the GitHub profile URL from basics.profiles (ADR-0024)."""
+    for p in r.get("basics", {}).get("profiles", []) or []:
+        if p.get("network") == "GitHub" and p.get("url"):
+            return p.get("url")
+    return "https://github.com/C0FFEEC0DE"
+
+
 # --------------------------------------------------------------------------- #
 # JSON-LD
 # --------------------------------------------------------------------------- #
@@ -1354,6 +1362,7 @@ def build(clean: bool = False, do_pdf: bool = True):
     # index.html
     tpl = load_index_template()
     jsonld = build_jsonld(resumes["en"], base)
+    github_url = _github_url(resumes["en"])
     out = inject_template(tpl, {
         "RESUME_EN_HTML": render_contact_fragment(resumes["en"], "en"),
         "RESUME_RU_HTML": render_contact_fragment(resumes["ru"], "ru"),
@@ -1363,6 +1372,7 @@ def build(clean: bool = False, do_pdf: bool = True):
         "OG_TAGS": build_og_tags(resumes["en"], base),
         "BASE": base.rstrip("/"),
         "PDF_NAME": pdf_name,
+        "GITHUB_URL": github_url,
     })
     (DIST / "index.html").write_text(out, encoding="utf-8")
 
