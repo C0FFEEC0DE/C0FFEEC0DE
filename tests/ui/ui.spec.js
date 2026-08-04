@@ -192,7 +192,7 @@ test("Open Graph meta tags use the résumé name, role, and summary", async ({ p
   expect((await res.headers())["content-type"] || "").toContain("png");
 });
 
-test("red Space Invader favicon is linked and served", async ({ page }) => {
+test("red anarchy symbol favicon is linked and served", async ({ page }) => {
   await page.goto("/");
   const link = page.locator("link[rel='icon']");
   await expect(link).toHaveAttribute("type", "image/svg+xml");

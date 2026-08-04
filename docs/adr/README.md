@@ -38,4 +38,4 @@ Records are numbered 0001→0032.
 | 0029 | New résumé material as the canonical source of truth | Accepted |
 | 0030 | Downloadable résumé PDFs use `Name_Surname_Role` filenames | Accepted |
 | 0031 | LLM / AI-agent optimized résumé build | Accepted |
-| 0032 | Favicon: red pixel Space Invader | Accepted |
+| 0032 | Favicon: red pixel anarchy symbol | Accepted |
