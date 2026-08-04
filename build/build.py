@@ -1376,14 +1376,14 @@ def build(clean: bool = False, do_pdf: bool = True):
             print(f"WARNING: PDF generation skipped: {exc}", file=sys.stderr)
             (DIST / pdf_name).write_bytes(b"")  # placeholder so links/tests know it's absent
 
-    # Copy frontend assets (CSS, JS, PNG). Self-hosted fonts were removed in
-    # the minimal business-card redesign (ADR-0018 v2); the page uses system
-    # sans-serif and the branded PDF embeds nothing beyond that.
+    # Copy frontend assets (CSS, JS, PNG, SVG). Self-hosted fonts were removed
+    # in the minimal business-card redesign (ADR-0018 v2); the page uses system
+    # sans-serif.
     og_src = SRC_DIR / "dragon-og.png"
     if og_src.exists():
         shutil.copy2(og_src, assets / "dragon-og.png")
     for f in SRC_DIR.iterdir():
-        if (f.suffix in (".css", ".js") or f.name.endswith(".png")):
+        if (f.suffix in (".css", ".js", ".svg") or f.name.endswith(".png")):
             shutil.copy2(f, assets / f.name)
 
     return resumes

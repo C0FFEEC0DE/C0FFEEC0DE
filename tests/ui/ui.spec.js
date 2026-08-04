@@ -192,6 +192,19 @@ test("Open Graph meta tags use the résumé name, role, and summary", async ({ p
   expect((await res.headers())["content-type"] || "").toContain("png");
 });
 
+test("red Space Invader favicon is linked and served", async ({ page }) => {
+  await page.goto("/");
+  const link = page.locator("link[rel='icon']");
+  await expect(link).toHaveAttribute("type", "image/svg+xml");
+  await expect(link).toHaveAttribute("href", "assets/favicon.svg");
+  const res = await page.request.get("assets/favicon.svg");
+  expect(res.status()).toBe(200);
+  expect((await res.headers())["content-type"] || "").toContain("svg");
+  const svg = await res.text();
+  expect(svg).toContain("#c62828");
+  expect(svg).toContain("<rect");
+});
+
 test("skip-link and document structure are accessible", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator(".skip-link")).toHaveAttribute("href", "#main");

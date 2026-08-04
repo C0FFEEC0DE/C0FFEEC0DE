@@ -449,6 +449,19 @@ def test_open_graph_tags_present_and_escaped(dist):
     assert 'property="profile:last_name"' in html
 
 
+def test_favicon_resolves(dist):
+    """ADR-0032: the red Space Invader favicon is linked and copied to assets."""
+    build.build(clean=True)
+    html = (dist / "index.html").read_text("utf-8")
+    assert 'rel="icon"' in html
+    assert "assets/favicon.svg" in html
+    favicon = dist / "assets" / "favicon.svg"
+    assert favicon.is_file(), "favicon.svg must be copied to dist/assets/"
+    svg = favicon.read_text("utf-8")
+    assert "#c62828" in svg, "favicon must use the red Space Invader color"
+    assert "<rect" in svg, "favicon must be pixel-art rectangles"
+
+
 def test_landing_page_shows_contact_only(dist):
     """ADR-0025: the landing #resume block shows the compact business-card
     contacts only — email + LinkedIn + Telegram. The full résumé body

@@ -3,7 +3,7 @@
 Decisions shaping the C0FFEEC0DE résumé site, in Michael Nygard's ADR format
 (Context · Decision · Consequences). New decisions append a number; a
 superseded record is marked **Superseded by ADR-00xx** and a new one is added.
-Records are numbered 0001→0031.
+Records are numbered 0001→0032.
 
 | # | Title | Status |
 |---|---|---|
@@ -38,3 +38,4 @@ Records are numbered 0001→0031.
 | 0029 | New résumé material as the canonical source of truth | Accepted |
 | 0030 | Downloadable résumé PDFs use `Name_Surname_Role` filenames | Accepted |
 | 0031 | LLM / AI-agent optimized résumé build | Accepted |
+| 0032 | Favicon: red pixel Space Invader | Accepted |
