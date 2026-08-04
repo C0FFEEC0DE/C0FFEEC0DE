@@ -52,8 +52,6 @@ others causes divergence bugs):
 - `render_header_fragment` — name/label/summary; injected into the landing hero
   (`{{HEADER_EN}}` / `{{HEADER_RU}}` in `src/index.html`).
 - `render_contact_fragment` — the compact Contact block injected into `#resume`.
-- `render_impact_fragment` — three canonical, bilingual impact signals injected
-  before the CTA (ADR-0034).
 - `render_resume_html(r, lang)` — the single human-readable/ATS-safe PDF body
   (Contact → Summary → Experience → Skills → Projects → Education → Certificates
   → Languages). It combines Forest palette/visual hierarchy with ATS-safe
@@ -100,8 +98,9 @@ renders without JavaScript. Theme/font changes that drift these are caught.
 - **`## Summary` body section overwrites the front-matter `basics.summary`**
   (build.py `parse_resume` line ~103). The body one is what renders in the hero
   `.lead`. Keep them in sync, and keep the summary short — ADR-0008 (low
-  cognitive load) is first-class: the page front-loads identity, three selected
-  impact signals, and the two audience CTAs. The dragon is a hidden footer
+  cognitive load) is first-class: the page front-loads identity, one concise
+  scale signal in the summary, contacts, and the two audience CTAs. Detailed
+  evidence stays in the PDF and machine outputs. The dragon is a hidden footer
   easter egg (ADR-0026), and the
   verbose curl one-liner was removed from the footer in ADR-0020 v3 (the file
   `resume.txt` is still served, so the ADR-0006 command still works, but it is

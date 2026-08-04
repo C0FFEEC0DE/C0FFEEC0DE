@@ -19,7 +19,7 @@ basics:
   label: "Staff DevOps Engineer"
   email: "hi@krasnobai.dev"
   url: "https://krasnobai.dev"
-  summary: "Staff DevOps/SRE Engineer with 18 years operating high-throughput cloud platforms: 500M+ requests/day and fleets of up to 10,000 instances."
+  summary: "Staff DevOps/SRE Engineer with 18 years operating high-throughput cloud platforms at 500M+ requests/day."
   location:
     city: "Belgrade"
     region: "Serbia"
@@ -38,7 +38,7 @@ availability:
   timezone: "Europe/Belgrade — CET/CEST (UTC+1/+2)"
 meta:
   canonical: "https://krasnobai.dev/resume.json"
-  version: "0.4.1"
+  version: "0.4.2"
   lastModified: "2026-08-04"
   intro: "Staff DevOps/SRE Engineer with 18 years of experience operating high-throughput cloud platforms. Reduced infrastructure costs by 80%, redesigned alerting for a fleet of up to 10,000 instances, and built delivery and reliability platforms used by dozens of engineering teams. Leads a professional-development program for 60 DevOps engineers through 10 specialization leads and applies LLM orchestration to operational workflows."
   impact:
@@ -51,7 +51,7 @@ languages_hint:
 
 ## Summary
 
-Staff DevOps/SRE Engineer with 18 years operating high-throughput cloud platforms: 500M+ requests/day and fleets of up to 10,000 instances.
+Staff DevOps/SRE Engineer with 18 years operating high-throughput cloud platforms at 500M+ requests/day.
 
 ## Experience
 

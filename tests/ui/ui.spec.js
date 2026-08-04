@@ -222,16 +222,13 @@ test("mobile: single-column business card layout", async ({ page }) => {
   await page.goto("/");
   const hero = await page.locator(".hero").boundingBox();
   const contact = await page.locator("#resume").boundingBox();
-  const impact = await page.locator(".impact").boundingBox();
   const cta = await page.locator(".cta-section").boundingBox();
   expect(hero).not.toBeNull();
   expect(contact).not.toBeNull();
-  expect(impact).not.toBeNull();
   expect(cta).not.toBeNull();
-  // vertical reading order: hero → contact → evidence → CTA
+  // vertical reading order: hero → contact → CTA
   expect(contact.y).toBeGreaterThanOrEqual(hero.y + hero.height - 2);
-  expect(impact.y).toBeGreaterThanOrEqual(contact.y + contact.height - 2);
-  expect(cta.y).toBeGreaterThanOrEqual(impact.y + impact.height - 2);
+  expect(cta.y).toBeGreaterThanOrEqual(contact.y + contact.height - 2);
   // identity uses most of the viewport width
   expect(hero.width).toBeGreaterThan(300);
 });
@@ -277,12 +274,11 @@ test("hero actions keep PDF primary and add GitHub secondary", async ({ page }) 
   await expect(page.locator(".cta-section a").nth(1)).toContainText("Открыть GitHub");
 });
 
-test("selected impact is visible and machine links are collapsed", async ({ page }) => {
+test("landing omits metric cards and machine links are collapsed", async ({ page }) => {
   await page.goto("/");
-  const impact = page.locator(".impact [data-lang='en']");
-  await expect(impact).toContainText("80%");
-  await expect(impact).toContainText("500M+");
-  await expect(impact).toContainText("10,000");
+  await expect(page.locator(".impact, .impact-grid, .impact-item")).toHaveCount(0);
+  await expect(page.locator("main")).not.toContainText("80%");
+  await expect(page.locator("main")).not.toContainText("10,000");
   await expect(page.locator(".machine-links")).toBeHidden();
   await page.locator(".machine-zone summary").click();
   await expect(page.locator(".machine-links")).toBeVisible();

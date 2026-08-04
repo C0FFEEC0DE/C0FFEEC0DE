@@ -1,6 +1,6 @@
 # ADR-0020 — UI block layout (best-practices pass)
 
-Date: 2026-07-30 · Status: Accepted (v4: 2026-08-04)
+Date: 2026-07-30 · Status: Accepted (v5: 2026-08-04)
 
 ## Context
 
@@ -18,8 +18,8 @@ The landing page has four visible regions:
    longer lives here by default; it is revealed from the footer (ADR-0026).
 2. **Contact section** — a compact email + LinkedIn + Telegram block injected
    as `render_contact_fragment`.
-3. **Evidence and CTA section** — three selected impact signals, a primary PDF
-   action, and a secondary GitHub evidence link (ADR-0034).
+3. **CTA section** — a primary PDF action and a secondary GitHub evidence link
+   immediately after the contact row (ADR-0034 v2).
 4. **Footer** — the "made by hand" note + a compact, inline list of
    machine-readable format links collapsed under a native disclosure control.
 
@@ -125,6 +125,9 @@ served and the command from ADR-0006 still works for anyone who knows the URL.
 
 ## Revision history
 
+- **v5 (2026-08-04):** ADR-0034 v2 removes the separate metric-card strip;
+  detailed evidence remains in the PDF and machine outputs while the landing
+  flows directly from contacts to the two CTAs.
 - **v4 (2026-08-04):** amended by ADR-0034/0037: add selected impact evidence,
   keep PDF primary with GitHub secondary, collapse machine formats under
   `<details>`, and replace framework layout classes with self-hosted CSS.

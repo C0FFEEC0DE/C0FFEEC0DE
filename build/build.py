@@ -375,32 +375,16 @@ def _business_card_contacts(b: dict, lang: str) -> str:
 def render_contact_fragment(r: dict, lang: str) -> str:
     """Business-card contact row injected into the landing #resume block.
 
-    The full history lives in the PDF and machine outputs; the landing combines
-    identity, contacts, and selected impact before the download decision.
+    The full history and detailed evidence live in the PDF and machine outputs;
+    the landing keeps only identity, contacts, and the download decision.
     """
     return _business_card_contacts(r["basics"], lang)
-
-
-def render_impact_fragment(r: dict, lang: str) -> str:
-    """Three recruiter-facing impact signals kept in canonical front matter."""
-    impact = (r.get("meta") or {}).get("impact", [])
-    items = []
-    for item in impact[:3]:
-        if not isinstance(item, dict) or not item.get("value") or not item.get("label"):
-            continue
-        items.append(
-            '<div class="impact-item">'
-            f'<strong>{esc(item["value"])}</strong>'
-            f'<span>{esc(item["label"])}</span>'
-            '</div>'
-        )
-    return '<div class="impact-grid">' + "".join(items) + "</div>" if items else ""
 
 
 def render_body_fragment(r: dict, lang: str) -> str:
     """Résumé sections without the header, retained for semantic renderers.
 
-    The landing page uses only the contact and selected-impact fragments.
+    The landing page uses only the contact fragment.
     """
     b = r["basics"]
     parts: list[str] = []
@@ -1479,8 +1463,6 @@ def build(clean: bool = False, do_pdf: bool = True):
     out = inject_template(tpl, {
         "RESUME_EN_HTML": render_contact_fragment(resumes["en"], "en"),
         "RESUME_RU_HTML": render_contact_fragment(resumes["ru"], "ru"),
-        "IMPACT_EN": render_impact_fragment(resumes["en"], "en"),
-        "IMPACT_RU": render_impact_fragment(resumes["ru"], "ru"),
         "HEADER_EN": render_header_fragment(resumes["en"], "en"),
         "HEADER_RU": render_header_fragment(resumes["ru"], "ru"),
         "JSONLD": jsonld,

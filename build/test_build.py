@@ -176,7 +176,7 @@ def test_agents_md_links(dist):
     md = (dist / "AGENTS.md").read_text("utf-8")
     assert "resume.json" in md
     assert "JSON Resume" in md
-    assert "Résumé version: `0.4.1`" in md
+    assert "Résumé version: `0.4.2`" in md
     assert "Last modified: `2026-08-04`" in md
     assert "do not fill them with placeholders" in md
 
@@ -510,9 +510,9 @@ def test_favicon_resolves(dist):
     assert "<rect" in svg, "favicon must be pixel-art rectangles"
 
 
-def test_landing_page_shows_contact_and_selected_impact(dist):
-    """ADR-0034: the compact landing shows contacts and three evidence cards,
-    while the full history remains in the PDF and structured outputs."""
+def test_landing_page_shows_contact_without_metric_cards(dist):
+    """ADR-0034 v2: the landing stays calm; detailed evidence remains in the
+    PDF and structured outputs instead of a product-style KPI strip."""
     build.build(clean=True)
     html = (dist / "index.html").read_text("utf-8")
     resume = html[html.find('id="resume"'):html.find("<footer")]
@@ -520,8 +520,9 @@ def test_landing_page_shows_contact_and_selected_impact(dist):
     assert 'class="contact-row"' in resume
     assert "LinkedIn" in resume and "Telegram" in resume
     assert "mailto:" in resume
-    assert 'class="impact-grid"' in resume
-    assert "80%" in resume and "500M+" in resume and "10,000" in resume
+    assert 'class="impact"' not in resume
+    assert 'class="impact-grid"' not in resume
+    assert "80%" not in resume and "10,000" not in resume
     # none of the other résumé sections leak onto the landing page
     for absent in ("Work Experience", "Skills", "Projects", "Education",
                    "Certificates", "Languages", "Опыт работы", "Навыки",

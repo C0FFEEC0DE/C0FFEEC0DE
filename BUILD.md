@@ -155,7 +155,7 @@ Each visitor gets a deterministic pixel-art dragon seeded from the URL (`?d=…`
 
 The site uses a **fixed light Forest theme** (ADR-0017 v5) — a calm green palette (paper-neutral greens, one green accent, soft 16px rounding, warm low shadow). The theme and small button system are entirely self-hosted CSS, with no framework or runtime CDN. Colors are chosen for WCAG AA and machine-enforced by the build (ADR-0019). To change the palette, edit the `:root` block in `src/site.css`.
 
-The whole site is tuned for a **human, handcrafted feel** (ADR-0018): system sans-serif everywhere, warm paper neutrals, soft rounding, three concise impact signals, and the dragon as a hidden personality anchor. The PDF remains the primary CTA; GitHub is a secondary evidence link.
+The whole site is tuned for a **human, handcrafted feel** (ADR-0018): system sans-serif everywhere, warm paper neutrals, soft rounding, one concise scale signal in the summary, and the dragon as a hidden personality anchor. Detailed metrics stay in the PDF and machine-readable résumé; the PDF remains the primary CTA and GitHub the secondary evidence link.
 
 Theme contrast is **regression-guarded** (ADR-0019): a pure-Python test computes the WCAG ratio for the light theme (text, muted, accent, button-on-accent, against both the page bg and the block surface) and fails the build below 4.5:1. Playwright tests also block scripts to verify the fixed Forest-light default renders correctly without JavaScript.
 

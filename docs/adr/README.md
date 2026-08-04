@@ -26,7 +26,7 @@ Records are numbered 0001→0037.
 | 0017 | Single Forest theme | Accepted (v5) |
 | 0018 | Human, handcrafted feel | Accepted |
 | 0019 | Automated contrast + no-JS regression guards | Accepted |
-| 0020 | UI block layout (best-practices pass) | Accepted (v4) |
+| 0020 | UI block layout (best-practices pass) | Accepted (v5) |
 | 0021 | Dragon share link revealed inline | Accepted |
 | 0022 | LinkedIn share button (pre-filled link) | Accepted |
 | 0023 | Custom domain set to krasnobai.dev | Accepted |
@@ -40,7 +40,7 @@ Records are numbered 0001→0037.
 | 0031 | LLM / AI-agent optimized résumé build | Accepted |
 | 0032 | Favicon: red pixel anarchy symbol | Superseded by ADR-0034 |
 | 0033 | Evidence-first, concise résumé content | Accepted |
-| 0034 | Recruiter-first landing page and neutral identity | Accepted |
+| 0034 | Recruiter-first landing page and neutral identity | Accepted (v2) |
 | 0035 | Normalized machine-readable outputs and semantic validation | Accepted |
 | 0036 | Compact ATS PDF and release quality gates | Accepted (v2) |
 | 0037 | Self-hosted, dependency-light frontend | Accepted |

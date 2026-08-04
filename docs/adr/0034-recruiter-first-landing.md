@@ -1,6 +1,6 @@
 # ADR-0034 — Recruiter-first landing page and neutral identity
 
-Date: 2026-08-04 · Status: Accepted
+Date: 2026-08-04 · Status: Accepted (v2)
 
 ## Context
 
@@ -13,9 +13,9 @@ compliance hiring contexts.
 
 ## Decision
 
-1. Keep the page compact but show three selected impact signals before the CTA:
-   80% infrastructure cost reduction, 500M+ daily requests, and a fleet scale of
-   up to 10,000 instances.
+1. Keep the page compact and calm: identity, one scale signal in the summary,
+   contacts, then the CTA. Do not render a separate KPI/metric-card strip;
+   detailed achievements remain in the PDF and machine-readable résumé.
 2. Keep the PDF as the primary CTA and add GitHub as a secondary CTA.
 3. Replace the emoji with a self-hosted inline document SVG.
 4. Replace the anarchy favicon with a neutral, self-hosted pixel `AK` monogram.
@@ -29,7 +29,16 @@ compliance hiring contexts.
 
 ## Consequences
 
-- Recruiters see proof of scale without leaving the first screen.
+- Recruiters see enough scale to orient themselves without a product-style KPI
+  strip or repeated claims.
 - The primary action remains unambiguous while source work is one click away.
 - The identity stays handcrafted without introducing political interpretation.
 - ADR-0025 and ADR-0032 are superseded.
+
+## Revision history
+
+- **v2 (2026-08-04):** remove the three metric cards after production review;
+  retain one scale signal in the summary and keep detailed evidence in the
+  résumé artifacts.
+- **v1 (2026-08-04):** recruiter-first CTA, selected evidence cards, neutral
+  identity, durable RU URL, and collapsed machine links.
