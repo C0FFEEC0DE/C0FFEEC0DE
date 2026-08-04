@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+from html import unescape
 import json
 import re
 import struct
@@ -32,6 +33,7 @@ def expected_release() -> dict[str, str]:
     return {
         "name": _source_value(source, "name"),
         "label": _source_value(source, "label"),
+        "summary": _source_value(source, "summary"),
         "version": _source_value(source, "version"),
         "lastModified": _source_value(source, "lastModified"),
     }
@@ -58,6 +60,9 @@ def verify_once(base: str, expected: dict[str, str]) -> None:
     for value in (expected["name"], expected["label"]):
         if value not in index:
             raise ValueError(f"index: missing current {value!r}")
+    description = re.search(r'<meta name="description" content="([^\"]*)">', index)
+    if not description or unescape(description.group(1)) != expected["summary"]:
+        raise ValueError("index: meta description does not match canonical summary")
     for marker in ('Content-Security-Policy', 'assets/og-card.png', 'assets/favicon.svg'):
         if marker not in index:
             raise ValueError(f"index: missing {marker}")
@@ -70,6 +75,7 @@ def verify_once(base: str, expected: dict[str, str]) -> None:
     actual = {
         "name": resume["basics"]["name"],
         "label": resume["basics"]["label"],
+        "summary": resume["basics"]["summary"],
         "version": resume["meta"]["version"],
         "lastModified": resume["meta"]["lastModified"],
     }

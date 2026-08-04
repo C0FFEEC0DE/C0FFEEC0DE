@@ -1467,6 +1467,7 @@ def build(clean: bool = False, do_pdf: bool = True):
         "HEADER_RU": render_header_fragment(resumes["ru"], "ru"),
         "JSONLD": jsonld,
         "OG_TAGS": build_og_tags(resumes["en"], base),
+        "META_DESCRIPTION": esc(resumes["en"]["basics"].get("summary", "")),
         "BASE": base.rstrip("/"),
         "PDF_NAME": pdf_name,
         "GITHUB_URL": github_url,

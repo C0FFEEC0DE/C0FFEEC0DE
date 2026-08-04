@@ -186,6 +186,8 @@ test("Open Graph meta tags use the résumé name, role, and summary", async ({ p
   expect(title).toContain("Staff DevOps Engineer");
   const desc = await page.locator("meta[property='og:description']").getAttribute("content");
   expect(desc).toContain("high-throughput cloud platforms");
+  const standardDesc = await page.locator("meta[name='description']").getAttribute("content");
+  expect(standardDesc).toBe(desc);
   const img = await page.locator("meta[property='og:image']").getAttribute("content");
   expect(img).toMatch(/og-card\.png$/);
   const res = await page.request.get(img);
