@@ -166,6 +166,12 @@ dates: 2008 — 2012
 
 ## Projects
 
+### krasnobai.dev
+url: https://krasnobai.dev
+- Персональный двуязычный сайт-резюме, собираемый из единственного markdown-источника чисто питоновским пайплайном. Один `resume.en.md` порождает 10+ артефактов: JSON Resume, llms.txt, AGENTS.md, .well-known/cv.json, agents.json, ATS-совместимый PDF, Open Graph-превью и UI, покрытый Playwright-тестами.
+- Деплой на GitHub Pages через GitHub Actions; использует Bootstrap с SRI, self-hosted SVG/PNG-ассеты, без бэкенда и трекинга.
+- Демонстрирует инфраструктуру как код, CI/CD, доступность, автоматизированное тестирование и лучшие практики discoverability для LLM/AI-агентов в компактном hand-crafted пакете.
+
 ### agnthive
 url: https://agnthive.run
 - Open-source MIT-плагин для Claude Code на Node.js (ESM), обеспечивающий hook-gated SDLC (discover → design → implement → verify → review → docs) с 8 специализированными агентами и набором бенчмарков, который ловит регрессии агентов до релиза. Кроссплатформенный (Linux/macOS/Windows). github.com/C0FFEEC0DE/agnthive

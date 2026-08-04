@@ -165,6 +165,12 @@ dates: 2008 — 2012
 
 ## Projects
 
+### krasnobai.dev
+url: https://krasnobai.dev
+- Personal bilingual résumé site built from a single markdown source with a pure-Python build pipeline. One `resume.en.md` generates 10+ outputs: JSON Resume, llms.txt, AGENTS.md, .well-known/cv.json, agents.json, an ATS-safe PDF, Open Graph previews, and Playwright-tested UI.
+- Deployed to GitHub Pages via GitHub Actions; uses SRI-pinned Bootstrap, self-hosted SVG/PNG assets, and no backend or tracking.
+- Demonstrates infrastructure-as-code, CI/CD, accessibility, automated testing, and LLM/AI-agent discoverability best practices in a tiny, hand-crafted package.
+
 ### agnthive
 url: https://agnthive.run
 - Open-source, MIT-licensed Node.js ESM plugin for Claude Code that enforces a hook-gated SDLC (discover → design → implement → verify → review → docs) with 8 specialist agents and a benchmark suite that catches agent regressions before they ship. Cross-platform (Linux/macOS/Windows). github.com/C0FFEEC0DE/agnthive
