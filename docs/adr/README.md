@@ -10,7 +10,7 @@ Records are numbered 0001→0041.
 | 0001 | Markdown is the single source of truth | Accepted |
 | 0002 | JSON Resume v1.0.0 as the machine-readable format | Accepted |
 | 0003 | AI-agent surface: llms.txt + AGENTS.md + JSON-LD | Accepted |
-| 0004 | Deploy via GitHub Pages + Actions (artifact) | Accepted |
+| 0004 | Deploy via GitHub Pages + Actions (artifact) | Accepted (v2) |
 | 0005 | Custom domain is deferred and env-driven | Accepted |
 | 0006 | curl one-liner over explicit plain-text paths | Accepted |
 | 0007 | Bilingual EN/RU via paired markdown + client toggle | Accepted |
